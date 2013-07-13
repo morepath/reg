@@ -2,7 +2,7 @@ from .interface import Interface, abstractmethod, abstractproperty
 
 class ILookup(Interface):
     @abstractmethod
-    def lookup(self, target, objs, discriminator):
+    def component(self, target, objs, discriminator):
         """Look up a component in the registry.
         
         The target is the class that we want to look up. The component
@@ -134,3 +134,5 @@ class NoImplicitRegistryError(Exception):
 class NoImplicitLookupError(Exception):
     pass
 
+class ComponentLookupError(TypeError):
+    pass

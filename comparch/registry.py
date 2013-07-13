@@ -1,5 +1,7 @@
 from .mapping import MultiMap, ClassMapKey, ClassMultiMapKey, InverseMap
-from .abcs import IRegistry, ILookup
+from .abcs import IRegistry, ILookup, ComponentLookupError
+
+SENTINEL = object()
 
 class Registry(IRegistry, ILookup):
     """A component registry.
@@ -25,26 +27,35 @@ class Registry(IRegistry, ILookup):
             im[target] = discriminator_map = {}
         discriminator_map[discriminator] = component
         
-    def lookup(self, target, objs, discriminator):
+    def component(self, target, objs, discriminator, default=SENTINEL):
         target = ClassMapKey(target)
         key = ClassMultiMapKey(*[obj.__class__ for obj in objs])
         for im in self._map.all(key):
             found = im.get(target)
             if found is not None:
+                result = found.get(discriminator)
                 break
         else:
-            return None
-        return found.get(discriminator)
-
-    def adapt(self, target, objs, discriminator):
+            result = None
+        if result is not None:
+            return result
+        if default is not SENTINEL:
+            return default
+        raise ComponentLookupError(
+            "Could not find component for target %r from objs %r "
+            "with discriminator %r" % (
+                target.key,
+                objs,
+                discriminator))
+    
+    def adapt(self, target, objs, discriminator, default=SENTINEL):
         # self-adaptation
         if len(objs) == 1 and isinstance(objs[0], target):
             return objs[0]
-        adapter = self.lookup(target, objs, name)
-        if adapter is None:
-            return None
+        adapter = self.component(target, objs, discriminator, default)
+        if adapter is default:
+            return default
         try:
             return adapter(*objs)
         except TypeError, e:
             raise TypeError(str(e) + " (%s)" % adapter)
-    

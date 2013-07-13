@@ -18,22 +18,22 @@ def test_registry_sources():
     reg.register(LineCount, (SpecialDocument,), None,
                  'special document line count')
 
-    assert (reg.lookup(LineCount, (Document(),),  None) ==
+    assert (reg.component(LineCount, (Document(),),  None) ==
             'document line count')
     
-    assert (reg.lookup(LineCount, (SpecialDocument(),), None) ==
+    assert (reg.component(LineCount, (SpecialDocument(),), None) ==
             'special document line count')
 
     class AnotherDocument(Document):
         pass
 
-    assert (reg.lookup(LineCount, (AnotherDocument(),), None) ==
+    assert (reg.component(LineCount, (AnotherDocument(),), None) ==
             'document line count')
                            
     class Other(object):
         pass
     
-    assert reg.lookup(LineCount, (Other(),), None) is None
+    assert reg.component(LineCount, (Other(),), None, default=None) is None
 
 def test_registry_target_find_specific():
     reg = Registry()
@@ -53,11 +53,11 @@ def test_registry_target_find_specific():
     reg.register(LineCount, (Document,), None, 'line count')
     reg.register(SpecialLineCount, (Document,), None, 'special line count')
 
-    assert reg.lookup(LineCount, (Document(),), None) == 'line count'
-    assert reg.lookup(SpecialLineCount, (Document(),), None) == 'special line count'
+    assert reg.component(LineCount, (Document(),), None) == 'line count'
+    assert reg.component(SpecialLineCount, (Document(),), None) == 'special line count'
 
-    assert reg.lookup(LineCount, (SpecialDocument(),), None) == 'line count'
-    assert reg.lookup(SpecialLineCount, (SpecialDocument(),), None) == 'special line count'
+    assert reg.component(LineCount, (SpecialDocument(),), None) == 'line count'
+    assert reg.component(SpecialLineCount, (SpecialDocument(),), None) == 'special line count'
 
 def test_registry_target_find_subclass():
     reg = Registry()
@@ -72,7 +72,7 @@ def test_registry_target_find_subclass():
         pass
     
     reg.register(Elephant, (Document,), None, 'elephant')
-    assert reg.lookup(Animal, (Document(),), None) == 'elephant'
+    assert reg.component(Animal, (Document(),), None) == 'elephant'
 
 def test_registry_no_sources():
     reg = Registry()
@@ -84,5 +84,7 @@ def test_registry_no_sources():
         pass
     
     reg.register(Elephant, (), None, 'elephant')
-    assert reg.lookup(Animal, (), None) == 'elephant'
+    assert reg.component(Animal, (), None) == 'elephant'
     
+# XXX various default and component lookup error tests
+
