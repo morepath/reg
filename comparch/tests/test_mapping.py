@@ -332,7 +332,20 @@ def test_inverse_map_sub():
 
     assert m[animal] == 'Elephant'
     assert m[elephant] == 'Elephant'
+
+def test_inverse_map_sub2():
+    m = InverseMap()
+
+    animal = MapKey('animal')
+    elephant = MapKey('elephant', parents=[animal])
+    african_elephant = MapKey('african elephant', parents=[elephant])
     
+    m[african_elephant] = 'African Elephant'
+
+    assert m[animal] == 'African Elephant'
+    assert m[elephant] == 'African Elephant'
+    assert m[african_elephant] == 'African Elephant'
+
 def test_inverse_map_two_descendants():
     m = InverseMap()
 
@@ -347,4 +360,12 @@ def test_inverse_map_two_descendants():
     assert m[rhino] == 'Rhino'
     # we'll get the last written descendant, which is an animal
     assert m[animal] == 'Rhino'
+
+def test_inverse_map_empty():
+    m = InverseMap()
+
+    animal = MapKey('animal')
+
+    with py.test.raises(KeyError):
+        m[animal]
     
