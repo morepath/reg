@@ -64,10 +64,37 @@ class Map(dict):
             except KeyError:
                 pass
 
+class MultiMapKey(object):
+    def __init__(self, *keys):
+        self.arity = len(keys)
+        self.keys = keys
+
+    def __repr__(self):
+        return "<MultiMapKey: %r>" % (self.keys,)
+
+    def __eq__(self, other):
+        return self.keys == other.keys
+
+    @property
+    def ancestors(self):
+        return multimapkey_ancestors(self.keys)
+    
+def multimapkey_ancestors(keys):
+    first = keys[0]
+    rest = keys[1:]
+    if not rest:
+        for ancestor in first.ancestors:
+            yield MultiMapKey(ancestor)
+        return
+    for ancestor in first.ancestors:
+        for multikey in multimapkey_ancestors(rest):
+            yield MultiMapKey(ancestor, *multikey.keys)
+
 # XXX create a caching proxy to speed up things after registration is
 # frozen
 # create a freeze concept that kills registration, so that caching is safe
 # freezing after software initialization is safe
+# do we want to implement keys, values, etc? what do they mean?          
 class MultiMap(object):
     """map that takes sequences of MapKey objects as key.
 
@@ -87,32 +114,26 @@ class MultiMap(object):
         self._by_arity = {}
         
     def __setitem__(self, key, value):
-        arity = MapKey(len(key))
-        key = [arity] + list(key)
-        last_key = key.pop()
-        map = self._by_arity
-        for k in key:
-            # XXX why is the dict() call here?
-            submap = dict(map).get(k)
+        keys = list(key.keys)
+        last_key = keys.pop()
+        map = self._by_arity.get(key.arity)
+        if map is None:
+            self._by_arity[key.arity] = map = Map()
+        for k in keys:
+            submap = map.exact_get(k)
             if submap is None:
                 submap = map[k] = Map()
             map = submap
         map[last_key] = value
 
-    def __delitem__(self, key):
-        arity = MapKey(len(key))
-        key = [arity] + list(key)
-        last_key = key.pop()
-        map = self._by_arity
-        for k in key:
-            map = dict(map)[k]
-        del map[last_key]
-
     def __getitem__(self, key):
-        arity = MapKey(len(key))
-        key = (arity,) + key
-        return self._getitem_recursive(self._by_arity, key)
-
+        for multimapkey in key.ancestors:
+            try:
+                return self.exact_getitem(multimapkey)
+            except KeyError:
+                pass
+        raise KeyError(key)
+    
     def get(self, key, default=None):
         try:
             return self[key]
@@ -120,9 +141,8 @@ class MultiMap(object):
             return default
 
     def exact_getitem(self, key):
-        arity = MapKey(len(key))
-        m = self._by_arity[arity]
-        for k in key:
+        m = self._by_arity[key.arity]
+        for k in key.keys:
             m = m.exact_getitem(k)
         return m
 
@@ -132,41 +152,14 @@ class MultiMap(object):
         except KeyError:
             return default
         
-    # XXX should use ancestor_multikeys, but need to turn it
-    # into a generator for efficiency
-    def _getitem_recursive(self, map, key):
-        first = key[0]
-        rest = key[1:]
-        if not rest:
-            return map[first]
-        for ancestor in first.ancestors:
-            try:
-                return self._getitem_recursive(map[ancestor], rest)
-            except KeyError, e:
-                pass
-        # XXX is key informative enough for a key error? probably not
-        raise KeyError(key)
-
     def all(self, key):
         result = []
-        for k in ancestor_multikeys(key):
+        for k in key.ancestors:
             try:
                 result.append(self.exact_getitem(k))
             except KeyError:
                 pass
         return result
-
-# convert to generator
-def ancestor_multikeys(key):
-    first = key[0]
-    rest = key[1:]
-    if not rest:
-        for ancestor in first.ancestors:
-            yield (ancestor,)
-        return
-    for ancestor in first.ancestors:
-        for multikey in ancestor_multikeys(rest):
-            yield (ancestor,) + multikey
 
 class ClassMapKey(object):
     def __init__(self, class_):
@@ -185,10 +178,8 @@ class ClassMapKey(object):
     def __repr__(self):
         return "<ClassMapKey: %r>" % self.key
 
-# XXX if this is a real class, ancestors can be a method
-# but it needs to be generic, MultiMapKey, first
-def ClassMultiMapKey(classes):
-    return tuple([ClassMapKey(class_) for class_ in classes])
+def ClassMultiMapKey(*classes):
+    return MultiMapKey(*[ClassMapKey(class_) for class_ in classes])
 
 def _inheritance_sortkey(target_tuple):
     class_, discriminator_map = target_tuple
@@ -228,7 +219,7 @@ class Registry(object):
         self._map = MultiMap()
 
     def register(self, sources, target, discriminator, component):
-        key = ClassMultiMapKey(sources)
+        key = ClassMultiMapKey(*sources)
         # XXX implement setdefault might be nice
         l = self._map.exact_get(key, [])
         self._map[key] = l
@@ -260,7 +251,7 @@ class Registry(object):
         If the component can be found, it will be returned. If the
         component cannot be found, ``None`` is returned.
         """
-        key = ClassMultiMapKey([obj.__class__ for obj in objs])
+        key = ClassMultiMapKey(*[obj.__class__ for obj in objs])
         for l in self._map.all(key):
             for class_, discriminator_map in l:
                 if issubclass(class_, target):

@@ -1,6 +1,7 @@
 import py.test
 from comparch.mapping import (
-    MapKey, Map, MultiMap, ClassMapKey, Registry, ancestor_multikeys)
+    MapKey, Map, MultiMapKey, MultiMap, ClassMapKey,
+    Registry)
     
 def test_mapkey_without_parents():
     a = MapKey('a')
@@ -154,22 +155,22 @@ def test_multimap():
     two = MapKey('two', [one])
     three = MapKey('three', [two])
 
-    m[(alpha, three)] = u'Value for alpha, three'
-    m[(beta, two)] = u'Value for beta, two'
+    m[MultiMapKey(alpha, three)] = u'Value for alpha, three'
+    m[MultiMapKey(beta, two)] = u'Value for beta, two'
 
-    assert m[(alpha, three)] == u'Value for alpha, three'
-    assert m[(beta, two)] == u'Value for beta, two'
+    assert m[MultiMapKey(alpha, three)] == u'Value for alpha, three'
+    assert m[MultiMapKey(beta, two)] == u'Value for beta, two'
 
-    assert m[(gamma, two)] == u'Value for beta, two'
-    assert m[(beta, three)] == u'Value for beta, two'
-    assert m[(gamma, three)] == u'Value for beta, two'
+    assert m[MultiMapKey(gamma, two)] == u'Value for beta, two'
+    assert m[MultiMapKey(beta, three)] == u'Value for beta, two'
+    assert m[MultiMapKey(gamma, three)] == u'Value for beta, two'
     
     with py.test.raises(KeyError):
-        m[(alpha, one)]
+        m[MultiMapKey(alpha, one)]
     with py.test.raises(KeyError):
-        m[(alpha, two)]
+        m[MultiMapKey(alpha, two)]
     with py.test.raises(KeyError):
-        m[(beta, one)]
+        m[MultiMapKey(beta, one)]
 
 def test_ancestor_multikeys():
     alpha = MapKey('alpha')
@@ -180,9 +181,10 @@ def test_ancestor_multikeys():
     two = MapKey('two', [one])
     three = MapKey('three', [two])
 
-    assert list(ancestor_multikeys((gamma, two))) == [
-        (gamma, two), (gamma, one), (beta, two),
-        (beta, one), (alpha, two), (alpha, one)]
+    assert list(MultiMapKey(gamma, two).ancestors) == [
+        MultiMapKey(gamma, two), MultiMapKey(gamma, one),
+        MultiMapKey(beta, two), MultiMapKey(beta, one),
+        MultiMapKey(alpha, two), MultiMapKey(alpha, one)]
     
 def test_multimap_arity_1():
     m = MultiMap()
@@ -191,11 +193,11 @@ def test_multimap_arity_1():
     beta = MapKey('beta', [alpha])
     gamma = MapKey('gamma', [beta])
 
-    m[(alpha,)] = u'Value for alpha'
-    m[(beta,)] = u'Value for beta'
+    m[MultiMapKey(alpha)] = u'Value for alpha'
+    m[MultiMapKey(beta)] = u'Value for beta'
 
-    assert m[(alpha,)] == u'Value for alpha'
-    assert m[(beta,)] == u'Value for beta'
+    assert m[MultiMapKey(alpha)] == u'Value for alpha'
+    assert m[MultiMapKey(beta)] == u'Value for beta'
     
 def test_multimap_with_fallback():
     m = MultiMap()
@@ -208,24 +210,24 @@ def test_multimap_with_fallback():
     two = MapKey('two', [one])
     three = MapKey('three', [two])
 
-    m[(alpha, three)] = u'Value for alpha, three'
-    m[(beta, two)] = u'Value for beta, two'
+    m[MultiMapKey(alpha, three)] = u'Value for alpha, three'
+    m[MultiMapKey(beta, two)] = u'Value for beta, two'
 
     # fallback
-    m[(alpha, one)] = u'Value for alpha, one'
+    m[MultiMapKey(alpha, one)] = u'Value for alpha, one'
 
     # this gets the more specific interface
-    assert m[(alpha, three)] == u'Value for alpha, three'
-    assert m[(beta, two)] == u'Value for beta, two'
+    assert m[MultiMapKey(alpha, three)] == u'Value for alpha, three'
+    assert m[MultiMapKey(beta, two)] == u'Value for beta, two'
 
-    assert m[(gamma, two)] == u'Value for beta, two'
-    assert m[(beta, three)] == u'Value for beta, two'
-    assert m[(gamma, three)] == u'Value for beta, two'
+    assert m[MultiMapKey(gamma, two)] == u'Value for beta, two'
+    assert m[MultiMapKey(beta, three)] == u'Value for beta, two'
+    assert m[MultiMapKey(gamma, three)] == u'Value for beta, two'
 
     # this uses the fallback
-    assert m[(alpha, one)] == u'Value for alpha, one'
-    assert m[(alpha, two)] == u'Value for alpha, one'
-    assert m[(beta, one)] == u'Value for alpha, one'
+    assert m[MultiMapKey(alpha, one)] == u'Value for alpha, one'
+    assert m[MultiMapKey(alpha, two)] == u'Value for alpha, one'
+    assert m[MultiMapKey(beta, one)] == u'Value for alpha, one'
 
 def test_multimap_all():
     m = MultiMap()
@@ -238,32 +240,32 @@ def test_multimap_all():
     two = MapKey('two', [one])
     three = MapKey('three', [two])
 
-    m[(alpha, three)] = u'Value for alpha, three'
-    m[(beta, two)] = u'Value for beta, two'
-    m[(alpha, one)] = u'Value for alpha, one'
+    m[MultiMapKey(alpha, three)] = u'Value for alpha, three'
+    m[MultiMapKey(beta, two)] = u'Value for beta, two'
+    m[MultiMapKey(alpha, one)] = u'Value for alpha, one'
 
     # this gets the more specific interface
-    assert m.all((alpha, three)) == [u'Value for alpha, three',
-                                     u'Value for alpha, one']
-    assert m.all((beta, two)) == [u'Value for beta, two',
-                                  u'Value for alpha, one']
-    assert m.all((gamma, two)) == [u'Value for beta, two',
-                                   u'Value for alpha, one']
-    assert m.all((beta, three)) == [u'Value for beta, two',
-                                    u'Value for alpha, three',
-                                    u'Value for alpha, one']
-    assert m.all((gamma, three)) == [u'Value for beta, two',
-                                     u'Value for alpha, three',
-                                     u'Value for alpha, one']
+    assert m.all(MultiMapKey(alpha, three)) == [u'Value for alpha, three',
+                                                u'Value for alpha, one']
+    assert m.all(MultiMapKey(beta, two)) == [u'Value for beta, two',
+                                             u'Value for alpha, one']
+    assert m.all(MultiMapKey(gamma, two)) == [u'Value for beta, two',
+                                              u'Value for alpha, one']
+    assert m.all(MultiMapKey(beta, three)) == [u'Value for beta, two',
+                                               u'Value for alpha, three',
+                                               u'Value for alpha, one']
+    assert m.all(MultiMapKey(gamma, three)) == [u'Value for beta, two',
+                                                u'Value for alpha, three',
+                                                u'Value for alpha, one']
 
     # this uses the fallback only
-    assert m.all((alpha, one)) == [u'Value for alpha, one']
-    assert m.all((alpha, two)) == [u'Value for alpha, one']
-    assert m.all((beta, one)) == [u'Value for alpha, one']
+    assert m.all(MultiMapKey(alpha, one)) == [u'Value for alpha, one']
+    assert m.all(MultiMapKey(alpha, two)) == [u'Value for alpha, one']
+    assert m.all(MultiMapKey(beta, one)) == [u'Value for alpha, one']
 
     # we get nothing at all
     frub = MapKey('frub')
-    assert m.all((frub,)) == []
+    assert m.all(MultiMapKey(frub,)) == []
 
 # XXX test_multimap_deletion
 
