@@ -345,6 +345,6 @@ def test_inverse_map_two_descendants():
 
     assert m[elephant] == 'Elephant'
     assert m[rhino] == 'Rhino'
-    # we'll get the last written descendant, which is an animal, so we're alright
+    # we'll get the last written descendant, which is an animal
     assert m[animal] == 'Rhino'
     
