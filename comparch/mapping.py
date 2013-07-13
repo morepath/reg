@@ -192,8 +192,28 @@ def ClassMultiMapKey(classes):
 
 def _inheritance_sortkey(target_tuple):
     class_, discriminator_map = target_tuple
-    return class_.__mro__
+    return tuple(reversed(map(ClassSortable, class_.__mro__)))
 
+# what are the rules for sorting classes in Python? I can't
+# find them. So we'll just implement our own
+# we could instead implement a topological sort, which may
+# be more efficient
+class ClassSortable(object):
+    def __init__(self, class_):
+        self.class_ = class_
+
+    def __repr__(self):
+        return "<ClassSortable for %r>" % self.class_
+    
+    # lt is used by sort
+    def __lt__(self, other):
+        if self.class_ is other.class_:
+            return False
+        return issubclass(other.class_, self.class_)
+
+    def __eq__(self, other):
+        return self.class_ is other.class_
+    
 class Registry(object):
     """A component registry.
     
