@@ -91,11 +91,6 @@ def multimapkey_ancestors(keys):
         for multikey in multimapkey_ancestors(rest):
             yield MultiMapKey(ancestor, *multikey.keys)
 
-# XXX create a caching proxy to speed up things after registration is
-# frozen
-# create a freeze concept that kills registration, so that caching is safe
-# freezing after software initialization is safe
-# do we want to implement keys, values, etc? what do they mean?          
 class MultiMap(object):
     """map that takes sequences of MapKey objects as key.
 
