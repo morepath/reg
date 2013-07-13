@@ -44,12 +44,10 @@ class Map(dict):
     exact_get = dict.get
     
     def __getitem__(self, key):
-        for mapkey in key.ancestors:
-            try:
-                return self.exact_getitem(mapkey)
-            except KeyError:
-                pass
-        raise KeyError(key)
+        try:
+            return next(self.all(key))
+        except StopIteration:
+            raise KeyError(key)
 
     def get(self, key, default=None):
         try:
@@ -58,9 +56,9 @@ class Map(dict):
             return default
 
     def all(self, key):
-        for mapkey in key.ancestors:
+        for k in key.ancestors:
             try:
-                yield self.exact_getitem(mapkey)
+                yield self.exact_getitem(k)
             except KeyError:
                 pass
 
@@ -135,13 +133,11 @@ class MultiMap(object):
         m[last_key] = value
 
     def __getitem__(self, key):
-        for multimapkey in key.ancestors:
-            try:
-                return self.exact_getitem(multimapkey)
-            except KeyError:
-                pass
-        raise KeyError(key)
-    
+        try:
+            return next(self.all(key))
+        except StopIteration:
+            raise KeyError(key)
+
     def get(self, key, default=None):
         try:
             return self[key]
@@ -161,13 +157,11 @@ class MultiMap(object):
             return default
         
     def all(self, key):
-        result = []
         for k in key.ancestors:
             try:
-                result.append(self.exact_getitem(k))
+                yield self.exact_getitem(k)
             except KeyError:
                 pass
-        return result
 
 class InverseMap(object):
     def __init__(self):

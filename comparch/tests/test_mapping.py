@@ -244,27 +244,32 @@ def test_multimap_all():
     m[MultiMapKey(alpha, one)] = u'Value for alpha, one'
 
     # this gets the more specific interface
-    assert m.all(MultiMapKey(alpha, three)) == [u'Value for alpha, three',
-                                                u'Value for alpha, one']
-    assert m.all(MultiMapKey(beta, two)) == [u'Value for beta, two',
-                                             u'Value for alpha, one']
-    assert m.all(MultiMapKey(gamma, two)) == [u'Value for beta, two',
-                                              u'Value for alpha, one']
-    assert m.all(MultiMapKey(beta, three)) == [u'Value for beta, two',
-                                               u'Value for alpha, three',
-                                               u'Value for alpha, one']
-    assert m.all(MultiMapKey(gamma, three)) == [u'Value for beta, two',
-                                                u'Value for alpha, three',
-                                                u'Value for alpha, one']
-
+    assert list(m.all(MultiMapKey(alpha, three))) == [
+        u'Value for alpha, three',
+        u'Value for alpha, one']
+    assert list(m.all(MultiMapKey(beta, two))) == [
+        u'Value for beta, two',
+        u'Value for alpha, one']
+    assert list(m.all(MultiMapKey(gamma, two))) == [
+        u'Value for beta, two',
+        u'Value for alpha, one']
+    assert list(m.all(MultiMapKey(beta, three))) == [
+            u'Value for beta, two',
+            u'Value for alpha, three',
+            u'Value for alpha, one']
+    assert list(m.all(MultiMapKey(gamma, three))) == [
+        u'Value for beta, two',
+        u'Value for alpha, three',
+        u'Value for alpha, one']
+    
     # this uses the fallback only
-    assert m.all(MultiMapKey(alpha, one)) == [u'Value for alpha, one']
-    assert m.all(MultiMapKey(alpha, two)) == [u'Value for alpha, one']
-    assert m.all(MultiMapKey(beta, one)) == [u'Value for alpha, one']
+    assert list(m.all(MultiMapKey(alpha, one))) == [u'Value for alpha, one']
+    assert list(m.all(MultiMapKey(alpha, two))) == [u'Value for alpha, one']
+    assert list(m.all(MultiMapKey(beta, one))) == [u'Value for alpha, one']
 
     # we get nothing at all
     frub = MapKey('frub')
-    assert m.all(MultiMapKey(frub,)) == []
+    assert list(m.all(MultiMapKey(frub,))) == []
 
 def test_multimap_empty_key():
     m = MultiMap()
@@ -272,7 +277,7 @@ def test_multimap_empty_key():
     
     m[MultiMapKey()] = u'Value for the empty'
     assert m[MultiMapKey()] == u'Value for the empty'
-    assert m.all(MultiMapKey()) == [u'Value for the empty']
+    assert list(m.all(MultiMapKey())) == [u'Value for the empty']
     
 def test_class_mapkey():
     class A(object):
