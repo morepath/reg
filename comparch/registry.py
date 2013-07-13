@@ -62,26 +62,6 @@ class Registry(IRegistry, ILookup):
                 target.key,
                 objs,
                 discriminator))
-        
-        target = ClassMapKey(target)
-        key = ClassMultiMapKey(*[obj.__class__ for obj in objs])
-        for im in self._map.all(key):
-            found = im.get(target)
-            if found is not None:
-                result = found.get(discriminator)
-                break
-        else:
-            result = None
-        if result is not None:
-            return result
-        if default is not SENTINEL:
-            return default
-        raise ComponentLookupError(
-            "Could not find component for target %r from objs %r "
-            "with discriminator %r" % (
-                target.key,
-                objs,
-                discriminator))
     
     def adapt(self, target, objs, discriminator, default=SENTINEL):
         # self-adaptation
