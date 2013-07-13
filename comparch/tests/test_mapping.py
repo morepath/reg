@@ -266,6 +266,14 @@ def test_multimap_all():
     frub = MapKey('frub')
     assert m.all(MultiMapKey(frub,)) == []
 
+def test_multimap_empty_key():
+    m = MultiMap()
+    assert list(MultiMapKey().ancestors) == [MultiMapKey()]
+    
+    m[MultiMapKey()] = u'Value for the empty'
+    assert m[MultiMapKey()] == u'Value for the empty'
+    assert m.all(MultiMapKey()) == [u'Value for the empty']
+    
 def test_class_mapkey():
     class A(object):
         pass

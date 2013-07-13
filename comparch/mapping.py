@@ -80,6 +80,9 @@ class MultiMapKey(object):
         return multimapkey_ancestors(self.keys)
     
 def multimapkey_ancestors(keys):
+    if not keys:
+        yield MultiMapKey()
+        return
     first = keys[0]
     rest = keys[1:]
     if not rest:
@@ -115,16 +118,21 @@ class MultiMap(object):
         
     def __setitem__(self, key, value):
         keys = list(key.keys)
+        m = self._by_arity.get(key.arity)
+        if m is None:
+            if keys:
+                self._by_arity[key.arity] = m = Map()
+            else:
+                self._by_arity[key.arity] = value
+                return
         last_key = keys.pop()
-        map = self._by_arity.get(key.arity)
-        if map is None:
-            self._by_arity[key.arity] = map = Map()
+    
         for k in keys:
-            submap = map.exact_get(k)
+            submap = m.exact_get(k)
             if submap is None:
-                submap = map[k] = Map()
-            map = submap
-        map[last_key] = value
+                submap = m[k] = Map()
+            m = submap
+        m[last_key] = value
 
     def __getitem__(self, key):
         for multimapkey in key.ancestors:
