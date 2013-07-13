@@ -332,7 +332,6 @@ def test_registry_sources():
     
     assert reg.lookup((Other(),), LineCount, None) is None
 
-# XXX this test randomly fails now!
 def test_registry_target_find_specific():
     reg = Registry()
     
