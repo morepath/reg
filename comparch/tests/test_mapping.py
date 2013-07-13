@@ -1,6 +1,6 @@
 import py.test
 from comparch.mapping import (
-    MapKey, Map, MultiMapKey, MultiMap, ClassMapKey)
+    MapKey, Map, MultiMapKey, MultiMap, ClassMapKey, InverseMap)
     
 def test_mapkey_without_parents():
     a = MapKey('a')
@@ -305,3 +305,46 @@ def test_class_mapkey():
     assert d.ancestors == [ClassMapKey(D), ClassMapKey(B),
                            ClassMapKey(A), ClassMapKey(object)]
 
+
+def test_inverse_map():
+    m = InverseMap()
+
+    animal = MapKey('animal')
+    elephant = MapKey('elephant', parents=[animal])
+    african_elephant = MapKey('african elephant', parents=[elephant])
+    
+    m[animal] = 'Animal'
+    m[elephant] = 'Elephant'
+
+    assert m[animal] == 'Animal'
+    assert m[elephant] == 'Elephant'
+    with py.test.raises(KeyError):
+        m[african_elephant]
+
+def test_inverse_map_sub():
+    m = InverseMap()
+
+    animal = MapKey('animal')
+    elephant = MapKey('elephant', parents=[animal])
+    african_elephant = MapKey('african elephant', parents=[elephant])
+    
+    m[elephant] = 'Elephant'
+
+    assert m[animal] == 'Elephant'
+    assert m[elephant] == 'Elephant'
+    
+def test_inverse_map_two_descendants():
+    m = InverseMap()
+
+    animal = MapKey('animal')
+    elephant = MapKey('elephant', parents=[animal])
+    rhino = MapKey('rhino', parents=[animal])
+    
+    m[elephant] = 'Elephant'
+    m[rhino] = 'Rhino'
+
+    assert m[elephant] == 'Elephant'
+    assert m[rhino] == 'Rhino'
+    # we'll get the last written descendant, which is an animal, so we're alright
+    assert m[animal] == 'Rhino'
+    

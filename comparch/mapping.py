@@ -169,6 +169,25 @@ class MultiMap(object):
                 pass
         return result
 
+class InverseMap(object):
+    def __init__(self):
+        self.d = {}
+        self.ancestors = {}
+        
+    def __setitem__(self, key, value):
+        self.d[key] = value
+        for ancestor in key.ancestors:
+            found = self.ancestors.get(ancestor)
+            if found is not None and found in key.ancestors:
+                continue
+            self.ancestors[ancestor] = key
+            
+    def exact_getitem(self, key):
+        return self.d[key]
+    
+    def __getitem__(self, key):
+        return self.d[self.ancestors[key]]
+    
 class ClassMapKey(object):
     def __init__(self, class_):
         self.key = class_
