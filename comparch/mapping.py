@@ -184,10 +184,22 @@ class InverseMap(object):
             
     def exact_getitem(self, key):
         return self.d[key]
-    
+
+    def exact_get(self, key, default=None):
+        try:
+            return self.exact_getitem(key)
+        except KeyError:
+            return default
+        
     def __getitem__(self, key):
         return self.d[self.ancestors[key]]
-    
+
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
+        
 class ClassMapKey(object):
     def __init__(self, class_):
         self.key = class_

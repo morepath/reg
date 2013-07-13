@@ -1,4 +1,4 @@
-from .mapping import MultiMap, ClassMultiMapKey
+from .mapping import MultiMap, ClassMapKey, ClassMultiMapKey, InverseMap
 
 class Registry(object):
     """A component registry.
@@ -15,16 +15,13 @@ class Registry(object):
 
     def register(self, target, sources, discriminator, component):
         key = ClassMultiMapKey(*sources)
-        # XXX implement setdefault might be nice
-        l = self._map.exact_get(key, [])
-        self._map[key] = l
-        for class_, discriminator_map in l:
-            if class_ is target:
-                break
-        else:
-            discriminator_map = {}
-            l.append((target, discriminator_map))
-            l.sort(key=_inheritance_sortkey)
+        target = ClassMapKey(target)
+        im = self._map.exact_get(key)
+        if im is None:
+            self._map[key] = im = InverseMap()
+        discriminator_map = im.exact_get(target)
+        if discriminator_map is None:
+            im[target] = discriminator_map = {}
         discriminator_map[discriminator] = component
         
     def lookup(self, target, objs, discriminator):
@@ -49,54 +46,12 @@ class Registry(object):
         If the component can be found, it will be returned. If the
         component cannot be found, ``None`` is returned.
         """
+        target = ClassMapKey(target)
         key = ClassMultiMapKey(*[obj.__class__ for obj in objs])
-        for l in self._map.all(key):
-            for class_, discriminator_map in l:
-                if issubclass(class_, target):
-                    return discriminator_map.get(discriminator)
-        return None
-        
-
-def _inheritance_sortkey(target_tuple):
-    class_, discriminator_map = target_tuple
-    return tuple(reversed(map(ClassSortable, class_.__mro__)))
-
-# what are the rules for sorting classes in Python? I can't
-# find them. So we'll just implement our own
-# we could instead implement a topological sort, which may
-# be more efficient
-class ClassSortable(object):
-    def __init__(self, class_):
-        self.class_ = class_
-
-    def __repr__(self):
-        return "<ClassSortable for %r>" % self.class_
-    
-    # lt is used by sort
-    def __lt__(self, other):
-        if self.class_ is other.class_:
-            return False
-        return issubclass(other.class_, self.class_)
-
-    def __eq__(self, other):
-        return self.class_ is other.class_
- 
-# if I register an elephant and I want an animal, I want to find elephant
-
-# if we find multiple targets, one elephant and one animal, and I want an
-# animal, which one do I find? if I want an elephant it's clear; the elephant
-# is the only option
-# we can keep track of the targets registered and sort them so that the
-# base classes come before the subclasses. this way we'll always find
-# the closest subclass
-
-
-
-# if register a object and I want an ancestor, I want to find it too
-
-# so look for all registrations for key, then find the first one (?)
-# that matches.
-
-# this means that if I have a Zoo and a SpecialZoo, and I've registered
-# Animal for Zoo and Elephant for SpecialZoo, and I look up an animal for
-# special zoo, I'd find the elephant first.
+        for im in self._map.all(key):
+            found = im.get(target)
+            if found is not None:
+                break
+        else:
+            return None
+        return found.get(discriminator)
