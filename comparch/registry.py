@@ -15,6 +15,9 @@ class Registry(IRegistry, ILookup):
 
     def __init__(self):
         self._map = MultiMap()
+        # XXX cache should interact with implicit and thread local
+        # we want cache to be thread-local to avoid threading issues
+        self._cache = {}
 
     def register(self, target, sources, discriminator, component):
         key = ClassMultiMapKey(*sources)
@@ -26,8 +29,40 @@ class Registry(IRegistry, ILookup):
         if discriminator_map is None:
             im[target] = discriminator_map = {}
         discriminator_map[discriminator] = component
+
+    def component_for_classes(self, target, sources, discriminator):
+        sources = tuple(sources)
+        result = self._cache.get((target, sources, discriminator), SENTINEL)
+        if result is not SENTINEL:
+            return result
         
+        target = ClassMapKey(target)
+        key = ClassMultiMapKey(*sources)
+        for im in self._map.all(key):
+            found = im.get(target)
+            if found is not None:
+                result = found.get(discriminator)
+                break
+        else:
+            result = None
+
+        self._cache[(target, sources, discriminator)] = result
+        return result
+    
     def component(self, target, objs, discriminator, default=SENTINEL):
+        result = self.component_for_classes(
+            target, [obj.__class__ for obj in objs], discriminator)
+        if result is not None:
+            return result
+        if default is not SENTINEL:
+            return default
+        raise ComponentLookupError(
+            "Could not find component for target %r from objs %r "
+            "with discriminator %r" % (
+                target.key,
+                objs,
+                discriminator))
+        
         target = ClassMapKey(target)
         key = ClassMultiMapKey(*[obj.__class__ for obj in objs])
         for im in self._map.all(key):
