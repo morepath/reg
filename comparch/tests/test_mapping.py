@@ -1,7 +1,6 @@
 import py.test
 from comparch.mapping import (
-    MapKey, Map, MultiMapKey, MultiMap, ClassMapKey,
-    Registry)
+    MapKey, Map, MultiMapKey, MultiMap, ClassMapKey)
     
 def test_mapkey_without_parents():
     a = MapKey('a')
@@ -267,8 +266,6 @@ def test_multimap_all():
     frub = MapKey('frub')
     assert m.all(MultiMapKey(frub,)) == []
 
-# XXX test_multimap_deletion
-
 def test_class_mapkey():
     class A(object):
         pass
@@ -300,75 +297,3 @@ def test_class_mapkey():
     assert d.ancestors == [ClassMapKey(D), ClassMapKey(B),
                            ClassMapKey(A), ClassMapKey(object)]
 
-def test_registry_sources():
-    reg = Registry()
-    
-    class Document(object):
-        pass
-
-    class SpecialDocument(Document):
-        pass
-
-    class LineCount(object):
-        pass
-
-    reg.register((Document,), LineCount, None,
-                 'document line count')
-    reg.register((SpecialDocument,), LineCount, None,
-                 'special document line count')
-
-    assert (reg.lookup((Document(),), LineCount, None) ==
-            'document line count')
-    
-    assert (reg.lookup((SpecialDocument(),), LineCount, None) ==
-            'special document line count')
-
-    class AnotherDocument(Document):
-        pass
-
-    assert (reg.lookup((AnotherDocument(),), LineCount, None) ==
-            'document line count')
-                           
-    class Other(object):
-        pass
-    
-    assert reg.lookup((Other(),), LineCount, None) is None
-
-def test_registry_target_find_specific():
-    reg = Registry()
-    
-    class Document(object):
-        pass
-
-    class LineCount(object):
-        pass
-
-    class SpecialLineCount(LineCount):
-        pass
-
-    class SpecialDocument(Document):
-        pass
-    
-    reg.register((Document,), LineCount, None, 'line count')
-    reg.register((Document,), SpecialLineCount, None, 'special line count')
-
-    assert reg.lookup((Document(),), LineCount, None) == 'line count'
-    assert reg.lookup((Document(),), SpecialLineCount, None) == 'special line count'
-
-    assert reg.lookup((SpecialDocument(),), LineCount, None) == 'line count'
-    assert reg.lookup((SpecialDocument(),), SpecialLineCount, None) == 'special line count'
-
-def test_registry_target_find_subclass():
-    reg = Registry()
-
-    class Document(object):
-        pass
-
-    class Animal(object):
-        pass
-
-    class Elephant(Animal):
-        pass
-    
-    reg.register((Document,), Elephant, None, 'elephant')
-    assert reg.lookup((Document(),), Animal, None) == 'elephant'
