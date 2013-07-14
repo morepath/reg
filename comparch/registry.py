@@ -84,6 +84,8 @@ class Lookup(ILookup):
             raise TypeError(str(e) + " (%s)" % adapter)
 
 class Registry(ClassRegistry, Lookup):
+    """A registry that is also a lookup.
+    """
     def __init__(self):
         ClassRegistry.__init__(self)
         # the class_lookup is this class itself
