@@ -3,16 +3,17 @@ from .interface import Interface, abstractmethod, abstractproperty
 class ILookup(Interface):
     @abstractmethod
     def component(self, target, objs, discriminator):
-        """Look up a component in the registry.
-        
+        """Look up a component. 
+
         The target is the class that we want to look up. The component
-        found should normally be a subclass of that class, but no such
-        checking is done and it doesn't have to be.
+        found should normally be an instance that class, or in the
+        case of an adapter, have it result be an instance of that class,
+        but no such checking is done and you can register anything.
         
         objs is a list of 0 to n objects that we use to look up the
-        component.  If multiple objs are listed, the lookup is made
-        for that combination of objs. The classes of the objects are
-        used to do the look up.
+        component. The classes of the objects are used to do the look
+        up. If multiple objs are listed, the lookup is made for that
+        combination of objs.
 
         The discriminator is a immutable object (such as a string or a
         tuple) under which the component should be looked up. If the
@@ -63,6 +64,29 @@ class IRegistry(Interface):
         The component is a python object (function, class, instance) that is
         registered.
         """
+
+class IClassLookup(Interface):
+    @abstractmethod
+    def get(self, target, sources, discriminator):
+        """Look up a component, by class.
+
+        The target is the class that we want to look up. The component
+        found should normally be an instance that class, or in the
+        case of an adapter, have it result be an instance of that class,
+        but no such checking is done and you can register anything.
+
+        sources is a list of 0 to n classes that we use to look up the
+        component.  If multiple classes are listed, the lookup is made
+        for that combination of classes.
+
+        The discriminator is a immutable object (such as a string or a
+        tuple) under which the component should be looked up. If the
+        component hasn't been registered with that discriminator, it
+        won't be found.
+        
+        If the component can be found, it will be returned. If the
+        component cannot be found, ``None`` is returned.
+        """        
         
 class IImplicit(Interface):
     """Implicit global registry and lookup.
