@@ -7,11 +7,11 @@ class Implicit(IImplicit):
         self.local = None
 
     def initialize(self, lookup):
-        self._base_lookup = lookup
+        self.base_lookup = lookup
         self.local = Local(lookup=self.base_lookup)
         
     def clear(self):
-        self._base_lookup = None
+        self.base_lookup = None
         self.local = Local(lookup=None)
 
     def reset(self):

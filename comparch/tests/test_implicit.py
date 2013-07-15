@@ -1,6 +1,7 @@
 import threading
 from comparch.implicit import implicit
 from comparch.registry import Registry
+from comparch.interface import Interface
 
 def setup_function(f):
     implicit.initialize(Registry())
@@ -96,3 +97,16 @@ def test_lookup_in_thread_does_not_use_changed_default():
     # in the main thread does not affect sub-threads; they will still
     # use the original initialization
     assert log[0] is implicit.base_lookup
+
+def test_implicit_component_lookup():
+    class ITarget(Interface):
+        pass
+
+    reg = Registry()
+
+    reg.register(ITarget, (), None, 'test component')
+    
+    implicit.initialize(reg)
+    assert ITarget.component() == 'test component'
+    
+    
