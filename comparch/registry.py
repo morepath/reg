@@ -1,5 +1,6 @@
 from .mapping import MultiMap, ClassMapKey, ClassMultiMapKey, InverseMap
 from .interfaces import IRegistry, IClassLookup, ILookup, ComponentLookupError
+from .compose import CachedClassLookup
 
 SENTINEL = object()
 
@@ -30,20 +31,6 @@ class ClassRegistry(IRegistry, IClassLookup):
             result = None
         return result
 
-class CachedClassLookup(IClassLookup):
-    def __init__(self, class_lookup):
-        self.class_lookup = class_lookup
-        self._cache = {}
-        
-    def get(self, target, sources, discriminator):
-        sources = tuple(sources)
-        component = self._cache.get((target, sources, discriminator), SENTINEL)
-        if component is not SENTINEL:
-            return component
-        component = self.class_lookup.get(target, sources, discriminator)
-        self._cache[(target, sources, discriminator)] = component
-        return component
-    
 class Lookup(ILookup):
     """A component lookup.
     

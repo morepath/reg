@@ -4,6 +4,8 @@ lookups together.
 """
 from .interfaces import IClassLookup
 
+CACHED_SENTINEL = object()
+
 def ListClassLookup(object):
     """A simple list of class lookups functioning as an IClassLookup.
 
@@ -38,3 +40,19 @@ class ChainClassLookup(IClassLookup):
         if result is not None:
             return result
         return self.next.get(target, sources,  discriminator)
+
+class CachedClassLookup(IClassLookup):
+    def __init__(self, class_lookup):
+        self.class_lookup = class_lookup
+        self._cache = {}
+        
+    def get(self, target, sources, discriminator):
+        sources = tuple(sources)
+        component = self._cache.get((target, sources, discriminator),
+                                    CACHED_SENTINEL)
+        if component is not CACHED_SENTINEL:
+            return component
+        component = self.class_lookup.get(target, sources, discriminator)
+        self._cache[(target, sources, discriminator)] = component
+        return component
+ 
