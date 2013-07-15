@@ -1,6 +1,6 @@
 import py.test
 
-from comparch.interface import Interface, abstractmethod
+from comparch.interface import Interface, abstractmethod, NoImplicitLookupError
 from comparch.registry import Registry
 from comparch.interfaces import ComponentLookupError
 
@@ -257,3 +257,8 @@ def test_extra_kw():
     with py.test.raises(TypeError) as e:
         ITarget.component(alpha, lookup=reg, extra="illegal")
     assert str(e.value) == 'Illegal extra keyword arguments: extra'
+
+def test_no_implicit():
+    alpha = Alpha()
+    with py.test.raises(NoImplicitLookupError):
+        ITarget.component(alpha)
