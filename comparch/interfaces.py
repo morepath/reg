@@ -160,12 +160,12 @@ class IImplicit(Interface):
         """Set the implicit ILookup."""
     lookup = abstractproperty(_get_lookup, _set_lookup)
 
-    @abstractproperty
-    def base_lookup(self):
-        """Access the base lookup that was registered using ``register()``.
-
-        This can be used as a basis to compose a new lookup.
-        """
+    # XXX abcs don't support defining required attributes apparently
+    # attribute base_lookup
+    # Access the base lookup that was registered using ``register()``.
+    #
+    # This can be used as a basis to compose a new lookup.
+    # """
         
 class NoImplicitRegistryError(Exception):
     pass

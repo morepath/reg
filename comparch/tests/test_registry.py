@@ -1,4 +1,3 @@
-import py.test
 from comparch.registry import Registry
 
 def test_registry_sources():

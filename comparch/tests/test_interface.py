@@ -1,4 +1,4 @@
-from comparch.interface import Interface, abstractmethod
+from comparch.interface import Interface
 from comparch.registry import Registry
 
 def test_interface_component():

@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod, abstractproperty
+assert abstractmethod, abstractproperty # these really need to be here, pyflakes
 
 SENTINEL = object()
 
@@ -30,6 +31,9 @@ def process_kw(kw):
         raise TypeError("Illegal extra keyword arguments: %s" %
                         ', '.join(kw.keys()))
     return lookup, discriminator, default
+
+class NoImplicitLookupError(Exception):
+    pass
 
 def find_lookup(kw):
     lookup = kw.pop('lookup', None)

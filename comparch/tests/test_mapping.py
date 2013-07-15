@@ -178,7 +178,6 @@ def test_ancestor_multikeys():
 
     one = MapKey('one')
     two = MapKey('two', [one])
-    three = MapKey('three', [two])
 
     assert list(MultiMapKey(gamma, two).ancestors) == [
         MultiMapKey(gamma, two), MultiMapKey(gamma, one),
@@ -190,7 +189,6 @@ def test_multimap_arity_1():
 
     alpha = MapKey('alpha')
     beta = MapKey('beta', [alpha])
-    gamma = MapKey('gamma', [beta])
 
     m[MultiMapKey(alpha)] = u'Value for alpha'
     m[MultiMapKey(beta)] = u'Value for beta'
@@ -337,7 +335,9 @@ def test_inverse_map_sub():
 
     assert m[animal] == 'Elephant'
     assert m[elephant] == 'Elephant'
-
+    with py.test.raises(KeyError):
+        assert m[african_elephant]
+    
 def test_inverse_map_sub2():
     m = InverseMap()
 

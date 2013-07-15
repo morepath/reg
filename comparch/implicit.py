@@ -1,8 +1,7 @@
 import threading
-from .registry import Registry
 from .interfaces import IImplicit
 
-class Implicit(object):
+class Implicit(IImplicit):
     def __init__(self):
         self.base_lookup = None
         self.local = None
