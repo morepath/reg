@@ -86,30 +86,47 @@ class IClassLookup(Interface):
         
         If the component can be found, it will be returned. If the
         component cannot be found, ``None`` is returned.
-        """        
-        
+        """
+
 class IImplicit(Interface):
-    """Implicit global registry and lookup.
+    """Implicit global lookup.
 
-    Comparch supports an implicit registry and lookup to be set up
-    globally. The implicit global registry can be used in registration code.
-    The implicit global lookup can be used for lookups.
-    
-    The global registry is normally only set up once per application,
-    during startup time. The initialize method will set up the default
-    registry. This also sets up a lookup for this
-    registry. Afterwards, the registry can be accessed through the
-    ``registry`` property (but cannot be set through this).
-    
-    The global implicit lookup can be accessed through the ``lookup``
-    property.
-    
-    Changing the implicit lookup during run-time is done by simply
-    assigning to it. Typically you'd assign an lookup constructed
-    using comparch.ListLookup or comparch.ChainLookup. This way a
-    lookup can look for a component in one registry first, and then
-    fall back to another registry, etc.
+    There will only one singleton instance of this, called ``implicit``.
 
+    Normally during startup of an application the framework will
+    register the implicit lookup by using ``implicit.register()``.
+    
+    The lookup can then be accessed using ``implicit.lookup``.
+        
+    ``Interface.component()`` and ``Interface.adapt`` make use of this
+    information if you do not pass an explicit ``lookup`` keyword
+    argument. This is handy as it becomes unnecessary to have to pass
+    a ``lookup`` object everywhere.
+
+    The drawback is that this single global lookup is implicit, which
+    makes it harder to test in isolation. Comparch supports testing
+    with the explicit ``lookup`` argument, but that is not useful if
+    you are testing code that relies on an implicit lookup. Therefore
+    comparch has strived to make the implicit global lookup as
+    explicit as possible so that it can be manipulated in tests where
+    this is necessary.
+
+    It is also possible for a framework to change the implicit lookup
+    during run-time. This is done by simply assigning to
+    ``implicit.lookup``. The lookup is stored on a thread-local and is
+    unique per thread.
+
+    Comparch offers facilities to compose such a custom lookup:
+    
+    * ``comparch.ListClassLookup`` and ``comparch.ChainClassLookup``
+       which can be used to chain multiple ``IClassLookup``s together.
+
+   * ``comparch.CachedClassLookup`` which can be used to create a
+      faster caching version of an ``IClassLookup``.
+
+    * ``comparch.Lookup`` which can be used to turn a ``IClassLookup``
+      into a proper ``ILookup``.
+    
     To change the lookup back to a lookup in the global implicit
     registry, call ``reset_lookup``.
     
@@ -117,41 +134,39 @@ class IImplicit(Interface):
     implicit global lookup.
     """
 
-    @abstractproperty
-    def registry(self):
-        """IRegistry. Read-only."""
+    @abstractmethod
+    def initialize(self, lookup):
+        """Initialize implicit with lookup.
+        """
+    
+    @abstractmethod
+    def clear(self):
+        """Clear global implicit lookup.
+        """
+
+    @abstractmethod
+    def reset(self):
+        """Reset global implicit lookup to original lookup used for
+        registration.
+
+        This can be used to wipe out any composed lookups that
+        were installed during this thread.
+        """
 
     def _get_lookup(self):
-        """Get the implicit lookup."""
+        """Get the implicit ILokup."""
         
     def _set_lookup(self, value):
-        """Set the implicit lookup."""
+        """Set the implicit ILookup."""
     lookup = abstractproperty(_get_lookup, _set_lookup)
 
     @abstractproperty
     def base_lookup(self):
-        """ILookup based on IRegistry"""
+        """Access the base lookup that was registered using ``register()``.
 
-    @abstractmethod
-    def initialize(self):
-        """Set up a standard global implicit registry and lookup.
+        This can be used as a basis to compose a new lookup.
         """
-
-    @abstractmethod
-    def initialize_with_registry(self, registry):
-        """Set up global implicit registry and lookup according to argument.
-        """
-
-    @abstractmethod
-    def clear(self):
-        """Clear global implicit registry and lookup.
-        """
-
-    @abstractmethod
-    def reset_lookup(self):
-        """Reset global implicit lookup to base_lookup.
-        """
-   
+        
 class NoImplicitRegistryError(Exception):
     pass
 

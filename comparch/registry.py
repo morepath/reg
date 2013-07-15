@@ -1,5 +1,5 @@
 from .mapping import MultiMap, ClassMapKey, ClassMultiMapKey, InverseMap
-from .abcs import IRegistry, IClassLookup, ILookup, ComponentLookupError
+from .interfaces import IRegistry, IClassLookup, ILookup, ComponentLookupError
 
 SENTINEL = object()
 
@@ -82,6 +82,12 @@ class Lookup(ILookup):
             return adapter(*objs)
         except TypeError, e:
             raise TypeError(str(e) + " (%s)" % adapter)
+
+class CachedLookup(Lookup, CachedClassLookup):
+    def __init__(self, class_lookup):
+        CachedClassLookup.__init__(self, class_lookup)
+        # the class_lookup is this class itself
+        Lookup._init__(self, self)
 
 class Registry(ClassRegistry, Lookup):
     """A registry that is also a lookup.

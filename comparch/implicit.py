@@ -1,35 +1,23 @@
 import threading
 from .registry import Registry
-from .abcs import IImplicit
+from .interfaces import IImplicit
 
-class Local(threading.local):
-    def __init__(self, **kw):
-        self.__dict__.update(kw)
-    
-class Implicit(IImplicit):
+class Implicit(object):
     def __init__(self):
-        self._registry = None
+        self.base_lookup = None
         self.local = None
-        
-    def initialize(self):
-        self.initialize_with_registry(Registry())
 
-    def initialize_with_registry(self, registry):
-        self._registry = registry
-        self.local = Local(lookup=registry)
+    def initialize(self, lookup):
+        self._base_lookup = lookup
+        self.local = Local(lookup=self.base_lookup)
         
     def clear(self):
-        self._registry = None
+        self._base_lookup = None
         self.local = Local(lookup=None)
-    
-    @property
-    def registry(self):
-        return self._registry
 
-    @property
-    def base_lookup(self):
-        return self.registry
-        
+    def reset(self):
+        self.local.lookup = self.base_lookup
+    
     @property
     def lookup(self):
         if self.local is None:
@@ -40,7 +28,8 @@ class Implicit(IImplicit):
     def lookup(self, value):
         self.local.lookup = value
 
-    def reset_lookup(self):
-        self.lookup = self.base_lookup
+class Local(threading.local):
+    def __init__(self, **kw):
+        self.__dict__.update(kw)
 
 implicit = Implicit()
