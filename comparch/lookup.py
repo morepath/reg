@@ -1,7 +1,6 @@
 from .interfaces import ILookup, ComponentLookupError
 from .compose import CachedClassLookup
-
-SENTINEL = object()
+from .interface import SENTINEL
 
 class Lookup(ILookup):
     """A component lookup.
@@ -26,7 +25,7 @@ class Lookup(ILookup):
         raise ComponentLookupError(
             "Could not find component for target %r from objs %r "
             "with discriminator %r" % (
-                target.key,
+                target,
                 objs,
                 discriminator))
     
