@@ -6,7 +6,7 @@ from .interfaces import IClassLookup
 
 CACHED_SENTINEL = object()
 
-def ListClassLookup(object):
+class ListClassLookup(IClassLookup):
     """A simple list of class lookups functioning as an IClassLookup.
 
     Go through all items in the list, starting at the beginning and
