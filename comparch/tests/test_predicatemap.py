@@ -1,12 +1,12 @@
 from comparch.predicate import PredicateMap, permutations, ANY_VALUE
 
-# def test_predicatemap():
-#     m = PredicateMap(['name', 'request_method'])
-#     m[dict(name='foo')] = 'registered for all'
-#     m[dict(name='foo', request_method='POST')] = 'registered for post'
+def test_predicatemap():
+    m = PredicateMap(['name', 'request_method'])
+    m[dict(name='foo')] = 'registered for all'
+    m[dict(name='foo', request_method='POST')] = 'registered for post'
 
-#     assert m[dict(name='foo', request_method='GET')] == 'registered for all'
-#     assert m[dict(name='foo', request_method='POST')] == 'registered for post'
+    assert m[dict(name='foo', request_method='GET')] == 'registered for all'
+    assert m[dict(name='foo', request_method='POST')] == 'registered for post'
     
 def test_permutations():
     d = { 'a': 'A', 'b': 'B' }

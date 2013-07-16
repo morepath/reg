@@ -25,6 +25,7 @@ class PredicateMap(object):
             s.add(i)
 
     def _get_specific(self, key):
+        result = None
         for k in self.names:
             v = key[k]
             index = self.indexes[k]
@@ -38,9 +39,9 @@ class PredicateMap(object):
             
     def __getitem__(self, key):
         for key_permutation in permutations(self.names, key):
-            values = self._get_specific(key_permutation)
-            if values:
-                return values[0]
+            ids = self._get_specific(key_permutation)
+            if ids:
+                return self.values[ids.pop()]
         raise KeyError(key)
         
     def get(self, key, default=None):
