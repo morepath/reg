@@ -12,22 +12,21 @@ class PredicateMap(object):
         for name in names:
             self.indexes[name] = {}
             
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value):        
         # XXX stop the same key being registered again
         i = len(self.values)
         self.values.append(value)
-        for k in self.names:
-            v = key.get(k, ANY_VALUE)
+        t = d_to_t(self.names, key)
+        for k, v in t:
             index = self.indexes[k]
             s = index.get(v)
             if s is None:
                 index[v] = s = set()
             s.add(i)
 
-    def _get_specific(self, key):
+    def _get_specific(self, t):
         result = None
-        for k in self.names:
-            v = key[k]
+        for k, v in t:
             index = self.indexes[k]
             s = index.get(v, set())
             if result is None:
@@ -38,8 +37,9 @@ class PredicateMap(object):
         return result
             
     def __getitem__(self, key):
-        for key_permutation in permutations(self.names, key):
-            ids = self._get_specific(key_permutation)
+        t = d_to_t(self.names, key)
+        for p in tuple_permutations(t):
+            ids = self._get_specific(p)
             if ids:
                 return self.values[ids.pop()]
         raise KeyError(key)
@@ -49,22 +49,24 @@ class PredicateMap(object):
             return self[key]
         except KeyError:
             return default
+ 
+def d_to_t(names, d):
+    return [(name, d.get(name, ANY_VALUE)) for name in names]
 
-def permutations(names, d):
-    return _permutations(list(reversed(names)), d)
-
-def _permutations(names, d):
-    k = names[0]
-    rest = names[1:]
-    v = d.get(k, ANY_VALUE)
+def tuple_permutations(t):
+    first = t[0]
+    rest = t[1:]
+    k, v = first
     if not rest:
-        yield { k: v }
+        yield (first,)
         if v is not ANY_VALUE:
-            yield { k: ANY_VALUE }
+            yield ((k, ANY_VALUE),)
         return
-    for subd in _permutations(rest, d):
-        subd[k] = v
-        yield subd.copy()
-        if v is not ANY_VALUE:
-            subd[k] = ANY_VALUE
-            yield subd.copy()
+    ps = tuple_permutations(rest)
+    for p in ps:
+        yield (first,) + p
+    ps = tuple_permutations(rest) # generator, so do this again
+    if v is not ANY_VALUE:
+        for p in ps:
+            yield ((k, ANY_VALUE),) + p
+
