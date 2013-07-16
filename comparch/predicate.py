@@ -85,4 +85,3 @@ def tuple_permutations(t):
     if v is not ANY_VALUE:
         for p in ps:
             yield ((k, ANY_VALUE),) + p
-
