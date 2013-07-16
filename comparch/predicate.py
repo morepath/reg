@@ -4,6 +4,7 @@ class AnyValue(object):
 
 ANY_VALUE = AnyValue()
 
+# XXX API isn't right yet; redefine in terms of the tuple instead of dict
 class PredicateRegistry(object):
     def __init__(self, names):
         self.names = names
@@ -59,7 +60,7 @@ class PredicateRegistry(object):
             if ids:
                 return self.values[ids.pop()]
         return default
-    
+
 def d_to_t(names, d):
     return tuple([(name, d.get(name, ANY_VALUE)) for name in names])
 
