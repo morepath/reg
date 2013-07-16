@@ -7,22 +7,38 @@ ANY_VALUE = AnyValue()
 class PredicateMap(object):
     def __init__(self, names):
         self.names = names
-        self.values = []
+        self.key_to_value_id = {}
+        self.values = {}
+        self.counter = 0
         self.indexes = {}
         for name in names:
             self.indexes[name] = {}
             
     def __setitem__(self, key, value):        
-        # XXX stop the same key being registered again
-        i = len(self.values)
-        self.values.append(value)
         t = d_to_t(self.names, key)
+
+        # make new value id
+        value_id = self.counter
+        self.values[value_id] = value
+        self.counter += 1
+
+        # get previous value id, if it is there
+        old_value_id = self.key_to_value_id.get(t)
+        if old_value_id is not None:
+            del self.values[old_value_id]
+    
+        # record new value id
+        self.key_to_value_id[t] = value_id
+        
         for k, v in t:
             index = self.indexes[k]
             s = index.get(v)
             if s is None:
                 index[v] = s = set()
-            s.add(i)
+            s.add(value_id)
+            # old value id needs to be cleaned up
+            if old_value_id is not None:
+                s.discard(old_value_id)
 
     def _get_specific(self, t):
         result = None
@@ -51,7 +67,7 @@ class PredicateMap(object):
             return default
  
 def d_to_t(names, d):
-    return [(name, d.get(name, ANY_VALUE)) for name in names]
+    return tuple([(name, d.get(name, ANY_VALUE)) for name in names])
 
 def tuple_permutations(t):
     first = t[0]
