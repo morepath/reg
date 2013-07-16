@@ -4,7 +4,7 @@ class AnyValue(object):
 
 ANY_VALUE = AnyValue()
 
-class PredicateMap(object):
+class PredicateRegistry(object):
     def __init__(self, names):
         self.names = names
         self.key_to_value_id = {}
@@ -14,7 +14,7 @@ class PredicateMap(object):
         for name in names:
             self.indexes[name] = {}
             
-    def __setitem__(self, key, value):        
+    def register(self, key, value):        
         t = d_to_t(self.names, key)
 
         # make new value id
@@ -52,20 +52,14 @@ class PredicateMap(object):
         assert 0 <= len(result) < 2 
         return result
             
-    def __getitem__(self, key):
+    def get(self, key, default=None):
         t = d_to_t(self.names, key)
         for p in tuple_permutations(t):
             ids = self._get_specific(p)
             if ids:
                 return self.values[ids.pop()]
-        raise KeyError(key)
-        
-    def get(self, key, default=None):
-        try:
-            return self[key]
-        except KeyError:
-            return default
- 
+        return default
+    
 def d_to_t(names, d):
     return tuple([(name, d.get(name, ANY_VALUE)) for name in names])
 
