@@ -34,4 +34,4 @@ class CachedLookup(Lookup, CachedClassLookup):
     def __init__(self, class_lookup):
         CachedClassLookup.__init__(self, class_lookup)
         # the class_lookup is this class itself
-        Lookup._init__(self, self)
+        Lookup.__init__(self, self)
