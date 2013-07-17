@@ -104,7 +104,7 @@ def test_implicit_component_lookup():
 
     reg = Registry()
 
-    reg.register(ITarget, (), None, 'test component')
+    reg.register(ITarget, (), 'test component')
     
     implicit.initialize(reg)
     assert ITarget.component() == 'test component'

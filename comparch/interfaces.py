@@ -2,30 +2,36 @@ from .interface import Interface, abstractmethod, abstractproperty
 
 class ILookup(Interface):
     @abstractmethod
-    def component(self, target, objs, discriminator):
+    def component(self, target, objs):
         """Look up a component. 
 
-        The target is the class that we want to look up. The component
-        found should normally be an instance that class, or in the
-        case of an adapter, have it result be an instance of that class,
-        but no such checking is done and you can register anything.
+        The target is the class that we want to look up. The target is
+        used to distinguish components from each other, and to
+        establish an inheritance relationship (if I want an Animal a
+        registered Elephant will do).
+
+        If what is found is a component instance, then component
+        should be an instance of target (or an instance of a subclass
+        of target).
+        
+        If what is found is a component factory (adapter factory),
+        then the result of calling this factory should be an instance
+        of target (or an instance of a subclass of target).
+
+        There is no checking of any of such however, and for some
+        targets you expect something else entirely. That's fine.
         
         objs is a list of 0 to n objects that we use to look up the
         component. The classes of the objects are used to do the look
         up. If multiple objs are listed, the lookup is made for that
         combination of objs.
-
-        The discriminator is a immutable object (such as a string or a
-        tuple) under which the component should be looked up. If the
-        component hasn't been registered with that discriminator, it
-        won't be found.
         
         If the component can be found, it will be returned. If the
         component cannot be found, ``None`` is returned.
         """
 
     @abstractmethod
-    def adapt(self, target, objs, discriminator):
+    def adapt(self, target, objs):
         """Look up an adapter in the registry. Adapt objs to target abc.
         
         The behavior of this method is like that of lookup, but it
@@ -45,7 +51,7 @@ class IChainLookup(ILookup):
 
 class IRegistry(Interface):
     @abstractmethod
-    def register(self, target, sources, discriminator, component):
+    def register(self, target, sources, component):
         """Register a component with the registry.
 
         The target is a class by which the component can be
@@ -56,18 +62,19 @@ class IRegistry(Interface):
         sources is a list of 0 to n classes that
         the component is registered for. If multiple sources are listed,
         a registration is made for that combination of sources.
-
-        The discriminator is an immutable value under which the
-        component should be registered. This can be used to
-        distinguish different registrations from each other.
         
         The component is a python object (function, class, instance) that is
         registered.
+
+        Typically what you would register would be either components
+        that are an instance of target or factory functions that
+        produce an instance of target. But you could register anything,
+        and that's fine; it's not checked.
         """
 
 class IClassLookup(Interface):
     @abstractmethod
-    def get(self, target, sources, discriminator):
+    def get(self, target, sources):
         """Look up a component, by class.
 
         The target is the class that we want to look up. The component
@@ -78,11 +85,6 @@ class IClassLookup(Interface):
         sources is a list of 0 to n classes that we use to look up the
         component.  If multiple classes are listed, the lookup is made
         for that combination of classes.
-
-        The discriminator is a immutable object (such as a string or a
-        tuple) under which the component should be looked up. If the
-        component hasn't been registered with that discriminator, it
-        won't be found.
         
         If the component can be found, it will be returned. If the
         component cannot be found, ``None`` is returned.

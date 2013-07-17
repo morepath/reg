@@ -5,32 +5,26 @@ SENTINEL = object()
 
 class InterfaceMeta(ABCMeta):        
     def component(cls, *args, **kw):
-        lookup, discriminator, default = process_kw(kw)
-        return lookup.component(cls, args, discriminator, default)
+        lookup, default = process_kw(kw)
+        return lookup.component(cls, args, default)
     
     def adapt(cls, *args, **kw):
         # shortcut rule to make sure self-adaptation works even without lookup
         if len(args) == 1 and isinstance(args[0], cls):
             return args[0]
-        lookup, discriminator, default = process_kw(kw)
-        return lookup.adapt(cls, args, discriminator, default)
+        lookup, default = process_kw(kw)
+        return lookup.adapt(cls, args, default)
 
 class Interface(object):
     __metaclass__ = InterfaceMeta
 
 def process_kw(kw):
-    discriminator = kw.pop('discriminator', None)
-    name = kw.pop('name', None)
-    if name is not None:
-        if discriminator is not None:
-            raise TypeError("Cannot give both name and discriminator")
-        discriminator = name
     default = kw.pop('default', SENTINEL)
     lookup = find_lookup(kw)
     if kw:
         raise TypeError("Illegal extra keyword arguments: %s" %
                         ', '.join(kw.keys()))
-    return lookup, discriminator, default
+    return lookup, default
 
 class NoImplicitLookupError(Exception):
     pass

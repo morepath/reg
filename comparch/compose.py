@@ -16,9 +16,9 @@ class ListClassLookup(IClassLookup):
     def __init__(self, lookups):
         self.lookups = lookups
 
-    def get(self, target, sources, discriminator):
+    def get(self, target, sources):
         for lookup in self.lookups:
-            result = lookup.get(target, sources, discriminator)
+            result = lookup.get(target, sources)
             if result is not None:
                 return result
         return None
@@ -35,24 +35,23 @@ class ChainClassLookup(IClassLookup):
         self.lookup = lookup
         self.next = next
 
-    def get(self, target, sources, discriminator):
-        result = self.lookup.get(target, sources, discriminator)
+    def get(self, target, sources):
+        result = self.lookup.get(target, sources)
         if result is not None:
             return result
-        return self.next.get(target, sources,  discriminator)
+        return self.next.get(target, sources)
 
 class CachedClassLookup(IClassLookup):
     def __init__(self, class_lookup):
         self.class_lookup = class_lookup
         self._cache = {}
         
-    def get(self, target, sources, discriminator):
+    def get(self, target, sources):
         sources = tuple(sources)
-        component = self._cache.get((target, sources, discriminator),
-                                    CACHED_SENTINEL)
+        component = self._cache.get((target, sources), CACHED_SENTINEL)
         if component is not CACHED_SENTINEL:
             return component
-        component = self.class_lookup.get(target, sources, discriminator)
-        self._cache[(target, sources, discriminator)] = component
+        component = self.class_lookup.get(target, sources)
+        self._cache[(target, sources)] = component
         return component
  

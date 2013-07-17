@@ -27,7 +27,7 @@ def test_interface_component():
 
     registry = Registry()
 
-    registry.register(IFoo, (), None, "test component")
+    registry.register(IFoo, (), "test component")
 
     assert IFoo.component(lookup=registry)  == 'test component' 
 
@@ -48,7 +48,7 @@ def test_interface_adapt():
 
     registry = Registry()
 
-    registry.register(IFoo, (Bar,), None, Foo)
+    registry.register(IFoo, (Bar,), Foo)
 
     bar = Bar()
     assert IFoo.adapt(bar, lookup=registry).foo() == "Foo called: bar's method"
@@ -56,26 +56,26 @@ def test_interface_adapt():
 def test_component_no_source():
     reg = Registry()
     foo = object()
-    reg.register(ITarget, (), None, foo)
-    assert reg.component(ITarget, [], None) is foo
+    reg.register(ITarget, (), foo)
+    assert reg.component(ITarget, []) is foo
     assert ITarget.component(lookup=reg) is foo
 
 def test_component_two_sources():
     reg = Registry()
     foo = object()
-    reg.register(ITarget, (IAlpha, IBeta), None, foo)
+    reg.register(ITarget, (IAlpha, IBeta), foo)
     alpha = Alpha()
     beta = Beta()
-    assert reg.component(ITarget, [alpha, beta], None) is foo
+    assert reg.component(ITarget, [alpha, beta]) is foo
     assert ITarget.component(alpha, beta, lookup=reg) is foo
     
 def test_component_class_based_registration():
     reg = Registry()
     foo = object()
-    reg.register(ITarget, (Alpha,), None, foo)
+    reg.register(ITarget, (Alpha,), foo)
 
     alpha = Alpha()
-    assert reg.component(ITarget, [alpha], None) is foo
+    assert reg.component(ITarget, [alpha]) is foo
     assert ITarget.component(alpha, lookup=reg) is foo
     
 def test_component_inheritance():
@@ -88,24 +88,24 @@ def test_component_inheritance():
     class Delta(Gamma):
         pass
     
-    reg.register(ITarget, [Gamma], None, foo)
+    reg.register(ITarget, [Gamma], foo)
 
     delta = Delta()
     
-    assert reg.component(ITarget, [delta], None) is foo
+    assert reg.component(ITarget, [delta]) is foo
     assert ITarget.component(delta, lookup=reg) is foo
     
 def test_component_not_found():
     reg = Registry()
 
     with py.test.raises(ComponentLookupError):
-        reg.component(ITarget, [], None) is None
-    assert reg.component(ITarget, [], None, 'default') == 'default'
+        reg.component(ITarget, []) is None
+    assert reg.component(ITarget, [], 'default') == 'default'
                
     alpha = Alpha()
     with py.test.raises(ComponentLookupError):
-        assert reg.component(ITarget, [alpha], '')
-    assert reg.component(ITarget, [], None, 'default') == 'default'
+        assert reg.component(ITarget, [alpha])
+    assert reg.component(ITarget, [], 'default') == 'default'
     
     assert ITarget.component(alpha, lookup=reg, default='default') == 'default'
     with py.test.raises(ComponentLookupError):
@@ -117,9 +117,9 @@ def test_component_to_itself():
 
     foo = object()
     
-    reg.register(IAlpha, [IAlpha], None, foo)
+    reg.register(IAlpha, [IAlpha], foo)
 
-    assert reg.component(IAlpha, [alpha], None) is foo
+    assert reg.component(IAlpha, [alpha]) is foo
     assert IAlpha.component(alpha, lookup=reg) is foo
 
 def test_adapter_no_source():
@@ -129,9 +129,9 @@ def test_adapter_no_source():
     def factory():
         return foo
     
-    reg.register(ITarget, (), None, factory)
+    reg.register(ITarget, (), factory)
 
-    assert reg.adapt(ITarget, [], None) is foo
+    assert reg.adapt(ITarget, []) is foo
     assert ITarget.adapt(lookup=reg) is foo
     
 def test_adapter_one_source():
@@ -144,10 +144,10 @@ def test_adapter_one_source():
         def foo(self):
             pass
         
-    reg.register(ITarget, [IAlpha], None, Adapted)
+    reg.register(ITarget, [IAlpha], Adapted)
     
     alpha = Alpha()
-    adapted = reg.adapt(ITarget, [alpha], None)
+    adapted = reg.adapt(ITarget, [alpha])
     assert isinstance(adapted, Adapted)
     assert adapted.context is alpha
     adapted = ITarget.adapt(alpha, lookup=reg)
@@ -164,14 +164,14 @@ def test_adapter_to_itself():
             self.context = context
 
     # behavior without any registration; we get the object back
-    assert reg.adapt(IAlpha, [alpha], None) is alpha
+    assert reg.adapt(IAlpha, [alpha]) is alpha
     assert IAlpha.adapt(alpha, lookup=reg) is alpha
     # it works even without registry (even implicitly registered!)
     assert IAlpha.adapt(alpha) is alpha
     
     # behavior is the same with registration
-    reg.register(IAlpha, [IAlpha], None, Adapter)
-    assert reg.adapt(IAlpha, [alpha], None) is alpha
+    reg.register(IAlpha, [IAlpha], Adapter)
+    assert reg.adapt(IAlpha, [alpha]) is alpha
     assert IAlpha.adapt(alpha, lookup=reg) is alpha
     assert IAlpha.adapt(alpha) is alpha
     
@@ -186,11 +186,11 @@ def test_adapter_two_sources():
         def foo(self):
             pass
         
-    reg.register(ITarget, [IAlpha, IBeta], None, Adapted)
+    reg.register(ITarget, [IAlpha, IBeta], Adapted)
 
     alpha = Alpha()
     beta = Beta()
-    adapted = reg.adapt(ITarget, [alpha, beta], None)
+    adapted = reg.adapt(ITarget, [alpha, beta])
 
     assert isinstance(adapted, Adapted)
     assert adapted.alpha is alpha
@@ -206,27 +206,10 @@ def test_default():
 
     assert ITarget.component(lookup=reg, default='blah') == 'blah'
 
-def test_discriminator():
-    reg = Registry()
-    foo = object()
-    reg.register(ITarget, [Alpha], (), foo)
-    alpha = Alpha()
-    assert ITarget.component(alpha, lookup=reg, discriminator=()) is foo
-    assert ITarget.component(alpha, lookup=reg, default='default') is 'default'
-
-def test_name():
-    reg = Registry()
-    foo = object()
-    reg.register(ITarget, [Alpha],  'x', foo)
-    alpha = Alpha()
-    assert ITarget.component(alpha, lookup=reg, name='x') is foo
-    assert ITarget.component(alpha, lookup=reg, default='default') is 'default'
-    None
-
 def test_non_adapter_looked_up_as_adapter():
     reg = Registry()
     foo = object()
-    reg.register(ITarget, [Alpha], None, foo)
+    reg.register(ITarget, [Alpha], foo)
     alpha = Alpha()
     
     with py.test.raises(TypeError):
@@ -238,7 +221,7 @@ def test_adapter_with_wrong_args():
         def __init__(self):
             pass
     reg = Registry()
-    reg.register(ITarget, [Alpha], None, Adapter)
+    reg.register(ITarget, [Alpha], Adapter)
     alpha = Alpha()
     
     with py.test.raises(TypeError) as e:
@@ -251,7 +234,7 @@ def test_extra_kw():
     reg = Registry()
     foo = object()
     
-    reg.register(ITarget, [Alpha], None, foo)
+    reg.register(ITarget, [Alpha], foo)
     alpha = Alpha()
     
     with py.test.raises(TypeError) as e:

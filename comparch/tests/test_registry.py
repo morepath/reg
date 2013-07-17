@@ -12,27 +12,25 @@ def test_registry_sources():
     class LineCount(object):
         pass
 
-    reg.register(LineCount, (Document,), None,
-                 'document line count')
-    reg.register(LineCount, (SpecialDocument,), None,
-                 'special document line count')
+    reg.register(LineCount, (Document,), 'document line count')
+    reg.register(LineCount, (SpecialDocument,), 'special document line count')
 
-    assert (reg.component(LineCount, (Document(),),  None) ==
+    assert (reg.component(LineCount, (Document(),)) ==
             'document line count')
     
-    assert (reg.component(LineCount, (SpecialDocument(),), None) ==
+    assert (reg.component(LineCount, (SpecialDocument(),)) ==
             'special document line count')
 
     class AnotherDocument(Document):
         pass
 
-    assert (reg.component(LineCount, (AnotherDocument(),), None) ==
+    assert (reg.component(LineCount, (AnotherDocument(),)) ==
             'document line count')
                            
     class Other(object):
         pass
     
-    assert reg.component(LineCount, (Other(),), None, default=None) is None
+    assert reg.component(LineCount, (Other(),), default=None) is None
 
 def test_registry_target_find_specific():
     reg = Registry()
@@ -49,14 +47,14 @@ def test_registry_target_find_specific():
     class SpecialDocument(Document):
         pass
     
-    reg.register(LineCount, (Document,), None, 'line count')
-    reg.register(SpecialLineCount, (Document,), None, 'special line count')
+    reg.register(LineCount, (Document,), 'line count')
+    reg.register(SpecialLineCount, (Document,), 'special line count')
 
-    assert reg.component(LineCount, (Document(),), None) == 'line count'
-    assert reg.component(SpecialLineCount, (Document(),), None) == 'special line count'
+    assert reg.component(LineCount, (Document(),)) == 'line count'
+    assert reg.component(SpecialLineCount, (Document(),)) == 'special line count'
 
-    assert reg.component(LineCount, (SpecialDocument(),), None) == 'line count'
-    assert reg.component(SpecialLineCount, (SpecialDocument(),), None) == 'special line count'
+    assert reg.component(LineCount, (SpecialDocument(),)) == 'line count'
+    assert reg.component(SpecialLineCount, (SpecialDocument(),)) == 'special line count'
 
 def test_registry_target_find_subclass():
     reg = Registry()
@@ -70,8 +68,8 @@ def test_registry_target_find_subclass():
     class Elephant(Animal):
         pass
     
-    reg.register(Elephant, (Document,), None, 'elephant')
-    assert reg.component(Animal, (Document(),), None) == 'elephant'
+    reg.register(Elephant, (Document,), 'elephant')
+    assert reg.component(Animal, (Document(),)) == 'elephant'
 
 def test_registry_no_sources():
     reg = Registry()
@@ -82,8 +80,8 @@ def test_registry_no_sources():
     class Elephant(Animal):
         pass
     
-    reg.register(Elephant, (), None, 'elephant')
-    assert reg.component(Animal, (), None) == 'elephant'
+    reg.register(Elephant, (), 'elephant')
+    assert reg.component(Animal, ()) == 'elephant'
     
 # XXX various default and component lookup error tests
 
