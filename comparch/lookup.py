@@ -26,10 +26,17 @@ class Lookup(ILookup):
         if adapter is default:
             return default
         try:
-            return adapter(*objs)
+            result = adapter(*objs)
         except TypeError, e:
             raise TypeError(str(e) + " (%s)" % adapter)
-
+        if result is not None:
+            return result
+        if default is not SENTINEL:
+            return default
+        raise ComponentLookupError(
+            "Could not adapt %r to target %r; adapter is None" % (
+                objs, target))
+    
     def all(self, target, objs):
         for found in self.class_lookup.get_all(
             target, [obj.__class__ for obj in objs]):

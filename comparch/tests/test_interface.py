@@ -253,6 +253,16 @@ def test_adapter_with_wrong_args():
 
     assert str(e.value) == ("__init__() takes exactly 1 argument (2 given) "
                             "(<class 'comparch.tests.test_interface.Adapter'>)")
+
+def test_adapter_returns_none():
+    def adapt(obj):
+        return None
+    reg = Registry()
+    reg.register(ITarget, [Alpha], adapt)
+    alpha = Alpha()
+    with py.test.raises(ComponentLookupError):
+        ITarget.adapt(alpha, lookup=reg)
+    assert ITarget.adapt(alpha, lookup=reg, default='default') == 'default'
     
 def test_extra_kw():
     reg = Registry()
