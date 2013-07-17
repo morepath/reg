@@ -69,6 +69,15 @@ class IRegistry(Interface):
         and that's fine; it's not checked.
         """
 
+    @abstractmethod
+    def exact_get(self, target, sources):
+        """Get registration for target and sources.
+
+        Does not go to base classes, just returns exact registration.
+        
+        None if no registration exists.
+        """
+        
 class IClassLookup(Interface):
     @abstractmethod
     def get(self, target, sources):

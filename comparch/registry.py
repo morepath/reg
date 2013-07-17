@@ -16,6 +16,14 @@ class ClassRegistry(IRegistry, IClassLookup):
             self._map[key] = im = InverseMap()
         im[target] = component
 
+    def exact_get(self, target, sources):
+        key = ClassMultiMapKey(*sources)
+        target = ClassMapKey(target)
+        im = self._map.exact_get(key)
+        if im is None:
+            return None
+        return im.exact_get(target)
+    
     def get(self, target, sources):
         try:
             return next(self.get_all(target, sources))
