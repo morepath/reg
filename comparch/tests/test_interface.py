@@ -52,6 +52,30 @@ def test_interface_adapt():
 
     bar = Bar()
     assert IFoo.adapt(bar, lookup=registry).foo() == "Foo called: bar's method"
+
+def test_interface_all():
+    class Base(object):
+        pass
+
+    class Sub(Base):
+        pass
+    registry = Registry()
+    registry.register(ITarget, (Sub,), 'registered for sub')
+    registry.register(ITarget, (Base,), 'registered for base')
+
+    base = Base()
+    sub = Sub()
+    
+    assert list(registry.all(ITarget, (sub,))) == [
+        'registered for sub', 'registered for base']
+    assert list(registry.all(ITarget, (base,))) == [
+        'registered for base'
+        ]
+    assert list(ITarget.all(sub, lookup=registry)) == [
+        'registered for sub',
+        'registered for base']
+    assert list(ITarget.all(base, lookup=registry)) == [
+        'registered for base'] 
     
 def test_component_no_source():
     reg = Registry()

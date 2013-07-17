@@ -15,6 +15,13 @@ class InterfaceMeta(ABCMeta):
         lookup, default = process_kw(kw)
         return lookup.adapt(cls, args, default)
 
+    def all(cls, *args, **kw):
+        lookup = find_lookup(kw)
+        if kw:
+            raise TypeError("Illegal extra keyword arguments: %s" %
+                            ', '.join(kw.keys()))
+        return lookup.all(cls, args)
+    
 class Interface(object):
     __metaclass__ = InterfaceMeta
 

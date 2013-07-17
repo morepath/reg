@@ -32,7 +32,7 @@ class ILookup(Interface):
 
     @abstractmethod
     def adapt(self, target, objs):
-        """Look up an adapter in the registry. Adapt objs to target abc.
+        """Look up an adapter for objs. Adapt objs to target abc.
         
         The behavior of this method is like that of lookup, but it
         performs an extra step: it calls the found component with the
@@ -41,13 +41,10 @@ class ILookup(Interface):
         done).
         """
 
-class IChainLookup(ILookup):
-    @abstractproperty
-    def lookup(self):
-        "The first ILookup to look in."
-    @abstractproperty
-    def next(self):
-        "The next ILookup in the chain."
+    @abstractmethod
+    def all(self, target, objs):
+        """Lookup up all components registered for objs.
+        """
 
 class IRegistry(Interface):
     @abstractmethod
@@ -90,6 +87,20 @@ class IClassLookup(Interface):
         component cannot be found, ``None`` is returned.
         """
 
+    @abstractmethod
+    def get_all(self, target, sources):
+        """Lookup up all components, by class.
+
+        The target is a class by which the component can be
+        looked up.
+        
+        sources is a list of 0 to n classes that the component is
+        registered for. If multiple sources are listed, a registration
+        is made for that combination of sources.
+
+        Yields all matching components.
+        """
+                
 class IImplicit(Interface):
     """Implicit global lookup.
 

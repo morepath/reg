@@ -17,13 +17,18 @@ class ClassRegistry(IRegistry, IClassLookup):
         im[target] = component
 
     def get(self, target, sources):
+        try:
+            return next(self.get_all(target, sources))
+        except StopIteration:
+            return None
+
+    def get_all(self, target, sources):
         target = ClassMapKey(target)
         key = ClassMultiMapKey(*sources)
         for im in self._map.all(key):
             found = im.get(target)
             if found is not None:
-                return found
-        return None
+                yield found
 
 class Registry(ClassRegistry, Lookup):
     """A registry that is also a lookup.

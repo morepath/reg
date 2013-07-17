@@ -30,6 +30,11 @@ class Lookup(ILookup):
         except TypeError, e:
             raise TypeError(str(e) + " (%s)" % adapter)
 
+    def all(self, target, objs):
+        for found in self.class_lookup.get_all(
+            target, [obj.__class__ for obj in objs]):
+            yield found
+    
 class CachedLookup(Lookup, CachedClassLookup):
     def __init__(self, class_lookup):
         CachedClassLookup.__init__(self, class_lookup)
