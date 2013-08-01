@@ -1,3 +1,7 @@
+"""Interface meta class, which is like an abc but with additional component
+lookup methods.
+"""
+
 from abc import ABCMeta, abstractmethod, abstractproperty
 assert abstractmethod, abstractproperty # these really need to be here, pyflakes
 

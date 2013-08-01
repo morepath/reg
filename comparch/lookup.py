@@ -1,3 +1,6 @@
+"""Look up components by instance (using their classes) and target class.
+"""
+
 from .interfaces import ILookup, ComponentLookupError
 from .compose import CachedClassLookup
 from .interface import SENTINEL

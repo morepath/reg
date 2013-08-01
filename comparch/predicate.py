@@ -1,3 +1,6 @@
+"""Data structure that allows look up of components that match predicates.
+"""
+
 class AnyValue(object):
     def __repr__(self):
         return "<ANY VALUE>"

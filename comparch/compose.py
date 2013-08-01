@@ -1,7 +1,9 @@
 """
-This module contains ClassLookups that can be used to compose
-lookups together.
+Compose ClassLookups. ListClassLookup and ChainClassLookup are different
+ways to compose ClassLookups together into a single one. CachedClassLookup
+is a caching version of ClassLookup.
 """
+
 from .interfaces import IClassLookup
 
 CACHED_SENTINEL = object()

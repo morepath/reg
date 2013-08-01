@@ -1,3 +1,7 @@
+"""An implicit global component lookup facility that can be installed
+explicitly.
+"""
+
 import threading
 from .interfaces import IImplicit
 

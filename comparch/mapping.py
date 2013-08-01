@@ -1,3 +1,6 @@
+"""Core data structures to allow registration and lookup by class.
+"""
+
 class MapKey(object):
     """A map key that can have parents.
     """

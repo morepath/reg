@@ -1,3 +1,6 @@
+"""Registry where you can register components by target class and classes
+that you look up the component for."""
+
 from .mapping import MultiMap, ClassMapKey, ClassMultiMapKey, InverseMap
 from .interfaces import IRegistry, IClassLookup
 from .lookup import Lookup

@@ -1,3 +1,6 @@
+"""Basic interfaces and API docs.
+"""
+
 from .interface import Interface, abstractmethod, abstractproperty
 
 class ILookup(Interface):
