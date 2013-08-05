@@ -53,7 +53,8 @@ class PredicateRegistry(object):
                 result = s
             else:
                 result = result.intersection(s)
-            # XXX shortcut if result is empty?
+            if not result:
+                return result
         assert 0 <= len(result) < 2 
         return result
             

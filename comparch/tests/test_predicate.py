@@ -36,6 +36,11 @@ def test_involved_entry():
     assert m.get(dict(a='A', b='SOMETHING', c='C')) == 'a=A c=C'
     assert m.get(dict(b='B')) == 'b=B'
     assert m.get(dict(a='SOMETHING', b='B', d='D')) == 'b=B d=D'
+
+def test_break_early():
+    m = PredicateRegistry(['a', 'b'])
+    m.register(dict(b='B'), 'b=B')
+    assert m.get(dict(b='C')) is None
     
 def test_tuple_permutations():
     t = (('a', 'A'), ('b', 'B'))
