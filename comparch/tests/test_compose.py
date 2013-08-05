@@ -1,4 +1,4 @@
-from comparch.registry import Registry
+from comparch.registry import ClassRegistry as Registry
 from comparch.interface import Interface
 from comparch.compose import (
     ListClassLookup, ChainClassLookup, CachedClassLookup)

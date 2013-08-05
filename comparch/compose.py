@@ -27,7 +27,7 @@ class ListClassLookup(IClassLookup):
 
     def get_all(self, target, sources):
         for lookup in self.lookups:
-            for component in lookup.all(target, sources):
+            for component in lookup.get_all(target, sources):
                 if component is not None:
                     yield component
             
@@ -50,9 +50,9 @@ class ChainClassLookup(IClassLookup):
         return self.next.get(target, sources)
 
     def get_all(self, target, sources):
-        for component in self.lookup.all(target, sources):
+        for component in self.lookup.get_all(target, sources):
             yield component
-        for component in self.next.all(target, sources):
+        for component in self.next.get_all(target, sources):
             yield component
 
 class CachedClassLookup(IClassLookup):
@@ -75,6 +75,6 @@ class CachedClassLookup(IClassLookup):
         result = self._all_cache.get((target, sources))
         if result is not None:
             return result
-        result = list(self.class_lookup.all(target, sources))
+        result = list(self.class_lookup.get_all(target, sources))
         self._all_cache[(target, sources)] = result
         return result
