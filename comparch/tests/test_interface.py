@@ -251,8 +251,7 @@ def test_adapter_with_wrong_args():
     with py.test.raises(TypeError) as e:
         ITarget.adapt(alpha, lookup=reg)
 
-    assert str(e.value) == ("__init__() takes exactly 1 argument (2 given) "
-                            "(<class 'comparch.tests.test_interface.Adapter'>)")
+    assert str(e.value) == ("__init__() takes exactly 1 argument (2 given)")
 
 def test_adapter_returns_none():
     def adapt(obj):

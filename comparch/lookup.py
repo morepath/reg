@@ -28,10 +28,7 @@ class Lookup(ILookup):
         adapter = self.component(target, objs, default)
         if adapter is default:
             return default
-        try:
-            result = adapter(*objs)
-        except TypeError, e:
-            raise TypeError(str(e) + " (%s)" % adapter)
+        result = adapter(*objs)
         if result is not None:
             return result
         if default is not SENTINEL:
