@@ -3,15 +3,17 @@ lookup methods.
 """
 
 from abc import ABCMeta, abstractmethod, abstractproperty
-assert abstractmethod, abstractproperty # these really need to be here, pyflakes
+# these really need to be here, pyflakes
+assert abstractmethod, abstractproperty
 
 SENTINEL = object()
 
-class InterfaceMeta(ABCMeta):        
+
+class InterfaceMeta(ABCMeta):
     def component(cls, *args, **kw):
         lookup, default = process_kw(kw)
         return lookup.component(cls, args, default)
-    
+
     def adapt(cls, *args, **kw):
         # shortcut rule to make sure self-adaptation works even without lookup
         if len(args) == 1 and isinstance(args[0], cls):
@@ -25,9 +27,11 @@ class InterfaceMeta(ABCMeta):
             raise TypeError("Illegal extra keyword arguments: %s" %
                             ', '.join(kw.keys()))
         return lookup.all(cls, args)
-    
+
+
 class Interface(object):
     __metaclass__ = InterfaceMeta
+
 
 def process_kw(kw):
     default = kw.pop('default', SENTINEL)
@@ -37,8 +41,10 @@ def process_kw(kw):
                         ', '.join(kw.keys()))
     return lookup, default
 
+
 class NoImplicitLookupError(Exception):
     pass
+
 
 def find_lookup(kw):
     lookup = kw.pop('lookup', None)

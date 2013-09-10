@@ -7,10 +7,11 @@ from .lookup import Lookup
 
 SENTINEL = object()
 
+
 class ClassRegistry(IRegistry, IClassLookup):
     def __init__(self):
         self._map = MultiMap()
-        
+
     def register(self, target, sources, component):
         key = ClassMultiMapKey(*sources)
         target = ClassMapKey(target)
@@ -42,6 +43,7 @@ class ClassRegistry(IRegistry, IClassLookup):
         for im in self._map.all(key):
             for found in im.all(target):
                 yield found
+
 
 class Registry(ClassRegistry, Lookup):
     """A registry that is also a lookup.

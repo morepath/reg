@@ -14,6 +14,7 @@ setup(name='comparch',
         'setuptools'
         ],
       extras_require = dict(
-        test=['pytest >= 2.0'],
+        test=['pytest >= 2.0',
+              'pytest-cov'],
         ),
       )

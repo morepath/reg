@@ -3,10 +3,11 @@
 
 from .interface import Interface, abstractmethod, abstractproperty
 
+
 class ILookup(Interface):
     @abstractmethod
     def component(self, target, objs):
-        """Look up a component. 
+        """Look up a component.
 
         The target is the class that we want to look up. The target is
         used to distinguish components from each other, and to
@@ -16,7 +17,7 @@ class ILookup(Interface):
         If what is found is a component instance, then component
         should be an instance of target (or an instance of a subclass
         of target).
-        
+
         If what is found is a component factory (adapter factory),
         then the result of calling this factory should be an instance
         of target (or an instance of a subclass of target).
@@ -34,7 +35,7 @@ class ILookup(Interface):
         an object is returned this will be returned as the real matching
         component. If ``None`` is returned it will look for a match higher
         up the ancestor chain.
-        
+
         If the component can be found, it will be returned. If the
         component cannot be found, ``None`` is returned.
         """
@@ -42,7 +43,7 @@ class ILookup(Interface):
     @abstractmethod
     def adapt(self, target, objs):
         """Look up an adapter for objs. Adapt objs to target abc.
-        
+
         The behavior of this method is like that of lookup, but it
         performs an extra step: it calls the found component with the
         objs given as arguments. The resulting instance should be a
@@ -79,11 +80,11 @@ class IRegistry(Interface):
         looked up.  The registered object should either be an instance
         of that class, or in the case of an adapter, return a such an
         instance.
-        
+
         sources is a list of 0 to n classes that
         the component is registered for. If multiple sources are listed,
         a registration is made for that combination of sources.
-        
+
         The component is a python object (function, class, instance) that is
         registered.
 
@@ -107,6 +108,7 @@ class IRegistry(Interface):
         None if no registration exists.
         """
 
+
 class IClassLookup(Interface):
     @abstractmethod
     def get(self, target, sources):
@@ -120,7 +122,7 @@ class IClassLookup(Interface):
         sources is a list of 0 to n classes that we use to look up the
         component.  If multiple classes are listed, the lookup is made
         for that combination of classes.
-        
+
         If the component can be found, it will be returned. If the
         component cannot be found, ``None`` is returned.
         """
@@ -131,14 +133,15 @@ class IClassLookup(Interface):
 
         The target is a class by which the component can be
         looked up.
-        
+
         sources is a list of 0 to n classes that the component is
         registered for. If multiple sources are listed, a registration
         is made for that combination of sources.
 
         Yields all matching components.
         """
-                
+
+
 class IImplicit(Interface):
     """Implicit global lookup.
 
@@ -146,9 +149,9 @@ class IImplicit(Interface):
 
     Normally during startup of an application the framework will
     register the implicit lookup by using ``implicit.register()``.
-    
+
     The lookup can then be accessed using ``implicit.lookup``.
-        
+
     ``Interface.component()`` and ``Interface.adapt`` make use of this
     information if you do not pass an explicit ``lookup`` keyword
     argument. This is handy as it becomes unnecessary to have to pass
@@ -168,7 +171,7 @@ class IImplicit(Interface):
     unique per thread.
 
     Comparch offers facilities to compose such a custom lookup:
-    
+
     * ``comparch.ListClassLookup`` and ``comparch.ChainClassLookup``
        which can be used to chain multiple ``IClassLookup``s together.
 
@@ -177,10 +180,10 @@ class IImplicit(Interface):
 
     * ``comparch.Lookup`` which can be used to turn a ``IClassLookup``
       into a proper ``ILookup``.
-    
+
     To change the lookup back to a lookup in the global implicit
     registry, call ``reset_lookup``.
-    
+
     The implicit lookup is thread-local: each thread has a separate
     implicit global lookup.
     """
@@ -189,7 +192,7 @@ class IImplicit(Interface):
     def initialize(self, lookup):
         """Initialize implicit with lookup.
         """
-    
+
     @abstractmethod
     def clear(self):
         """Clear global implicit lookup.
@@ -206,7 +209,7 @@ class IImplicit(Interface):
 
     def _get_lookup(self):
         """Get the implicit ILokup."""
-        
+
     def _set_lookup(self, value):
         """Set the implicit ILookup."""
     lookup = abstractproperty(_get_lookup, _set_lookup)
@@ -217,15 +220,19 @@ class IImplicit(Interface):
     #
     # This can be used as a basis to compose a new lookup.
     # """
-        
+
+
 class NoImplicitRegistryError(Exception):
     pass
+
 
 class NoImplicitLookupError(Exception):
     pass
 
+
 class ComponentLookupError(TypeError):
     pass
+
 
 class PredicateRegistryError(Exception):
     pass

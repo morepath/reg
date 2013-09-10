@@ -4,22 +4,28 @@ from comparch.interface import Interface, abstractmethod, NoImplicitLookupError
 from comparch.registry import Registry
 from comparch.interfaces import ComponentLookupError
 
+
 class IAlpha(Interface):
     pass
+
 
 class Alpha(IAlpha):
     pass
 
+
 class IBeta(Interface):
     pass
 
+
 class Beta(IBeta):
     pass
+
 
 class ITarget(Interface):
     @abstractmethod
     def foo(self):
         """A target method"""
+
 
 def test_interface_component():
     class IFoo(Interface):
@@ -29,7 +35,8 @@ def test_interface_component():
 
     registry.register(IFoo, (), "test component")
 
-    assert IFoo.component(lookup=registry)  == 'test component' 
+    assert IFoo.component(lookup=registry) == 'test component'
+
 
 def test_interface_adapt():
     class IFoo(Interface):
@@ -53,6 +60,7 @@ def test_interface_adapt():
     bar = Bar()
     assert IFoo.adapt(bar, lookup=registry).foo() == "Foo called: bar's method"
 
+
 def test_interface_all():
     class Base(object):
         pass
@@ -65,7 +73,7 @@ def test_interface_all():
 
     base = Base()
     sub = Sub()
-    
+
     assert list(registry.all(ITarget, (sub,))) == [
         'registered for sub', 'registered for base']
     assert list(registry.all(ITarget, (base,))) == [
@@ -75,14 +83,16 @@ def test_interface_all():
         'registered for sub',
         'registered for base']
     assert list(ITarget.all(base, lookup=registry)) == [
-        'registered for base'] 
-    
+        'registered for base']
+
+
 def test_component_no_source():
     reg = Registry()
     foo = object()
     reg.register(ITarget, (), foo)
     assert reg.component(ITarget, []) is foo
     assert ITarget.component(lookup=reg) is foo
+
 
 def test_component_two_sources():
     reg = Registry()
@@ -92,7 +102,8 @@ def test_component_two_sources():
     beta = Beta()
     assert reg.component(ITarget, [alpha, beta]) is foo
     assert ITarget.component(alpha, beta, lookup=reg) is foo
-    
+
+
 def test_component_class_based_registration():
     reg = Registry()
     foo = object()
@@ -101,7 +112,8 @@ def test_component_class_based_registration():
     alpha = Alpha()
     assert reg.component(ITarget, [alpha]) is foo
     assert ITarget.component(alpha, lookup=reg) is foo
-    
+
+
 def test_component_inheritance():
     reg = Registry()
     foo = object()
@@ -111,53 +123,58 @@ def test_component_inheritance():
 
     class Delta(Gamma):
         pass
-    
+
     reg.register(ITarget, [Gamma], foo)
 
     delta = Delta()
-    
+
     assert reg.component(ITarget, [delta]) is foo
     assert ITarget.component(delta, lookup=reg) is foo
-    
+
+
 def test_component_not_found():
     reg = Registry()
 
     with py.test.raises(ComponentLookupError):
         reg.component(ITarget, []) is None
     assert reg.component(ITarget, [], 'default') == 'default'
-               
+
     alpha = Alpha()
     with py.test.raises(ComponentLookupError):
         assert reg.component(ITarget, [alpha])
     assert reg.component(ITarget, [], 'default') == 'default'
-    
+
     assert ITarget.component(alpha, lookup=reg, default='default') == 'default'
     with py.test.raises(ComponentLookupError):
         ITarget.component(alpha, lookup=reg)
+
 
 def test_component_to_itself():
     reg = Registry()
     alpha = Alpha()
 
     foo = object()
-    
+
     reg.register(IAlpha, [IAlpha], foo)
 
     assert reg.component(IAlpha, [alpha]) is foo
     assert IAlpha.component(alpha, lookup=reg) is foo
 
+
 def test_adapter_no_source():
     reg = Registry()
 
     foo = object()
+
     def factory():
         return foo
-    
+
     reg.register(ITarget, (), factory)
 
     assert reg.adapt(ITarget, []) is foo
     assert ITarget.adapt(lookup=reg) is foo
-    
+
+
 def test_adapter_one_source():
     reg = Registry()
 
@@ -167,9 +184,9 @@ def test_adapter_one_source():
 
         def foo(self):
             pass
-        
+
     reg.register(ITarget, [IAlpha], Adapted)
-    
+
     alpha = Alpha()
     adapted = reg.adapt(ITarget, [alpha])
     assert isinstance(adapted, Adapted)
@@ -177,7 +194,8 @@ def test_adapter_one_source():
     adapted = ITarget.adapt(alpha, lookup=reg)
     assert isinstance(adapted, Adapted)
     assert adapted.context is alpha
-    
+
+
 def test_adapter_to_itself():
     reg = Registry()
 
@@ -192,13 +210,14 @@ def test_adapter_to_itself():
     assert IAlpha.adapt(alpha, lookup=reg) is alpha
     # it works even without registry (even implicitly registered!)
     assert IAlpha.adapt(alpha) is alpha
-    
+
     # behavior is the same with registration
     reg.register(IAlpha, [IAlpha], Adapter)
     assert reg.adapt(IAlpha, [alpha]) is alpha
     assert IAlpha.adapt(alpha, lookup=reg) is alpha
     assert IAlpha.adapt(alpha) is alpha
-    
+
+
 def test_adapter_two_sources():
     reg = Registry()
 
@@ -209,7 +228,7 @@ def test_adapter_two_sources():
 
         def foo(self):
             pass
-        
+
     reg.register(ITarget, [IAlpha, IBeta], Adapted)
 
     alpha = Alpha()
@@ -224,21 +243,24 @@ def test_adapter_two_sources():
     assert isinstance(adapted, Adapted)
     assert adapted.alpha is alpha
     assert adapted.beta is beta
-    
+
+
 def test_default():
     reg = Registry()
 
     assert ITarget.component(lookup=reg, default='blah') == 'blah'
+
 
 def test_non_adapter_looked_up_as_adapter():
     reg = Registry()
     foo = object()
     reg.register(ITarget, [Alpha], foo)
     alpha = Alpha()
-    
+
     with py.test.raises(TypeError):
         ITarget.adapt(alpha, lookup=reg)
-    
+
+
 def test_adapter_with_wrong_args():
     class Adapter(object):
         # takes no args
@@ -247,11 +269,12 @@ def test_adapter_with_wrong_args():
     reg = Registry()
     reg.register(ITarget, [Alpha], Adapter)
     alpha = Alpha()
-    
+
     with py.test.raises(TypeError) as e:
         ITarget.adapt(alpha, lookup=reg)
 
     assert str(e.value) == ("__init__() takes exactly 1 argument (2 given)")
+
 
 def test_adapter_returns_none():
     def adapt(obj):
@@ -262,17 +285,19 @@ def test_adapter_returns_none():
     with py.test.raises(ComponentLookupError):
         ITarget.adapt(alpha, lookup=reg)
     assert ITarget.adapt(alpha, lookup=reg, default='default') == 'default'
-    
+
+
 def test_extra_kw():
     reg = Registry()
     foo = object()
-    
+
     reg.register(ITarget, [Alpha], foo)
     alpha = Alpha()
-    
+
     with py.test.raises(TypeError) as e:
         ITarget.component(alpha, lookup=reg, extra="illegal")
     assert str(e.value) == 'Illegal extra keyword arguments: extra'
+
 
 def test_no_implicit():
     alpha = Alpha()

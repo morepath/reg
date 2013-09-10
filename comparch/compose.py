@@ -8,13 +8,14 @@ from .interfaces import IClassLookup
 
 CACHED_SENTINEL = object()
 
+
 class ListClassLookup(IClassLookup):
     """A simple list of class lookups functioning as an IClassLookup.
 
     Go through all items in the list, starting at the beginning and
     try to find the component. If found in a lookup, return it right away.
     """
-    
+
     def __init__(self, lookups):
         self.lookups = lookups
 
@@ -30,7 +31,8 @@ class ListClassLookup(IClassLookup):
             for component in lookup.get_all(target, sources):
                 if component is not None:
                     yield component
-            
+
+
 class ChainClassLookup(IClassLookup):
     """Chain a class lookup on top of another class lookup.
 
@@ -38,7 +40,7 @@ class ChainClassLookup(IClassLookup):
     in the next IClassLookup object. This way multiple IClassLookup objects
     can be chained together.
     """
-    
+
     def __init__(self, lookup, next):
         self.lookup = lookup
         self.next = next
@@ -55,12 +57,13 @@ class ChainClassLookup(IClassLookup):
         for component in self.next.get_all(target, sources):
             yield component
 
+
 class CachedClassLookup(IClassLookup):
     def __init__(self, class_lookup):
         self.class_lookup = class_lookup
         self._cache = {}
         self._all_cache = {}
-        
+
     def get(self, target, sources):
         sources = tuple(sources)
         component = self._cache.get((target, sources), CACHED_SENTINEL)

@@ -1,6 +1,7 @@
 """Core data structures to allow registration and lookup by class.
 """
 
+
 class MapKey(object):
     """A map key that can have parents.
     """
@@ -28,9 +29,10 @@ class MapKey(object):
     def __repr__(self):
         return "<MapKey: %r>" % self.key
 
+
 class Map(dict):
     """special map that understands about keys in a dag.
-    
+
     A normal mapping (dictionary) in Python has keys that are
     completely independent from each other. If you look up a
     particular key, either that key is present in the mapping or not
@@ -45,7 +47,7 @@ class Map(dict):
     # dictionary
     exact_getitem = dict.__getitem__
     exact_get = dict.get
-    
+
     def __getitem__(self, key):
         try:
             return next(self.all(key))
@@ -65,6 +67,7 @@ class Map(dict):
             except KeyError:
                 pass
 
+
 class MultiMapKey(object):
     def __init__(self, *keys):
         self.arity = len(keys)
@@ -79,7 +82,8 @@ class MultiMapKey(object):
     @property
     def ancestors(self):
         return multimapkey_ancestors(self.keys)
-    
+
+
 def multimapkey_ancestors(keys):
     if not keys:
         yield MultiMapKey()
@@ -93,6 +97,7 @@ def multimapkey_ancestors(keys):
     for ancestor in first.ancestors:
         for multikey in multimapkey_ancestors(rest):
             yield MultiMapKey(ancestor, *multikey.keys)
+
 
 class MultiMap(object):
     """map that takes sequences of MapKey objects as key.
@@ -111,7 +116,7 @@ class MultiMap(object):
     """
     def __init__(self):
         self._by_arity = {}
-        
+
     def __setitem__(self, key, value):
         keys = list(key.keys)
         m = self._by_arity.get(key.arity)
@@ -122,7 +127,7 @@ class MultiMap(object):
                 self._by_arity[key.arity] = value
                 return
         last_key = keys.pop()
-    
+
         for k in keys:
             submap = m.exact_get(k)
             if submap is None:
@@ -153,7 +158,7 @@ class MultiMap(object):
             return self.exact_getitem(key)
         except KeyError:
             return default
-        
+
     def all(self, key):
         for k in key.ancestors:
             try:
@@ -161,10 +166,13 @@ class MultiMap(object):
             except KeyError:
                 pass
 
+
 class InverseMapSentinel(object):
     pass
 
+
 IM_SENTINEL = InverseMapSentinel()
+
 
 class InverseMap(object):
     def __init__(self):
@@ -212,8 +220,8 @@ class ClassMapKey(object):
         self.parents = tuple(
             [ClassMapKey(base) for base in class_.__bases__])
         self.ancestors = [self] + [ClassMapKey(ancestor) for ancestor in
-                          class_.__mro__[1:]]
-        
+                                   class_.__mro__[1:]]
+
     def __hash__(self):
         return hash(self.key)
 
@@ -222,6 +230,7 @@ class ClassMapKey(object):
 
     def __repr__(self):
         return "<ClassMapKey: %r>" % self.key
+
 
 def ClassMultiMapKey(*classes):
     return MultiMapKey(*[ClassMapKey(class_) for class_ in classes])

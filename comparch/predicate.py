@@ -1,4 +1,5 @@
-from .interfaces import IMatcher, PredicateRegistryError
+from .interfaces import PredicateRegistryError
+
 
 class Sentinel(object):
     def __init__(self, name):
@@ -10,12 +11,14 @@ class Sentinel(object):
 ANY = Sentinel('ANY')
 SENTINEL = Sentinel('SENTINEL')
 
+
 class KeyPredicate(object):
     def __init__(self, name):
         self.name = name
 
     def create_index(self):
         return KeyIndex()
+
 
 class KeyIndex(object):
     def __init__(self):
@@ -26,6 +29,7 @@ class KeyIndex(object):
 
     def get(self, key):
         return self.d.get(key, set())
+
 
 class PredicateRegistry(object):
     def __init__(self, predicates):
@@ -70,6 +74,7 @@ class PredicateRegistry(object):
                 return result
         return default
 
+
 def key_permutations(names, d):
     if len(names) == 0:
         yield {}
@@ -92,4 +97,3 @@ def key_permutations(names, d):
         r = p.copy()
         r[first] = ANY
         yield r
-
