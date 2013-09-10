@@ -316,13 +316,26 @@ def test_inverse_map():
     elephant = MapKey('elephant', parents=[animal])
     african_elephant = MapKey('african elephant', parents=[elephant])
     
-    m[animal] = 'Animal'
-    m[elephant] = 'Elephant'
+    m.register(animal, 'Animal')
+    m.register(elephant, 'Elephant')
 
-    assert m[animal] == 'Animal'
-    assert m[elephant] == 'Elephant'
-    with py.test.raises(KeyError):
-        m[african_elephant]
+    assert list(m.all(animal)) == ['Animal', 'Elephant']
+    assert list(m.all(elephant)) == ['Elephant']
+    assert list(m.all(african_elephant)) == []
+
+def test_inverse_map_registration_order():
+    m = InverseMap()
+
+    animal = MapKey('animal')
+    elephant = MapKey('elephant', parents=[animal])
+    african_elephant = MapKey('african elephant', parents=[elephant])
+
+    m.register(elephant, 'Elephant')
+    m.register(animal, 'Animal')
+
+    assert list(m.all(animal)) == ['Animal', 'Elephant']
+    assert list(m.all(elephant)) == ['Elephant']
+    assert list(m.all(african_elephant)) == []
 
 def test_inverse_map_sub():
     m = InverseMap()
@@ -331,12 +344,11 @@ def test_inverse_map_sub():
     elephant = MapKey('elephant', parents=[animal])
     african_elephant = MapKey('african elephant', parents=[elephant])
     
-    m[elephant] = 'Elephant'
+    m.register(elephant, 'Elephant')
 
-    assert m[animal] == 'Elephant'
-    assert m[elephant] == 'Elephant'
-    with py.test.raises(KeyError):
-        assert m[african_elephant]
+    assert list(m.all(animal)) == ['Elephant']
+    assert list(m.all(elephant)) == ['Elephant']
+    assert list(m.all(african_elephant)) == []
     
 def test_inverse_map_sub2():
     m = InverseMap()
@@ -345,11 +357,11 @@ def test_inverse_map_sub2():
     elephant = MapKey('elephant', parents=[animal])
     african_elephant = MapKey('african elephant', parents=[elephant])
     
-    m[african_elephant] = 'African Elephant'
+    m.register(african_elephant, 'African Elephant')
 
-    assert m[animal] == 'African Elephant'
-    assert m[elephant] == 'African Elephant'
-    assert m[african_elephant] == 'African Elephant'
+    assert list(m.all(animal)) == ['African Elephant']
+    assert list(m.all(elephant)) == ['African Elephant']
+    assert list(m.all(african_elephant)) == ['African Elephant']
 
 def test_inverse_map_two_descendants():
     m = InverseMap()
@@ -358,19 +370,19 @@ def test_inverse_map_two_descendants():
     elephant = MapKey('elephant', parents=[animal])
     rhino = MapKey('rhino', parents=[animal])
     
-    m[elephant] = 'Elephant'
-    m[rhino] = 'Rhino'
+    m.register(elephant, 'Elephant')
+    m.register(rhino, 'Rhino')
 
-    assert m[elephant] == 'Elephant'
-    assert m[rhino] == 'Rhino'
-    # we'll get the last written descendant, which is an animal
-    assert m[animal] == 'Rhino'
+    assert list(m.all(elephant)) == ['Elephant']
+    assert list(m.all(rhino)) == ['Rhino']
 
+    # we get out the descendants in declaration order
+    assert list(m.all(animal)) == ['Elephant', 'Rhino']
+    
 def test_inverse_map_empty():
     m = InverseMap()
 
     animal = MapKey('animal')
 
-    with py.test.raises(KeyError):
-        m[animal]
-    
+    assert list(m.all(animal)) == []
+

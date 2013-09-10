@@ -1,87 +1,95 @@
-"""Data structure that allows look up of components that match predicates.
-"""
+from .interfaces import IMatcher, PredicateRegistryError
 
-class AnyValue(object):
+class Sentinel(object):
+    def __init__(self, name):
+        self.name = name
+
     def __repr__(self):
-        return "<ANY VALUE>"
+        return '<%s>' % self.name
 
-ANY_VALUE = AnyValue()
+ANY = Sentinel('ANY')
+SENTINEL = Sentinel('SENTINEL')
 
-# XXX API isn't right yet; redefine in terms of the tuple instead of dict
+class KeyPredicate(object):
+    def __init__(self, name):
+        self.name = name
+
+    def create_index(self):
+        return KeyIndex()
+
+class KeyIndex(object):
+    def __init__(self):
+        self.d = {}
+
+    def add(self, key, value):
+        self.d.setdefault(key, set()).add(value)
+
+    def get(self, key):
+        return self.d.get(key, set())
+
 class PredicateRegistry(object):
-    def __init__(self, names):
-        self.names = names
-        self.key_to_value_id = {}
+    def __init__(self, predicates):
+        self.predicates = predicates
+        self.names = [predicate.name for predicate in predicates]
+        self.indexes = {}
         self.values = {}
         self.counter = 0
-        self.indexes = {}
-        for name in names:
-            self.indexes[name] = {}
-            
-    def register(self, key, value):        
-        t = d_to_t(self.names, key)
 
-        # make new value id
+    def register(self, key, value):
         value_id = self.counter
         self.values[value_id] = value
         self.counter += 1
 
-        # get previous value id, if it is there
-        old_value_id = self.key_to_value_id.get(t)
-        if old_value_id is not None:
-            del self.values[old_value_id]
-    
-        # record new value id
-        self.key_to_value_id[t] = value_id
-        
-        for k, v in t:
-            index = self.indexes[k]
-            s = index.get(v)
-            if s is None:
-                index[v] = s = set()
-            s.add(value_id)
-            # old value id needs to be cleaned up
-            if old_value_id is not None:
-                s.discard(old_value_id)
+        for predicate in self.predicates:
+            index = self.indexes.get(predicate.name)
+            if index is None:
+                self.indexes[predicate.name] = index = predicate.create_index()
+            k = key.get(predicate.name, ANY)
+            index.add(k, value_id)
 
-    def _get_specific(self, t):
-        result = None
-        for k, v in t:
-            index = self.indexes[k]
-            s = index.get(v, set())
-            if result is None:
-                result = s
+    def get_specific(self, key):
+        result_ids = None
+        for predicate in self.predicates:
+            index = self.indexes[predicate.name]
+            matches = index.get(key[predicate.name])
+            if result_ids is None:
+                result_ids = matches
             else:
-                result = result.intersection(s)
-            if not result:
-                return result
-        assert 0 <= len(result) < 2 
-        return result
-            
+                result_ids = result_ids.intersection(matches)
+            if not result_ids:
+                return None
+        if len(result_ids) != 1:
+            raise PredicateRegistryError(
+                "Multiple matches for: %r" % key)
+        return self.values[result_ids.pop()]
+
     def get(self, key, default=None):
-        t = d_to_t(self.names, key)
-        for p in tuple_permutations(t):
-            ids = self._get_specific(p)
-            if ids:
-                return self.values[ids.pop()]
+        for p in key_permutations(self.names, key):
+            result = self.get_specific(p)
+            if result is not None:
+                return result
         return default
 
-def d_to_t(names, d):
-    return tuple([(name, d.get(name, ANY_VALUE)) for name in names])
-
-def tuple_permutations(t):
-    first = t[0]
-    rest = t[1:]
-    k, v = first
-    if not rest:
-        yield (first,)
-        if v is not ANY_VALUE:
-            yield ((k, ANY_VALUE),)
+def key_permutations(names, d):
+    if len(names) == 0:
+        yield {}
         return
-    ps = tuple_permutations(rest)
-    for p in ps:
-        yield (first,) + p
-    ps = tuple_permutations(rest) # generator, so do this again
-    if v is not ANY_VALUE:
-        for p in ps:
-            yield ((k, ANY_VALUE),) + p
+
+    first = names[0]
+    rest = names[1:]
+
+    d = d.copy()
+    try:
+        value = d.pop(first)
+    except KeyError:
+        raise PredicateRegistryError("no required key: %s" % first)
+
+    for p in key_permutations(rest, d):
+        r = p.copy()
+        r[first] = value
+        yield r
+    for p in key_permutations(rest, d):
+        r = p.copy()
+        r[first] = ANY
+        yield r
+

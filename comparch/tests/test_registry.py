@@ -1,4 +1,5 @@
 from comparch.registry import Registry
+from comparch.interfaces import IMatcher
 
 def test_registry_sources():
     reg = Registry()
@@ -82,6 +83,43 @@ def test_registry_no_sources():
     
     reg.register(Elephant, (), 'elephant')
     assert reg.component(Animal, ()) == 'elephant'
-    
+
+
+def test_matcher():
+    reg = Registry()
+
+    class Document(object):
+        def __init__(self, id):
+            self.id = id
+
+
+    class LineCount(object):
+        pass
+
+
+    class SpecialLineCount(LineCount):
+        pass
+
+
+    class Matcher(IMatcher):
+        def __init__(self, func, value):
+            self.func = func
+            self.value = value
+
+        def __call__(self, *args, **kw):
+            if self.func(*args, **kw):
+                return self.value
+            else:
+                return None
+
+    reg.register(LineCount, (Document,),
+                 Matcher(lambda doc: doc.id == 1, 'line count'))
+
+    reg.register(SpecialLineCount, (Document,),
+                 Matcher(lambda doc: doc.id != 1, 'special line count'))
+
+    assert reg.component(LineCount, (Document(1),)) == 'line count'
+    assert reg.component(LineCount, (Document(2),)) == 'special line count'
+
 # XXX various default and component lookup error tests
 

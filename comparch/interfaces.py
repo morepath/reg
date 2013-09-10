@@ -23,11 +23,17 @@ class ILookup(Interface):
 
         There is no checking of any of such however, and for some
         targets you expect something else entirely. That's fine.
-        
+
         objs is a list of 0 to n objects that we use to look up the
         component. The classes of the objects are used to do the look
         up. If multiple objs are listed, the lookup is made for that
         combination of objs.
+
+        If the component found has the special interface IMatcher, it
+        will be called with objs as parameters (``matcher(*objs)``). If
+        an object is returned this will be returned as the real matching
+        component. If ``None`` is returned it will look for a match higher
+        up the ancestor chain.
         
         If the component can be found, it will be returned. If the
         component cannot be found, ``None`` is returned.
@@ -47,7 +53,22 @@ class ILookup(Interface):
     @abstractmethod
     def all(self, target, objs):
         """Lookup up all components registered for objs.
+
+        Will check whether the found component is an IMatcher, in which
+        case it will be called. If non-None is returned, the found value is
+        included as a matching component.
         """
+
+
+class IMatcher(Interface):
+    """Look up by calling and returning value.
+
+    If an IMatcher component is registered, it is called with the objects
+    as an argument, and the resulting value is considered to be the looked up
+    component. If the resulting value is None, no component is found for
+    this matcher.
+    """
+
 
 class IRegistry(Interface):
     @abstractmethod
@@ -73,14 +94,19 @@ class IRegistry(Interface):
         """
 
     @abstractmethod
+    def clear(self):
+        """Clear registry of all registrations.
+        """
+
+    @abstractmethod
     def exact_get(self, target, sources):
         """Get registration for target and sources.
 
         Does not go to base classes, just returns exact registration.
-        
+
         None if no registration exists.
         """
-        
+
 class IClassLookup(Interface):
     @abstractmethod
     def get(self, target, sources):
@@ -199,4 +225,7 @@ class NoImplicitLookupError(Exception):
     pass
 
 class ComponentLookupError(TypeError):
+    pass
+
+class PredicateRegistryError(Exception):
     pass

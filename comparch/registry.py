@@ -17,11 +17,11 @@ class ClassRegistry(IRegistry, IClassLookup):
         im = self._map.exact_get(key)
         if im is None:
             self._map[key] = im = InverseMap()
-        im[target] = component
+        im.register(target, component)
 
     def clear(self):
         self._map = MultiMap()
-        
+
     def exact_get(self, target, sources):
         key = ClassMultiMapKey(*sources)
         target = ClassMapKey(target)
@@ -29,7 +29,7 @@ class ClassRegistry(IRegistry, IClassLookup):
         if im is None:
             return None
         return im.exact_get(target)
-    
+
     def get(self, target, sources):
         try:
             return next(self.get_all(target, sources))
@@ -40,8 +40,7 @@ class ClassRegistry(IRegistry, IClassLookup):
         target = ClassMapKey(target)
         key = ClassMultiMapKey(*sources)
         for im in self._map.all(key):
-            found = im.get(target)
-            if found is not None:
+            for found in im.all(target):
                 yield found
 
 class Registry(ClassRegistry, Lookup):

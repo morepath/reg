@@ -1,7 +1,7 @@
 """Look up components by instance (using their classes) and target class.
 """
 
-from .interfaces import ILookup, ComponentLookupError
+from .interfaces import ILookup, IMatcher, ComponentLookupError
 from .compose import CachedClassLookup
 from .interface import SENTINEL
 
@@ -10,8 +10,10 @@ class Lookup(ILookup):
         self.class_lookup = class_lookup
     
     def component(self, target, objs, default=SENTINEL):
-        result = self.class_lookup.get(
-            target, [obj.__class__ for obj in objs])
+        try:
+            result = next(self.all(target, objs))
+        except StopIteration:
+            result = None
         if result is not None:
             return result
         if default is not SENTINEL:
@@ -40,8 +42,11 @@ class Lookup(ILookup):
     def all(self, target, objs):
         for found in self.class_lookup.get_all(
             target, [obj.__class__ for obj in objs]):
-            yield found
-    
+            if isinstance(found, IMatcher):
+                found = found(*objs)
+            if found is not None:
+                yield found
+
 class CachedLookup(Lookup, CachedClassLookup):
     def __init__(self, class_lookup):
         CachedClassLookup.__init__(self, class_lookup)
