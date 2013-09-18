@@ -10,10 +10,11 @@ Contents:
 
 .. toctree::
    :maxdepth: 2
-
+   
+   usage
    developing
    history
-
+ 
 
 Indices and tables
 ==================
