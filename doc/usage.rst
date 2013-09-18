@@ -5,18 +5,23 @@ Introduction
 ------------
 
 Reg introduces a bunch of clever registries that can help you build
-very flexible pluggability systems for your codebase. With Reg you can:
+very flexible pluggability systems for your codebase. Reg may seem
+overkill at first. Sometimes it is; it depends on what you're
+building. Just see Reg as infrastructure that helps you build more
+powerful registration APIs for your applications and frameworks.
 
-* look up a registered object that provides a certain interface
+With Reg you can:
+
+* look up a registered object that provides a certain interface/abc/class
 
 * do this lookup by itself, or for one or more objects
 
-* adapt an object to another with a specific interface
+* adapt an object to another with a specific interface/abc/class
 
 * look up a registered object according to other criteria (predicates)
 
-Reg is very much aware of classes and inheritance. It provides an approach
-to do `multiple dispatch`_ in Python.
+Reg is very much aware of classes and inheritance. It provides an
+approach to do `multiple dispatch`_ in Python.
 
 .. _`multiple dispatch`: http://en.wikipedia.org/wiki/Multiple_dispatch
 
@@ -101,3 +106,17 @@ the ability to change what service is used without having to change
 the code that uses that service. This is at the cost of some
 indirection.
 
+There are alternatives to accomplish this without using Reg, of
+course.  One way would be to use setuptools entry points. This is a
+reasonable solution to provide plugins for Python packages, but
+doesn't really lend itself to a lot of registrations in a single
+application, something that Reg scales up to.
+
+Another way would be simply a custom registration API, something like this::
+
+  def register_emailer(emailer):
+     config.emailer = emailer
+
+That is totally reasonable and fine for many applications. Reg does a
+lot more though, especially in more advanced situations. We'll go into
+this next.
