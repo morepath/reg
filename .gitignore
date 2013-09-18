@@ -4,3 +4,5 @@ parts
 develop-eggs
 .coverage
 htmlcov
+doc/build
+
