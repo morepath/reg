@@ -158,10 +158,10 @@ class IImplicit(Interface):
     a ``lookup`` object everywhere.
 
     The drawback is that this single global lookup is implicit, which
-    makes it harder to test in isolation. Comparch supports testing
+    makes it harder to test in isolation. Reg supports testing
     with the explicit ``lookup`` argument, but that is not useful if
     you are testing code that relies on an implicit lookup. Therefore
-    comparch has strived to make the implicit global lookup as
+    Reg has strived to make the implicit global lookup as
     explicit as possible so that it can be manipulated in tests where
     this is necessary.
 
@@ -170,15 +170,15 @@ class IImplicit(Interface):
     ``implicit.lookup``. The lookup is stored on a thread-local and is
     unique per thread.
 
-    Comparch offers facilities to compose such a custom lookup:
+    Reg offers facilities to compose such a custom lookup:
 
-    * ``comparch.ListClassLookup`` and ``comparch.ChainClassLookup``
+    * ``reg.ListClassLookup`` and ``reg.ChainClassLookup``
        which can be used to chain multiple ``IClassLookup``s together.
 
-   * ``comparch.CachedClassLookup`` which can be used to create a
+   * ``reg.CachedClassLookup`` which can be used to create a
       faster caching version of an ``IClassLookup``.
 
-    * ``comparch.Lookup`` which can be used to turn a ``IClassLookup``
+    * ``reg.Lookup`` which can be used to turn a ``IClassLookup``
       into a proper ``ILookup``.
 
     To change the lookup back to a lookup in the global implicit

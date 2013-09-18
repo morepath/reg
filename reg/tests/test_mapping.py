@@ -1,5 +1,5 @@
 import py.test
-from comparch.mapping import (
+from reg.mapping import (
     MapKey, Map, MultiMapKey, MultiMap, ClassMapKey, InverseMap)
 
 

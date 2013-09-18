@@ -1,8 +1,8 @@
 import py.test
 
-from comparch.interface import Interface, abstractmethod, NoImplicitLookupError
-from comparch.registry import Registry
-from comparch.interfaces import ComponentLookupError
+from reg.interface import Interface, abstractmethod, NoImplicitLookupError
+from reg.registry import Registry
+from reg.interfaces import ComponentLookupError
 
 
 class IAlpha(Interface):

@@ -1,11 +1,11 @@
 CREDITS
 -------
 
-Comparch was written by Martijn Faassen; the core mapping code was
+Reg was written by Martijn Faassen; the core mapping code was
 originally co-authored by Thomas Lotze.
 
-Comparch is heavily inspired by ``zope.interface`` and
-``zope.component``, by Jim Fulton and a lot of Zope developers.
+Reg is heavily inspired by ``zope.interface`` and ``zope.component``,
+by Jim Fulton and a lot of Zope developers.
 
 History according to Martijn
 ----------------------------
@@ -26,26 +26,27 @@ I created a project called Crom:
 https://github.com/faassen/crom
 
 Crom focused on rethinking component and adapter registration and
-lookup, but was still based on ``zope.interface`` for the fundamental
-AdapterRegistry implementation. I worked a bit on Crom after the
-sprint, but soon I moved on to other matters.
+lookup, but was still based on ``zope.interface`` for its fundamental
+``AdapterRegistry`` implementation and the ``Interface`` metaclass. I
+worked a bit on Crom after the sprint, but soon I moved on to other
+matters.
 
 At the Plone conference held in Arnhem, the Netherlands in October
-2013, I gave a lightning talk about Crom and that made me think about
-it again. I figured what Crom needed was a rewrite of the core adapter
-registry, i.e. what was in the iface project. In the end of 2012 I
-mailed Thomas Lotze asking whether I could merge iface into Crom, and
-he gave his kind permission.
+2012, I gave a lightning talk about Crom. I figured what Crom needed
+was a rewrite of the core adapter registry, i.e. what was in the iface
+project. In the end of 2012 I mailed Thomas Lotze asking whether I
+could merge iface into Crom, and he gave his kind permission.
 
 The core registry code of iface was never quite finished however, and
 while the iface code was now in Crom, Crom didn't use it yet. Thus it
 lingered some more.
 
-In July 2013 in development work for CONTACT, I found myself in need
-of a component architecture. Crom also had some new configuration code
-intermingled with the component architecture code and I didn't want this.
+In July 2013 in development work for CONTACT (contact.de), I found
+myself in need of clever registries. Crom also had some configuration
+code intermingled with the component architecture code and I didn't
+want this anymore.
 
 So I reorganized the code yet again into another project, this one:
-Comparch. I then finished the core mapping code and hooked it up to
-the Crom-style API, which I refactored further. For interfaces, I used
+Reg. I then finished the core mapping code and hooked it up to the
+Crom-style API, which I refactored further. For interfaces, I used
 Python's ``abc`` module.

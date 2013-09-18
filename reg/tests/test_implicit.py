@@ -1,7 +1,7 @@
 import threading
-from comparch.implicit import implicit
-from comparch.registry import Registry
-from comparch.interface import Interface
+from reg.implicit import implicit
+from reg.registry import Registry
+from reg.interface import Interface
 
 
 def setup_function(f):

@@ -1,9 +1,9 @@
 import os
 from setuptools import setup, find_packages
 
-setup(name='comparch',
+setup(name='reg',
       version = '0.1dev',
-      description="Component Architecture Foundations",
+      description="Clever registries and lookups",
       author="Martijn Faassen",
       author_email="faassen@startifact.com",
       license="BSD",

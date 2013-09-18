@@ -1,5 +1,5 @@
-from comparch.registry import Registry
-from comparch.interfaces import IMatcher
+from reg.registry import Registry
+from reg.interfaces import IMatcher
 
 
 def test_registry_sources():

@@ -1,8 +1,7 @@
 import py.test
-from comparch.predicate import (PredicateRegistry, KeyPredicate, ANY,
-                                key_permutations)
-
-from comparch.interfaces import PredicateRegistryError
+from reg.predicate import (PredicateRegistry, KeyPredicate, ANY,
+                           key_permutations)
+from reg.interfaces import PredicateRegistryError
 
 
 def test_predicate_registry():
