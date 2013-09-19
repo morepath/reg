@@ -9,4 +9,7 @@ by Jim Fulton and a lot of Zope developers.
 
 Reg development was partially funded by Contact Software (http://contact.de).
 
+Thanks also to Chris McDonough who showed the way, reimplementing code
+to make it better.
+
 See also doc/history.rst for a more detailed history of its development.
