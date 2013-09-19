@@ -1,6 +1,10 @@
 Using Reg
 =========
 
+.. testsetup:: *
+
+  pass
+
 Introduction
 ------------
 
@@ -33,7 +37,9 @@ use to look up objects that provide the interface of that abc. In
 fact, Reg does not force you to use its own ``Interface``; you can do
 everything using ``abc`` or even plain Python classes.
 
-This is what an ``Interface`` looks like::
+This is what an ``Interface`` looks like:
+
+.. testcode::
 
   import reg
 
@@ -42,17 +48,23 @@ This is what an ``Interface`` looks like::
       def send(self, address, subject, body):
           "Send an email to address with subject and body."
 
-The ``I`` prefix in ``IEmailer`` is just a convention to indicate that
-a class is an interface.
+.. sidebar:: ``I`` prefix
 
-We can now subclass ``IEmailer`` to implement it::
+  The ``I`` prefix in ``IEmailer`` is just a convention to indicate
+  that a class is an interface. It doesn't have any special meaning.
+
+We can now subclass ``IEmailer`` to implement it:
+
+.. testcode::
 
   class Emailer(IEmailer):
-    def sender(self, address, subject, body):
-      # some implementation using the email module
+      def send(self, address, subject, body):
+          pass # some implementation using the email module
 
 When you instantiate ``Emailer``, you of course get something that is
-an instance of ``IEmailer``::
+an instance of ``IEmailer``:
+
+.. doctest::
 
   >>> emailer = Emailer()
   >>> isinstance(emailer, IEmailer)
@@ -70,12 +82,16 @@ Imagine we have an application that needs to send email. We want to
 make how it sends email configurable. The code that needs to send an
 email looks up an ``IEmailer`` to send emailer, not caring about the
 particular implementation. We can provide such an implementation using
-a registry::
+a registry:
+
+.. testcode::
 
   import reg
   r = reg.Registry()
 
-We can now register our ``emailer`` as an ``IEmailer``::
+We can now register our ``emailer`` as an ``IEmailer``:
+
+.. testcode::
 
   r.register(IEmailer, [], emailer)
 
@@ -91,23 +107,39 @@ Lookup
 ------
 
 Since ``reg.Registry`` is also has the lookup API, we can use it to look up
-the ``IEmailer`` again::
+the ``IEmailer`` again:
+
+.. doctest::
 
   >>> r.component(IEmailer, []) is emailer
   True
 
+.. sidebar:: Separate registry and lookup
+
+  While ``reg.Registry`` implements the ``IRegistry`` interface as
+  well as the ``ILookup`` interface, Reg also allows you to use
+  separate registry and lookup objects. This is useful when you want
+  to combine lookup objects, and also helps with cacheability. More
+  about this later.
+
 Since what we look for is an interface, ``IEmailer``, we can also use
-this alternate API::
+this alternate API:
+
+.. doctest::
 
   >>> IEmailer.component(lookup=r) is emailer
   True
 
-You can also install any lookup as an implicit global lookup. Here's how::
+You can also install any lookup as an implicit global lookup. Here's how:
+
+.. doctest::
 
   >>> from reg import implicit
-  >>> implicit.lookup = r
+  >>> implicit.initialize(r)
 
-Once you have done that, you can write this::
+Once you have done that, you can write this, without the ``lookup`` argument:
+
+.. doctest::
 
   >>> IEmailer.component() is emailer
   True
@@ -135,50 +167,71 @@ along these lines::
 And then when you need the emailer, you can use ``the_emailer``.
 
 That is totally reasonable and fine for many applications. Reg does a
-lot more though, especially in more advanced situations. We'll go into
-this next.
+lot more though. We'll go into this next.
 
 Reg knows about inheritance
 ---------------------------
 
 Let's look at an example involving inheritance. Let's define a
-``ISignedEmailer`` interface that is a special kind of emailer::
+``ISignedEmailer`` interface that is a special kind of emailer:
+
+.. testcode::
 
   class ISignedEmailer(IEmailer):
       pass
 
 We'll imagine this is an emailer that adds a signature automatically
-to each email sent. Let's create a class that implements the interface::
+to each email sent. Let's create a class that implements the interface:
+
+.. testcode::
 
   class SignedEmailer(ISignedEmailer):
-      ...
+      def send(self, address, subject, body):
+          pass # some implementation here
 
-And let's register an instance of this class as a ``ISignedEmailer``::
+We register an instance of this class as a ``ISignedEmailer``:
 
-  >>> signed_emailer = SignedEmailer()
-  >>> r.register(ISignedEmailer, [], signed_emailer)
+.. testcode::
 
-We can look it up as an ``ISignedEmailer``::
+  signed_emailer = SignedEmailer()
+  r.register(ISignedEmailer, [], signed_emailer)
 
-  >>> ISignedEmailer.component(lookup=r) is signed_emailer
+We can now look it up as an ``ISignedEmailer``:
+
+.. doctest::
+
+  >>> ISignedEmailer.component() is signed_emailer
   True
 
-But since a ``ISignedEmailer`` is also an ``IEmailer`` because of inheritance,
-we'll also get the ``signed_emailer`` object if we look for an ``IEmailer``::
+Since a ``ISignedEmailer`` is also an ``IEmailer`` because of
+inheritance, we can also look for ``IEmailer`` and get the ``signed_emailer``
+back:
 
-  >>> IEmailer.component(lookup=r) is emailer
+.. doctest::
+
+  >>> IEmailer.component() is emailer
+  True
 
 This works because Reg understands about inheritance.
 
 A Hypothetical CMS
 ------------------
 
-With Reg you can also register an object for another object. Let's
-change the examplew to a hypothetical content management system (CMS)
-to learn more about how this might work. Our CMS has two kinds of
-object, a ``Document`` which contains some text, and a ``Folder``
-which contains a bunch of content items, for instance ``Document``
-instances::
+With Reg you can also register an object for another object. To
+explain how that works, we will change our example. We're done with
+emailers. We change the example to a hypothetical content management
+system (CMS).
+
+We'll start the CMS with two kinds of content item:
+
+* a ``Document`` which contains some text.
+
+* a ``Folder`` which contains a bunch of content items, for instance
+  ``Document`` instances.
+
+This is the implementation:
+
+.. testcode::
 
   class Document(object):
      def __init__(self, text):
@@ -191,14 +244,17 @@ instances::
 ``size`` methods
 ----------------
 
-Now let's say we want to add a feature: we want the ability to
-calculate the size (in characters) of any object, so for ``Document``
-and ``Folder``. We define the size of the folder as the sum of the
-size of everything in it.
+Now we want to add a feature: we want the ability to calculate the
+size (in bytes) of any content item. The size of the document is
+defined as the length of its text (which for simplicity's sake we'll
+fake being ``len(text)``), and the size of the folder is defined as
+the sum of the size of everything in it.
 
 If we have control over the implementation of ``Document`` and
-``Folder`` can implement this by adding a ``size`` method to both
-classes::
+``Folder`` can implement this easily by adding a ``size`` method to
+both classes:
+
+.. testcode::
 
   class Document(object):
      def __init__(self, text):
@@ -214,35 +270,119 @@ classes::
      def size(self):
          return sum([item.size() for item in self.items])
 
-We'll note that the ``Folder`` size code is generic. If a new content
-item ``Image`` is defined and we provide a ``size`` method for this, a
-``Folder`` instance that contains ``Image`` instances will still be
-able to calculate its size.
+Let's see this work:
+
+.. doctest::
+
+  >>> doc = Document('Hello world!')
+  >>> doc.size()
+  12
+  >>> doc2 = Document('Bye world!')
+  >>> doc2.size()
+  10
+  >>> folder = Folder([doc, doc2])
+  >>> folder.size()
+  22
+
+We'll note that the ``Folder`` size code is generic; it doesn't care
+what the items inside it are, as long as they have a ``size`` method.
+
+If a new content item ``Image`` is defined and we provide a ``size``
+method for this, a ``Folder`` instance that contains ``Image``
+instances will still be able to calculate its size. Let's try this:
+
+.. testcode::
+
+  class Image(object):
+      def __init__(self, bytes):
+          self.bytes = bytes
+
+      def size(self):
+          return len(self.bytes)
+
+When we add an ``Image`` instance to the folder, the size of the folder
+can still be calculated:
+
+.. doctest::
+
+  >>> image = Image('abc')
+  >>> folder.items.append(image)
+  >>> folder.size()
+  25
 
 Adding ``size`` from outside
 ----------------------------
 
-Now what if we *don't* have control over the implementation of
-``Document`` and ``Folder``, and we want to add a size calculation feature
-from an extension of the core application? (see `Open/Closed principle`_ for
-more on this topic).
+So far we didn't need Reg at all. But in the real world things may be
+a lot more complicated. We may be dealing with a content management
+system core where we *cannot* control the implementation of
+``Document`` and ``Folder``. What if we want to add a size calculation
+feature in an extension package?
 
-.. _`Open/Closed principle`: https://en.wikipedia.org/wiki/Open/closed_principle
+.. sidebar:: Open/Closed Principle
 
-We can do this by separating out the logic into two functions::
+  The `Open/Closed principle`_ states software entities should be open
+  for extension, but closed for modification. The idea is you may have
+  a piece of software that you cannot or do not want to change, for
+  instance because it's being developed by a third party, or because
+  the feature you want to add is outside of the scope of that software
+  (separation of concerns). By extending the software without
+  modifying its source code, you can benefit from the stability of the
+  core software and still add new functionality.
+
+  .. _`Open/Closed principle`: https://en.wikipedia.org/wiki/Open/closed_principle
+
+.. sidebar:: What about monkey patching?
+
+  We *could* `monkey patch`_ a ``size`` method into all our content
+  classes. This would work. It would however be dangerous - what if
+  the original CMS's implementers change it so it *does* gain a size
+  method or attribute, for instance? Multiple monkey patches
+  interacting would also get difficult. The code also becomes harder
+  to read: where is this ``size`` method coming from? It isn't there
+  in the ``class`` statement! What about documentation?
+
+  Monkey patching does not make for very maintainable code.
+
+  .. _`monkey patch`: https://en.wikipedia.org/wiki/Monkey_patch
+
+One way to accomplish this is by separating the size logic from the
+classes altogether, and to use two functions instead:
+
+.. testcode::
 
   def document_size(document):
       return len(document.text)
 
   def folder_size(folder):
-      return len([document_size(item) for item in folder.items])
+      return sum([document_size(item) for item in folder.items])
 
 Generic size
 ------------
 
-There is a problem however: ``folder_size`` will fail if the folder
-contains something else than a document, for instance ``Image``. We've
-lost the generic nature of ``size()`` on ``Folder``. We can bring it back::
+There is a problem with the above implementation however:
+``folder_size`` is not generic anymore, but now depends on
+``document_size``. It would fail when presented with a folder
+with an ``Image`` in it:
+
+.. doctest::
+
+  >>> folder_size(folder)
+  Traceback (most recent call last):
+    ...
+  AttributeError: ...
+
+To support ``Image`` we first need an ``image_size`` function:
+
+.. testcode::
+
+  def image_size(image):
+     return len(image.bytes)
+
+We can write a ``generic_size`` function to get the size for any
+item we give it:
+
+.. testcode::
 
   def generic_size(item):
       if isinstance(item, Document):
@@ -253,24 +393,51 @@ lost the generic nature of ``size()`` on ``Folder``. We can bring it back::
           return folder_size(item)
       assert False, "Unknown item: %s" % item
 
-We can then adjust ``folder_size`` to use ``generic_size`` in its
-implementation::
+We can now rewrite ``folder_size`` to use ``generic_size``:
+
+.. testcode::
 
   def folder_size(folder):
-      return len([generic_size(item) for item in folder.items])
+      return sum([generic_size(item) for item in folder.items])
+
+Now our ``generic_size`` function will work::
+
+.. doctest::
+
+  >>> generic_size(doc)
+  12
+  >>> generic_size(image)
+  3
+  >>> generic_size(folder)
+  25
+
+A bit complicated, but it works!
 
 New ``File`` content
 --------------------
 
-But what if we now want to write a new extension to our CMS that adds
-a new kind of folder item, the ``File``, with a ``file_size``
-function?
+What if we now want to write a new extension to our CMS that adds a
+new kind of folder item, the ``File``, with a ``file_size`` function?
 
-We'd need to adjust ``generic_size`` to know about ``File`` as well,
-but ``generic_size`` already lives in another extension that
-deals with sizes, and knows nothing about this new ``File`` item. To
-resolve this, our next move could be to provide a registry in our size
-extension::
+.. testcode::
+
+  class File(object):
+     def __init__(self, bytes):
+         self.bytes = bytes
+
+  def file_size(file):
+      return len(file.bytes)
+
+What if we are actually yet another party, and we don't control the
+basic CMS *nor* the size extension we presented above?
+
+We cannot adjust ``generic_size`` to teach it about ``File`` now! Uh
+oh!
+
+Perhaps the implementers of the size extension were wise and anticipated
+this use case. They could have implemented ``generic_size`` like this:
+
+.. testcode::
 
   size_function_registry = {
      Document: document_size,
@@ -278,82 +445,179 @@ extension::
      Folder: folder_size
   }
 
+  def register_size(class_, function):
+     size_function_registry[class_] = function
+
   def generic_size(item):
      return size_function_registry[item.__class__](item)
 
-We can now put in ``file_size`` in this registry to teach ``generic_size``
-how to get the size of a ``File`` instance::
+We can now use ``register_size`` to teach ``generic_size`` how to get
+the size of a ``File`` instance:
 
-  >>> size_function_registry[File] = file_size
+.. testcode::
+
+  register_size(File, file_size)
+
+And it would work:
+
+.. doctest::
+
+  >>> generic_size(File('xyz'))
+  3
+
+To support this extensibility the writers of the size extension had to
+be wise enough to create a registry and an API to extend and use it.
 
 New ``HtmlDocument`` content
 ----------------------------
 
-But what if we introduce a new ``HtmlDocument`` item that is a subclass of
-``Document``? We need to remember to let the size_function_registry know
-that it can *still* use ``document_size`` to calculate its size::
+What if we introduce a new ``HtmlDocument`` item that is a subclass of
+``Document``?
 
-  >>> size_function_registry[HtmlDocument] = document_size
+.. testcode::
 
-All this is starting to get quite complicated. Reg can help.
+  class HtmlDocument(Document):
+      pass # imagine new html functionality here
+
+Let's try to get its size:
+
+.. doctest::
+
+  >>> htmldoc = HtmlDocument('<p>Hello world!</p>')
+  >>> generic_size(htmldoc)
+  Traceback (most recent call last):
+     ...
+  KeyError: ...
+
+Uh oh, that doesn't work! There's nothing registered for the
+``HtmlDocument`` class.
+
+We need to remember to also call ``register_size`` for
+``HtmlDocument``, even though ti's a subclass of ``Document`` and can
+therefore use the ``document_size`` function already.
+
+.. doctest::
+
+  >>> register_size(HtmlDocument, document_size)
+
+Now generic_size will work:
+
+.. doctest::
+
+  >>> generic_size(htmldoc)
+  19
+
+This is getting rather complicated, requiring not only quite a bit of
+anticipation for the developers of ``generic_size`` but also extra
+work for the person who wants to subclass a content item.
+
+We could write a system that generalizes this and automates a lot of
+this, making life easier. And that's Reg.
 
 Doing this with Reg
 -------------------
 
+Let's see how we could implement ``generic_size`` using Reg.
+
 First we need a special ``ISize`` interface that we can use to
-register the various ``*_size`` functions under::
+register the various ``*_size`` functions under:
+
+.. testcode::
 
   class ISize(reg.Interface):
       """Call me to get the size for the argument"""
 
-Now that we have this, we can register the various size functions for
-the various content items::
+Hey, we have something to hook documentation into as well here.
+
+We can now register the various size functions for the various content
+items:
+
+.. testcode::
 
   r.register(ISize, [Document], document_size)
   r.register(ISize, [Folder], folder_size)
+  r.register(ISize, [Image], image_size)
+  r.register(ISize, [File], file_size)
 
 Notice that we now finally use the second argument to ``register``, by
 providing the class for which we want to register a size function.
 
-Note that the registry ``r`` could be the same registry as the one
+Note also that the registry ``r`` is the same registry as the one
 where we registered ``IEmailer`` earlier -- these registrations will
-happily live side by size. We don't need to create a new registry for
+happily live side by side. We don't need to create a new registry for
 each use case.
 
-We can now rewrite ``generic_size`` to make use of this registry::
+We can rewrite ``generic_size`` to make use of ``ISize``:
+
+.. testcode::
 
   def generic_size(item):
-     return ISize.component(item, lookup=r)(item)
+      return ISize.component(item)(item)
 
-Whenever a new content item is defined, we register its size
-function.
+This gets all the functionality we've hand-coded before::
 
-We don't need to do it for subclasses however, so this registration
-for ``HtmlDocument`` would be superfluous as we already have one for
-``Document``::
+.. doctest::
 
-  r.register(ISize, [HtmlDocument], document_size)
+  >>> generic_size(doc)
+  12
+  >>> generic_size(folder)
+  25
+
+And also the ability to deal with new subclasses automatically:
+
+.. doctest::
+
+  >>> generic_size(htmldoc)
+  19
 
 Reg knows that ``HtmlDocument`` is a subclass of ``Document`` and will
-find ``document_size`` anyway. We only have to register something for
-``HtmlDocument`` if we would want to use a special, different size
-function for ``HtmlDocument``.
+find ``document_size`` automatically for you. We only have to register
+something for ``HtmlDocument`` if we would want to use a special,
+different size function for ``HtmlDocument``.
 
 Much better!
 
 Adaptation
 ----------
 
-Above in ``generic_size`` we looked up the ``ISize`` function for the
-item, and then immediately call that function with the item again. We
-see this pattern a lot, and call this *adaptation*. We adapt a content
-item to its size, so to speak.
+.. sidebar:: Use Reg directly or provide API?
+
+  By using ``adapt()`` to implement ``generic_size``, this function
+  became so simple we might as well advertise the use of
+  ``ISize.adapt()`` directly to our users, and not implement a
+  ``generic_size`` function at all.
+
+  Doing so would expose the users of your API to Reg directly. The
+  benefit of this is that they can now use the full power of Reg
+  without you doing more than declare an Interface and registering
+  things for it. The drawback is that the users of your API will have
+  to learn about Reg in order to use it. It's up to you.
+
+  The same tradeoffs apply to the registration functionality; do you
+  write custom ``register_`` functions in your API and hide Reg, or do
+  you expose a Reg registry directly? Again, it's up to you.
+
+In our new ``generic_size`` we do two things:
+
+* look up the ``ISize`` function for the item.
+
+* immediately call that function with the item again.
+
+It turns out this is a very common pattern, and we a special name for
+it: *adaptation*. We adapt a content item to its size, so to speak.
 
 Reg offers a shortcut for adaptation: ``adapt()``. We can rewrite
-``generic_size`` to use the ``.adapt`` call instead::
+``generic_size`` to use the ``.adapt`` call instead:
+
+.. testcode::
 
   def generic_size(item):
-     return ISize.adapt(item, lookup=r)
+     return ISize.adapt(item)
+
+.. doctest::
+
+  >>> generic_size(doc)
+  12
 
 ``adapt()`` will look up the registered component for its arguments,
 and then immediately *call* that object again with these arguments.
@@ -363,9 +627,13 @@ Using classes as adapters
 
 The above example worked well for a single function to get the size,
 but what if we wanted to add a feature that required multiple methods,
-not just one? Let's imagine we have a feature to get the icon for a
-content object in our CMS, and that this consists of two methods, a
-way to get a small icon and a large icon::
+not just one?
+
+Let's imagine we have a feature to get the icon for a content object
+in our CMS, and that this consists of two methods, with a way to get a
+small icon and a large icon:
+
+.. testcode::
 
   class IIcon(reg.Interface):
       @reg.abstractmethod
@@ -375,7 +643,12 @@ way to get a small icon and a large icon::
       def large(self):
           pass
 
-An implementation of this for ``Document`` might look like this::
+An implementation of this for ``Document`` might look like this:
+
+.. testcode::
+
+  def load_icon(path):
+      return path # pretend we load the path here and return an image obj
 
   class DocumentIcon(IIcon):
      def __init__(self, document):
@@ -391,18 +664,57 @@ An implementation of this for ``Document`` might look like this::
             return load_icon('document_large_empty.png')
         return load_icon('document_large.png')
 
-Note that the constructor of ``DocumentIcon`` receives a ``Document``
-instance as its first argument, and that the implementation of the
-``small`` and ``large`` methods use this instance to determine what
-icon to produce.
+The constructor of ``DocumentIcon`` receives a ``Document`` instance
+as its first argument. The implementation of the ``small`` and
+``large`` methods use this instance to determine what icon to produce.
 
-We can register this in the familiar way, but here we register the
-``DocumentIcon`` class instead of a function::
+We call ``DocumentIcon`` an adapter, and we can use it manually:
+
+.. doctest::
+
+  >>> icon_api = DocumentIcon(doc)
+  >>> icon_api.small()
+  'document_small.png'
+  >>> icon_api.large()
+  'document_large.png'
+
+We register the ``DocumentIcon`` adapter class instead of a function:
+
+.. testcode::
 
   r.register(IIcon, [Document], DocumentIcon)
 
-Now whenever we want the ``IIcon`` API (or *adapter*) for an item, we
-adapt that item to it, and then call methods on the API::
+We can also register a ``FolderIcon`` adapter for ``Folder``, a
+``ImageIcon`` adapter for ``Image``, and so on. For the sake of
+brevity let's only define one for ``Image`` here:
 
-  icon_api = IIcon.adapt(item, lookup=r)
-  small_icon = icon_api.small()
+.. testcode::
+
+  class ImageIcon(IIcon):
+      def __init__(self, image):
+          self.image = image
+
+      def small(self):
+          return load_icon('image_small.png')
+
+      def large(self):
+          return load_icon('image_large.png')
+
+  r.register(IIcon, [Image], ImageIcon)
+
+Now we can use the ``IIcon`` interface to retrieve the API defined by
+``IIcon`` for any item in the system for which an adapter is
+registered::
+
+.. doctest::
+
+  >>> icon_api = IIcon.adapt(doc)
+  >>> icon_api.small()
+  'document_small.png'
+  >>> icon_api.large()
+  'document_large.png'
+  >>> IIcon.adapt(image).small()
+  'image_small.png'
+  >>> IIcon.adapt(image).large()
+  'image_large.png'
+

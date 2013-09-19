@@ -53,6 +53,21 @@ information.
 
 .. _`py.test`: http://pytest.org/latest/
 
+Running the documentation tests
+-------------------------------
+
+The documentation contains code. To check these code snippets, you
+can run this code using this command::
+
+  $ bin/sphinx-build  -b doctest doc out
+
+Building the HTML documentation
+-------------------------------
+
+To build the HTML documentation (output in ``doc/build/html``), run::
+
+  $ bin/sphinxbuilder
+
 Various checking tools
 ----------------------
 
