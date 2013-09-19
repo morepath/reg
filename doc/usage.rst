@@ -313,12 +313,6 @@ can still be calculated:
 Adding ``size`` from outside
 ----------------------------
 
-So far we didn't need Reg at all. But in the real world things may be
-a lot more complicated. We may be dealing with a content management
-system core where we *cannot* control the implementation of
-``Document`` and ``Folder``. What if we want to add a size calculation
-feature in an extension package?
-
 .. sidebar:: Open/Closed Principle
 
   The `Open/Closed principle`_ states software entities should be open
@@ -332,19 +326,11 @@ feature in an extension package?
 
   .. _`Open/Closed principle`: https://en.wikipedia.org/wiki/Open/closed_principle
 
-.. sidebar:: What about monkey patching?
-
-  We *could* `monkey patch`_ a ``size`` method into all our content
-  classes. This would work. It would however be dangerous - what if
-  the original CMS's implementers change it so it *does* gain a size
-  method or attribute, for instance? Multiple monkey patches
-  interacting would also get difficult. The code also becomes harder
-  to read: where is this ``size`` method coming from? It isn't there
-  in the ``class`` statement! What about documentation?
-
-  Monkey patching does not make for very maintainable code.
-
-  .. _`monkey patch`: https://en.wikipedia.org/wiki/Monkey_patch
+So far we didn't need Reg at all. But in the real world things may be
+a lot more complicated. We may be dealing with a content management
+system core where we *cannot* control the implementation of
+``Document`` and ``Folder``. What if we want to add a size calculation
+feature in an extension package?
 
 One way to accomplish this is by separating the size logic from the
 classes altogether, and to use two functions instead:
@@ -359,6 +345,20 @@ classes altogether, and to use two functions instead:
 
 Generic size
 ------------
+
+.. sidebar:: What about monkey patching?
+
+  We *could* `monkey patch`_ a ``size`` method into all our content
+  classes. This would work. It would however be dangerous - what if
+  the original CMS's implementers change it so it *does* gain a size
+  method or attribute, for instance? Multiple monkey patches
+  interacting would also get difficult. The code also becomes harder
+  to read: where is this ``size`` method coming from? It isn't there
+  in the ``class`` statement! What about documentation?
+
+  Monkey patching does not make for very maintainable code.
+
+  .. _`monkey patch`: https://en.wikipedia.org/wiki/Monkey_patch
 
 There is a problem with the above implementation however:
 ``folder_size`` is not generic anymore, but now depends on
@@ -400,7 +400,7 @@ We can now rewrite ``folder_size`` to use ``generic_size``:
   def folder_size(folder):
       return sum([generic_size(item) for item in folder.items])
 
-Now our ``generic_size`` function will work::
+Now our ``generic_size`` function will work:
 
 .. doctest::
 
@@ -554,7 +554,7 @@ We can rewrite ``generic_size`` to make use of ``ISize``:
   def generic_size(item):
       return ISize.component(item)(item)
 
-This gets all the functionality we've hand-coded before::
+This gets all the functionality we've hand-coded before:
 
 .. doctest::
 
@@ -704,7 +704,7 @@ brevity let's only define one for ``Image`` here:
 
 Now we can use the ``IIcon`` interface to retrieve the API defined by
 ``IIcon`` for any item in the system for which an adapter is
-registered::
+registered:
 
 .. doctest::
 
