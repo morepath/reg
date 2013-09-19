@@ -41,8 +41,6 @@ Running the tests
 You can run the tests using `py.test`_. Buildout will have installed
 it for you in the ``bin`` subdirectory of your project::
 
-.. _`py.test`: http://pytest.org/latest/
-
   $ bin/py.test reg
 
 To generate test coverage information as HTML do::
@@ -52,6 +50,8 @@ To generate test coverage information as HTML do::
 You can then point your web browser to the ``htmlcov/index.html`` file
 in the project directory and click on modules to see detailed coverage
 information.
+
+.. _`py.test`: http://pytest.org/latest/
 
 Various checking tools
 ----------------------
