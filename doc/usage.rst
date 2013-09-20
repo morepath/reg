@@ -718,3 +718,58 @@ registered:
   >>> IIcon.adapt(image).large()
   'image_large.png'
 
+Multiple adaptation
+-------------------
+
+Sometimes we want to adapt more than one thing at the time. The
+canonical example for this is a web view lookup system. Given a
+request and a model, we want to find a view that represents these. The
+view needs to get the request, for parameter information, POST body,
+URL information, and so on. The view also needs to get the model, as
+that is what will be represented in the view.
+
+You want to be able to vary the view depending on the type of the request
+as well as the type of the model.
+
+Let's imagine we have a ``Request`` class:
+
+.. testcode::
+
+  class Request(object):
+      pass
+
+We'll use ``Document`` as the model class.
+
+We also define a ``IView`` interface:
+
+.. testcode::
+
+  class IView(reg.Interface):
+      pass
+
+We define a view that takes this request and the document and returns
+some content:
+
+.. testcode::
+
+  def document_view(request, document):
+      return "The document content is: " + document.text
+
+We can now register this view:
+
+.. testcode::
+
+  r.register(IView, [Request, Document], document_view)
+
+We now see why the second argument to ``register()`` is a list; so far
+we only supplied zero or one entry in it, but now we supply two.
+
+Given a request and a document, we can now adapt it to ``IView``:
+
+.. doctest::
+
+  >>> request = Request()
+  >>> IView.adapt(request, doc)
+  'The document content is: Hello world!'
+
+
