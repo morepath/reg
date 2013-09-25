@@ -12,12 +12,13 @@ ANY = Sentinel('ANY')
 SENTINEL = Sentinel('SENTINEL')
 
 
-class KeyPredicate(object):
-    def __init__(self, name):
+class Predicate(object):
+    def __init__(self, name, index_factory):
         self.name = name
+        self.index_factory = index_factory
 
     def create_index(self):
-        return KeyIndex()
+        return self.index_factory()
 
 
 class KeyIndex(object):

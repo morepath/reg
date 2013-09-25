@@ -1,12 +1,12 @@
 import py.test
-from reg.predicate import (PredicateRegistry, KeyPredicate, ANY,
+from reg.predicate import (PredicateRegistry, Predicate, KeyIndex, ANY,
                            key_permutations)
 from reg.interfaces import PredicateRegistryError
 
 
 def test_predicate_registry():
-    m = PredicateRegistry([KeyPredicate('name'),
-                           KeyPredicate('request_method')])
+    m = PredicateRegistry([Predicate('name', KeyIndex),
+                           Predicate('request_method', KeyIndex)])
     m.register(dict(name='foo'), 'registered for all')
     m.register(dict(name='foo', request_method='POST'), 'registered for post')
 
@@ -19,8 +19,8 @@ def test_predicate_registry():
 
 
 def test_predicate_registry_missing_key():
-    m = PredicateRegistry([KeyPredicate('name'),
-                           KeyPredicate('request_method')])
+    m = PredicateRegistry([Predicate('name', KeyIndex),
+                           Predicate('request_method', KeyIndex)])
     m.register(dict(name='foo', request_method='POST'), 'registered for post')
 
     with py.test.raises(PredicateRegistryError):
@@ -28,8 +28,8 @@ def test_predicate_registry_missing_key():
 
 
 def test_duplicate_entry():
-    m = PredicateRegistry([KeyPredicate('name'),
-                           KeyPredicate('request_method')])
+    m = PredicateRegistry([Predicate('name', KeyIndex),
+                           Predicate('request_method', KeyIndex)])
 
     m.register(dict(name='foo'), 'registered for all')
     m.register(dict(name='foo'), 'registered for all again')
@@ -39,10 +39,10 @@ def test_duplicate_entry():
 
 
 def test_involved_entry():
-    m = PredicateRegistry([KeyPredicate('a'),
-                           KeyPredicate('b'),
-                           KeyPredicate('c'),
-                           KeyPredicate('d')])
+    m = PredicateRegistry([Predicate('a', KeyIndex),
+                           Predicate('b', KeyIndex),
+                           Predicate('c', KeyIndex),
+                           Predicate('d', KeyIndex)])
     m.register(dict(a='A'), 'a=A')
     m.register(dict(a='A', b='B'), 'a=A b=B')
     m.register(dict(a='A', c='C'), 'a=A c=C')
@@ -62,7 +62,7 @@ def test_involved_entry():
 
 
 def test_break_early():
-    m = PredicateRegistry([KeyPredicate('a'), KeyPredicate('b')])
+    m = PredicateRegistry([Predicate('a', KeyIndex), Predicate('b', KeyIndex)])
     m.register(dict(b='B'), 'b=B')
     assert m.get(dict(a=ANY, b='C')) is None
 
