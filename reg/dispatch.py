@@ -1,6 +1,8 @@
 from functools import update_wrapper
 from reg.mapping import Map, ClassMapKey
 
+# pep 443 dispatch function support
+
 # XXX absolutely no caching done
 def singledispatch(func):
     registry = Map()
