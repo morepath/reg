@@ -19,16 +19,16 @@ class ListClassLookup(IClassLookup):
     def __init__(self, lookups):
         self.lookups = lookups
 
-    def get(self, target, sources):
+    def get(self, func, classes):
         for lookup in self.lookups:
-            result = lookup.get(target, sources)
+            result = lookup.get(func, classes)
             if result is not None:
                 return result
         return None
 
-    def all(self, target, sources):
+    def all(self, func, classes):
         for lookup in self.lookups:
-            for component in lookup.all(target, sources):
+            for component in lookup.all(func, classes):
                 if component is not None:
                     yield component
 
@@ -45,16 +45,16 @@ class ChainClassLookup(IClassLookup):
         self.lookup = lookup
         self.next = next
 
-    def get(self, target, sources):
-        result = self.lookup.get(target, sources)
+    def get(self, func, classes):
+        result = self.lookup.get(func, classes)
         if result is not None:
             return result
-        return self.next.get(target, sources)
+        return self.next.get(func, classes)
 
-    def all(self, target, sources):
-        for component in self.lookup.all(target, sources):
+    def all(self, func, classes):
+        for component in self.lookup.all(func, classes):
             yield component
-        for component in self.next.all(target, sources):
+        for component in self.next.all(func, classes):
             yield component
 
 
@@ -64,20 +64,20 @@ class CachedClassLookup(IClassLookup):
         self._cache = {}
         self._all_cache = {}
 
-    def get(self, target, sources):
-        sources = tuple(sources)
-        component = self._cache.get((target, sources), CACHED_SENTINEL)
+    def get(self, func, classes):
+        classes = tuple(classes)
+        component = self._cache.get((func, classes), CACHED_SENTINEL)
         if component is not CACHED_SENTINEL:
             return component
-        component = self.class_lookup.get(target, sources)
-        self._cache[(target, sources)] = component
+        component = self.class_lookup.get(func, classes)
+        self._cache[(func, classes)] = component
         return component
 
-    def all(self, target, sources):
-        sources = tuple(sources)
-        result = self._all_cache.get((target, sources))
+    def all(self, func, classes):
+        classes = tuple(classes)
+        result = self._all_cache.get((func, classes))
         if result is not None:
             return result
-        result = list(self.class_lookup.all(target, sources))
-        self._all_cache[(target, sources)] = result
+        result = list(self.class_lookup.all(func, classes))
+        self._all_cache[(func, classes)] = result
         return result
