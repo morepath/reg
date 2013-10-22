@@ -1,12 +1,12 @@
 """Basic interfaces and API docs.
 """
 
-from .interface import Interface, abstractmethod, abstractproperty
+from .interface import Interface, abstractmethod, abstractproperty, SENTINEL
 
 
 class ILookup(Interface):
     @abstractmethod
-    def component(self, target, objs):
+    def component(self, target, objs, default=SENTINEL):
         """Look up a component.
 
         The target is the class that we want to look up. The target is
@@ -41,7 +41,7 @@ class ILookup(Interface):
         """
 
     @abstractmethod
-    def adapt(self, target, objs):
+    def adapt(self, target, objs, default=SENTINEL):
         """Look up an adapter for objs. Adapt objs to target abc.
 
         The behavior of this method is like that of lookup, but it

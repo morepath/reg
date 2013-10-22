@@ -1,6 +1,7 @@
 """Look up components by instance (using their classes) and target class.
 """
 
+# XXX rename to LookupError?
 from .interfaces import ILookup, IMatcher, ComponentLookupError
 from .compose import CachedClassLookup
 from .interface import SENTINEL
@@ -17,7 +18,7 @@ class Lookup(ILookup):
         if default is not SENTINEL:
             return default
         raise ComponentLookupError(
-            "Could not find component for target %r from objs %r" % (
+            "%r: no component found for objs %r" % (
                 target,
                 objs))
 

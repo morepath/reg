@@ -1,23 +1,31 @@
 from functools import update_wrapper
 from reg.mapping import Map, ClassMapKey
 from reg.implicit import implicit
+# XXX is there also one in reg.interfaces??
+from reg.interface import NoImplicitLookupError
 
 # pep 443 dispatch function support
 
 def dispatch(func):
-    def component(*args, lookup=None):
-        lookup = lookup or implicit.lookup
-        return lookup.component(func, args)
-
-    def all(*args, lookup=None):
-        lookup = lookup or implicit.lookup
-        return lookup.all(func, args)
+    def get_lookup(kw):
+        lookup = kw.pop('lookup', implicit.lookup)
+        if lookup is None:
+            raise NoImplicitLookupError(
+                "Cannot lookup without explicit lookup argument "
+                "because no implicit lookup was configured.")
+        return lookup
     
     def wrapper(*args, **kw):
-        lookup = kw.pop('lookup', implicit.lookup)
-        return lookup.adapt(func, args)
+        return get_lookup(kw).adapt(wrapper, args, **kw)
+
+    def component(*args, **kw):
+        return get_lookup(kw).component(wrapper, args, **kw)
+
+    def all(*args, **kw):
+        return get_lookup(kw).all(wrapper, args, **kw)
 
     wrapper.component = component
+    wrapper.all = all
     update_wrapper(wrapper, func)
     return wrapper
 
