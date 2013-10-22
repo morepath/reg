@@ -167,9 +167,6 @@ class MultiMap(object):
                 pass
 
 
-IM_SENTINEL = Sentinel('IM_SENTINEL')
-
-
 class InverseMap(object):
     def __init__(self):
         self.d = {}
@@ -204,10 +201,7 @@ class InverseMap(object):
         if descendants is None:
             return
         for key in descendants:
-            value = self.d.get(key, IM_SENTINEL)
-            if value is IM_SENTINEL:
-                continue
-            yield value
+            yield self.d[key]
 
 
 class ClassMapKey(object):

@@ -19,11 +19,29 @@ def test_mapkey_with_parents():
     assert d.parents == (b, c)
 
 
+def test_map_key_repr():
+    a = MapKey('a')
+    assert repr(a) == "<MapKey: 'a'>"
+
+
 def test_map_simple_key():
     m = Map()
     a = MapKey('a')
     m[a] = u'Value for A'
     assert m[a] == u'Value for A'
+
+
+def test_map_get():
+    m = Map()
+    a = MapKey('a')
+    m[a] = u'Value for A'
+    assert m.get(a) == u'Value for A'
+
+
+def test_map_get_default():
+    m = Map()
+    a = MapKey('a')
+    assert m.get(a, 'default') == 'default'
 
 
 def test_map_same_underlying_key_is_same():
@@ -134,7 +152,7 @@ def test_map_all_empty():
     assert list(m.all(d)) == [u'Value for D', u'Value for B', u'Value for C']
 
 
-def test_exact_getitem():
+def test_map_exact_getitem():
     m = Map()
     a = MapKey('a')
     b = MapKey('b', parents=[a])
@@ -146,7 +164,7 @@ def test_exact_getitem():
     assert m.exact_getitem(a) == u'Value for A'
 
 
-def test_exact_get():
+def test_map_exact_get():
     m = Map()
     a = MapKey('a')
     b = MapKey('b', parents=[a])
@@ -185,6 +203,32 @@ def test_multimap():
         m[MultiMapKey(alpha, two)]
     with py.test.raises(KeyError):
         m[MultiMapKey(beta, one)]
+
+
+def test_multimap_key_repr():
+    alpha = MapKey('alpha')
+
+    one = MapKey('one')
+    two = MapKey('two', [one])
+    three = MapKey('three', [two])
+
+    assert (repr(MultiMapKey(alpha, three)) ==
+            "<MultiMapKey: (<MapKey: 'alpha'>, <MapKey: 'three'>)>")
+
+
+def test_multimap_get():
+    m = MultiMap()
+
+    alpha = MapKey('alpha')
+
+    one = MapKey('one')
+
+    m[MultiMapKey(alpha, one)] = u'Value for alpha, one'
+
+    assert m.get(MultiMapKey(alpha, one)) == u'Value for alpha, one'
+
+    assert m.get(MultiMapKey(one, alpha)) is None
+    assert m.get(MultiMapKey(one, alpha), 'default') == 'default'
 
 
 def test_ancestor_multikeys():
@@ -330,6 +374,12 @@ def test_class_mapkey():
                            ClassMapKey(A), ClassMapKey(object)]
 
 
+def test_classmap_key_repr():
+    class A(object):
+        pass
+    a = ClassMapKey(A)
+    assert repr(a) == "<ClassMapKey: <class 'reg.tests.test_mapping.A'>>"
+
 def test_inverse_map():
     m = InverseMap()
 
@@ -344,6 +394,22 @@ def test_inverse_map():
     assert list(m.all(elephant)) == ['Elephant']
     assert list(m.all(african_elephant)) == []
 
+
+def test_inverse_map_exact():
+    m = InverseMap()
+
+    animal = MapKey('animal')
+    elephant = MapKey('elephant', parents=[animal])
+    african_elephant = MapKey('african elephant', parents=[elephant])
+
+    m.register(animal, 'Animal')
+
+    m.exact_getitem(animal) == 'Animal'
+    with py.test.raises(KeyError):
+        m.exact_getitem(elephant)
+    assert m.exact_get(animal) == 'Animal'
+    assert m.exact_get(elephant) is None
+    assert m.exact_get(elephant, 'default') == 'default'
 
 def test_inverse_map_registration_order():
     m = InverseMap()
