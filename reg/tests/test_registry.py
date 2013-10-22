@@ -153,4 +153,28 @@ def test_matcher_inheritance():
     assert reg.component(linecount, [SpecialDocument(2)]) == 'extra normal'
     assert reg.component(linecount, [SpecialDocument(3)]) == 'special'
 
+def test_register_twice_with_sources():
+    reg = Registry()
+
+    class Document(object):
+        pass
+
+    def linecount(obj):
+        pass
+
+    reg.register(linecount, [Document], 'document line count')
+    reg.register(linecount, [Document], 'another line count')
+    assert reg.component(linecount, [Document()]) == 'another line count'
+
+def test_register_twice_without_sources():
+    reg = Registry()
+
+    def linecount(obj):
+        pass
+
+    reg.register(linecount, [], 'once')
+    reg.register(linecount, [], 'twice')
+    assert reg.component(linecount, []) == 'twice'
+
+    
 # XXX various default and component lookup error tests

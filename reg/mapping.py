@@ -119,13 +119,13 @@ class MultiMap(object):
 
     def __setitem__(self, key, value):
         keys = list(key.keys)
+        if key.arity == 0:
+            self._by_arity[0] = value
+            return
+
         m = self._by_arity.get(key.arity)
         if m is None:
-            if keys:
-                self._by_arity[key.arity] = m = Map()
-            else:
-                self._by_arity[key.arity] = value
-                return
+            self._by_arity[key.arity] = m = Map()
         last_key = keys.pop()
 
         for k in keys:
