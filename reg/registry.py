@@ -7,28 +7,34 @@ from .lookup import Lookup
 from abc import ABCMeta, abstractmethod
 
 class IRegistry(object):
+    """A registration API for components.
+    """
+
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def register(self, func, args, component):
-        """Register a component with the registry.
+    def register(self, key, classes, component):
+        """Register a component.
 
-        The target is a class by which the component can be
-        looked up.  The registered object should either be an instance
-        of that class, or in the case of an adapter, return a such an
-        instance.
+        :param key: Register component for this key.
+        :type key: hashable object, normally function.
+        :param classes: List of classes for which to register component.
+        :type classes: list of classes.
+        :param component: Any python object, often a function.
+                          Can be an IMatcher instance.
+        :type component: object.
 
-        sources is a list of 0 to n classes that
-        the component is registered for. If multiple sources are listed,
-        a registration is made for that combination of sources.
+        The key is a hashable object, often a function object, by
+        which the component can be looked up.
 
-        The component is a python object (function, class, instance) that is
-        registered.
+        classes is a list of 0 to n classes that the component is
+        registered for. If multiple sources are listed, a registration
+        is made for that combination of sources.
 
-        Typically what you would register would be either components
-        that are an instance of target or factory functions that
-        produce an instance of target. But you could register anything,
-        and that's fine; it's not checked.
+        The component is a python object (function, class, instance,
+        etc) that is registered. If you're working with multiple dispatch,
+        you would register a function that expects instances of the classes
+        in ``classes`` as its arguments.
         """
 
     @abstractmethod
@@ -37,75 +43,109 @@ class IRegistry(object):
         """
 
     @abstractmethod
-    def exact(self, func, args):
-        """Get registration for target and sources.
+    def exact(self, key, classes):
+        """Get registered component for exactly key and classes.
+
+        :param key: Get component for this key.
+        :type key: hashable object, normally function.
+        :param classes: List of classes for which to get component.
+        :type classes: list of classes.
+        :returns: registered component, or ``None``.
 
         Does not go to base classes, just returns exact registration.
 
-        None if no registration exists.
+        Returns ``None`` if no registration exists.
         """
 
 class IClassLookup(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def get(self, func, args):
-        """Look up a component, by class.
+    def get(self, key, classes):
+        """Look up a component, by key and classes of arguments.
 
-        The target is the class that we want to look up. The component
-        found should normally be an instance that class, or in the
-        case of an adapter, have it result be an instance of that class,
-        but no such checking is done and you can register anything.
+        :param key: Get component for this key.
+        :type key: hashable object, normally function.
+        :param classes: List of classes for which to get component.
+        :type classes: list of classes.
+        :returns: registered component, or ``None``.
 
-        sources is a list of 0 to n classes that we use to look up the
-        component.  If multiple classes are listed, the lookup is made
+        The key is a hashable object, often a function object, by
+        which the component is looked up.
+
+        classes is a list of 0 to n classes that we use to look up the
+        component. If multiple classes are listed, the lookup is made
         for that combination of classes.
+
+        In order to find the most matching registered component, a
+        Cartesian product is made of all combinations of base classes given,
+        sorted by inheritance, first class to last class, most specific to
+        least specific.
+
+        This calculation is relatively expensive so you can wrap a
+        class lookup in a :class:`reg.CachingClassLookup` proxy to
+        speed up subsequent calls.
 
         If the component can be found, it will be returned. If the
         component cannot be found, ``None`` is returned.
         """
 
     @abstractmethod
-    def all(self, func, args):
-        """Lookup up all components, by class.
+    def all(self, key, classes):
+        """Look up all components, by key and classes.
 
-        The target is a class by which the component can be
-        looked up.
+        :param key: Get components for this key.
+        :type key: hashable object, normally function.
+        :param classes: List of classes for which to get components.
+        :type classes: list of classes.
+        :returns: iterable of found components.
 
-        sources is a list of 0 to n classes that the component is
-        registered for. If multiple sources are listed, a registration
-        is made for that combination of sources.
+        The key is a hashable object, often a function object, by
+        which the components are looked up.
 
-        Yields all matching components.
+        classes is a list of 0 to n classes that we use to look up the
+        components. If multiple classes are listed, the lookup is made
+        for that combination of classes. All registered components for
+        combinations of base classes are also returned.
+
+        A Cartesian product is made of all combinations of base
+        classes to do this, sorted by inheritance, first class to last
+        class, most specific to least specific.
+
+        This calculation is relatively expensive so you can wrap a
+        class lookup in a :class:`reg.CachingClassLookup` proxy to
+        speed up subsequent calls.
+
+        If no components can be found, the iterable returned will be empty.
         """
 
 class ClassRegistry(IRegistry, IClassLookup):
     def __init__(self):
         self._d = {}
 
-    def register(self, func, args, component):
-        m = self._d.get(func)
+    def register(self, key, classes, component):
+        m = self._d.get(key)
         if m is None:
-            m = self._d[func] = MultiMap()
-        m[ClassMultiMapKey(*args)] = component
+            m = self._d[key] = MultiMap()
+        m[ClassMultiMapKey(*classes)] = component
 
     def clear(self):
         self._d = {}
 
-    def exact(self, func, args):
-        m = self._d.get(func)
+    def exact(self, key, classes):
+        m = self._d.get(key)
         if m is None:
             return None
-        return m.exact_get(ClassMultiMapKey(*args))
+        return m.exact_get(ClassMultiMapKey(*classes))
 
-    def get(self, func, args):
-        return next(self.all(func, args), None)
+    def get(self, key, classes):
+        return next(self.all(key, classes), None)
 
-    def all(self, func, args):
-        m = self._d.get(func)
+    def all(self, key, classes):
+        m = self._d.get(key)
         if m is None:
             return
-        for component in m.all(ClassMultiMapKey(*args)):
+        for component in m.all(ClassMultiMapKey(*classes)):
             yield component
 
 class Registry(IRegistry, Lookup):
@@ -116,11 +156,11 @@ class Registry(IRegistry, Lookup):
         # the class_lookup is this class itself
         Lookup.__init__(self, self.registry)
 
-    def register(self, func, args, component):
-        return self.registry.register(func, args, component)
+    def register(self, key, classes, component):
+        return self.registry.register(key, classes, component)
 
     def clear(self):
         return self.registry.clear()
 
-    def exact(self, func, args):
-        return self.registry.exact(func, args)
+    def exact(self, key, classes):
+        return self.registry.exact(key, classes)
