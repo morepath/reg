@@ -11,10 +11,7 @@ class Lookup(ILookup):
         self.class_lookup = class_lookup
 
     def component(self, target, objs, default=SENTINEL):
-        try:
-            result = next(self.all(target, objs))
-        except StopIteration:
-            result = None
+        result = next(self.all(target, objs), None)
         if result is not None:
             return result
         if default is not SENTINEL:
@@ -25,9 +22,6 @@ class Lookup(ILookup):
                 objs))
 
     def adapt(self, target, objs, default=SENTINEL):
-        # self-adaptation
-        if len(objs) == 1 and isinstance(objs[0], target):
-            return objs[0]
         adapter = self.component(target, objs, default)
         if adapter is default:
             return default
@@ -41,7 +35,7 @@ class Lookup(ILookup):
                 objs, target))
 
     def all(self, target, objs):
-        for found in self.class_lookup.get_all(
+        for found in self.class_lookup.all(
                 target, [obj.__class__ for obj in objs]):
             if isinstance(found, IMatcher):
                 found = found(*objs)

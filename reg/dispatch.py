@@ -1,8 +1,27 @@
 from functools import update_wrapper
 from reg.mapping import Map, ClassMapKey
+from reg.implicit import implicit
 
 # pep 443 dispatch function support
 
+def dispatch(func):
+    def component(*args, lookup=None):
+        lookup = lookup or implicit.lookup
+        return lookup.component(func, args)
+
+    def all(*args, lookup=None):
+        lookup = lookup or implicit.lookup
+        return lookup.all(func, args)
+    
+    def wrapper(*args, **kw):
+        lookup = kw.pop('lookup', implicit.lookup)
+        return lookup.adapt(func, args)
+
+    wrapper.component = component
+    update_wrapper(wrapper, func)
+    return wrapper
+
+    
 # XXX absolutely no caching done
 def singledispatch(func):
     registry = Map()

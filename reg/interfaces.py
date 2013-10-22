@@ -100,7 +100,7 @@ class IRegistry(Interface):
         """
 
     @abstractmethod
-    def exact_get(self, target, sources):
+    def exact(self, target, sources):
         """Get registration for target and sources.
 
         Does not go to base classes, just returns exact registration.
@@ -128,7 +128,7 @@ class IClassLookup(Interface):
         """
 
     @abstractmethod
-    def get_all(self, target, sources):
+    def all(self, target, sources):
         """Lookup up all components, by class.
 
         The target is a class by which the component can be
