@@ -1,5 +1,5 @@
 # flake8: noqa
-from .implicit import implicit
+from .implicit import implicit, NoImplicitLookupError
 from .registry import ClassRegistry, Registry
 from .lookup import Lookup, LookupError
 from .interface import Interface, abstractmethod, abstractproperty
