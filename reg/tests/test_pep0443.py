@@ -1,4 +1,4 @@
-from reg.dispatch import singledispatch
+from reg.pep443 import singledispatch
 from decimal import Decimal
 
 @singledispatch

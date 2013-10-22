@@ -2,10 +2,35 @@ from functools import update_wrapper
 from reg.mapping import Map, ClassMapKey
 from reg.implicit import implicit, NoImplicitLookupError
 
-# pep 443 dispatch function support
-
 def dispatch(func):
+    """Make a multiple dispatch function out of argument.
+
+    :param func: Function to turn into a multiple dispatch function.
+    :type func: function.
+    :returns: multiple dispatch version of function.
+
+    When someone calls the wrapped function, the arguments determine
+    what actual function will be called. In particular the classes of
+    the arguments are inspected. For each combination of arguments a
+    different function can be registered.
+
+    The function itself provides a default implementation in case no
+    more specific registered function can be found for its arguments.
+
+    Can be used as a decorator::
+
+      @dispatch
+      def my_function(...):
+          ...
+    """
     def get_lookup(kw):
+        """Find ILookup to use.
+
+        First inspects ``kw``, a dictionary of keyword arguments given for
+        an argument called ``lookup``. If that cannot be found, fall back
+        on a global ``implicit.lookup``. If no such lookup is available,
+        raise a ``NoImplicitLookupError``.
+        """
         lookup = kw.pop('lookup', implicit.lookup)
         if lookup is None:
             raise NoImplicitLookupError(
@@ -17,97 +42,22 @@ def dispatch(func):
         return get_lookup(kw).adapt(wrapper, args, **kw)
 
     def component(*args, **kw):
+        """Look up registered component for function and arguments.
+
+        Does a dynamic lookup based on the classes of the arguments and
+        returns whatever was registered (not calling it).
+        """
         return get_lookup(kw).component(wrapper, args, **kw)
 
     def all(*args, **kw):
+        """Look up all registered components for function and arguments.
+
+        For all combinations of argument classes, returns an iterable of
+        whatever was registered for this function.
+        """
         return get_lookup(kw).all(wrapper, args, **kw)
 
     wrapper.component = component
     wrapper.all = all
     update_wrapper(wrapper, func)
     return wrapper
-
-
-# XXX absolutely no caching done
-def singledispatch(func):
-    registry = Map()
-
-    def dispatch(typ):
-        """generic_func.dispatch(type) -> <function implementation>
-
-        Runs the dispatch algorithm to return the best available implementation
-        for the given `type` registered on `generic_func`.
-
-        """
-        return registry[ClassMapKey(typ)]
-
-    def register(typ, func=None):
-        """generic_func.register(type, func) -> func
-
-        Registers a new implementation for the given `type` on a `generic_func`.
-
-        """
-        if func is None:
-            return lambda f: register(typ, f)
-        registry[ClassMapKey(typ)] = func
-        return func
-
-    def wrapper(*args, **kw):
-        return dispatch(args[0].__class__)(*args, **kw)
-
-
-    registry[ClassMapKey(object)] = func
-    wrapper.register = register
-    wrapper.dispatch = dispatch
-    update_wrapper(wrapper, func)
-    return wrapper
-
-# XXX taken from functools implementation. need to look into this for
-# abc support
-
-# def _compose_mro(cls, haystack):
-#     """Calculates the MRO for a given class `cls`, including relevant abstract
-#     base classes from `haystack`.
-
-#     """
-#     bases = set(cls.__mro__)
-#     mro = list(cls.__mro__)
-#     for needle in haystack:
-#         if (needle in bases or not hasattr(needle, '__mro__')
-#                             or not issubclass(cls, needle)):
-#             continue   # either present in the __mro__ already or unrelated
-#         for index, base in enumerate(mro):
-#             if not issubclass(base, needle):
-#                 break
-#         if base in bases and not issubclass(needle, base):
-#             # Conflict resolution: put classes present in __mro__ and their
-#             # subclasses first. See test_mro_conflicts() in test_functools.py
-#             # for examples.
-#             index += 1
-#         mro.insert(index, needle)
-#     return mro
-
-# def _find_impl(cls, registry):
-#     """Returns the best matching implementation for the given class `cls` in
-#     `registry`. Where there is no registered implementation for a specific
-#     type, its method resolution order is used to find a more generic
-#     implementation.
-
-#     Note: if `registry` does not contain an implementation for the base
-#     `object` type, this function may return None.
-
-#     """
-#     mro = _compose_mro(cls, registry.keys())
-#     match = None
-#     for t in mro:
-#         if match is not None:
-#             # If `match` is an ABC but there is another unrelated, equally
-#             # matching ABC. Refuse the temptation to guess.
-#             if (t in registry and not issubclass(match, t)
-#                               and match not in cls.__mro__):
-#                 raise RuntimeError("Ambiguous dispatch: {} or {}".format(
-#                     match, t))
-#             break
-#         if t in registry:
-#             match = t
-#     return registry.get(match)
