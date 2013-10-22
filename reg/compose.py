@@ -4,7 +4,7 @@ ways to compose ClassLookups together into a single one. CachedClassLookup
 is a caching version of ClassLookup.
 """
 
-from .interfaces import IClassLookup
+from .registry import IClassLookup
 
 CACHED_SENTINEL = object()
 

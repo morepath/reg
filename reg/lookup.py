@@ -3,7 +3,6 @@
 
 # XXX rename to LookupError?
 from .interfaces import IMatcher, ComponentLookupError
-from .compose import CachedClassLookup
 from .interface import SENTINEL
 from abc import ABCMeta, abstractmethod
 
@@ -112,8 +111,3 @@ class Lookup(ILookup):
                 yield found
 
 
-class CachedLookup(Lookup, CachedClassLookup):
-    def __init__(self, class_lookup):
-        CachedClassLookup.__init__(self, class_lookup)
-        # the class_lookup is this class itself
-        Lookup.__init__(self, self)
