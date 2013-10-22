@@ -42,7 +42,7 @@ class Implicit(object):
     * ``reg.ListClassLookup`` and ``reg.ChainClassLookup``
        which can be used to chain multiple ``IClassLookup``s together.
 
-   * ``reg.CachedClassLookup`` which can be used to create a
+   * ``reg.CachingClassLookup`` which can be used to create a
       faster caching version of an ``IClassLookup``.
 
     * ``reg.Lookup`` which can be used to turn a ``IClassLookup``

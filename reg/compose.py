@@ -1,6 +1,6 @@
 """
 Compose ClassLookups. ListClassLookup and ChainClassLookup are different
-ways to compose ClassLookups together into a single one. CachedClassLookup
+ways to compose ClassLookups together into a single one. CachingClassLookup
 is a caching version of ClassLookup.
 """
 
@@ -11,7 +11,7 @@ CACHED_SENTINEL = Sentinel('CACHED_SENTINEL')
 
 
 class ListClassLookup(IClassLookup):
-    """A simple list of class lookups functioning as an IClassLookup.
+    """A simple list of class lookups functioning as a single IClassLookup.
 
     Go through all items in the list, starting at the beginning and
     try to find the component. If found in a lookup, return it right away.
@@ -59,7 +59,12 @@ class ChainClassLookup(IClassLookup):
             yield component
 
 
-class CachedClassLookup(IClassLookup):
+class CachingClassLookup(IClassLookup):
+    """Cache an existing class lookup.
+
+    All previous accesses to class lookup are cached.
+    """
+
     def __init__(self, class_lookup):
         self.class_lookup = class_lookup
         self._cache = {}

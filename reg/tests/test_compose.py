@@ -1,6 +1,6 @@
 from reg.registry import ClassRegistry as Registry
 from reg.compose import (
-    ListClassLookup, ChainClassLookup, CachedClassLookup)
+    ListClassLookup, ChainClassLookup, CachingClassLookup)
 
 
 def target():
@@ -60,7 +60,7 @@ def test_cached_class_lookup():
 
     reg.register(target, (), 'reg component')
 
-    cached = CachedClassLookup(reg)
+    cached = CachingClassLookup(reg)
 
     assert cached.get(target, ()) == 'reg component'
 
@@ -76,7 +76,7 @@ def test_cached_class_lookup_all():
 
     reg.register(target, (), 'reg component')
 
-    cached = CachedClassLookup(reg)
+    cached = CachingClassLookup(reg)
 
     assert list(cached.all(target, ())) == ['reg component']
 

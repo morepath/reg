@@ -27,7 +27,7 @@ def dispatch(func):
     update_wrapper(wrapper, func)
     return wrapper
 
-    
+
 # XXX absolutely no caching done
 def singledispatch(func):
     registry = Map()
