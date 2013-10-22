@@ -5,6 +5,10 @@ explicitly.
 import threading
 
 
+class NoImplicitLookupError(Exception):
+    pass
+
+
 class Implicit(object):
     """Implicit global lookup.
 

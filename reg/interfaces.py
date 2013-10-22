@@ -2,11 +2,4 @@
 """
 
 
-class NoImplicitRegistryError(Exception):
-    pass
-
-
-class NoImplicitLookupError(Exception):
-    pass
-
 

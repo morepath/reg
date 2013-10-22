@@ -1,11 +1,11 @@
 import py.test
 
-from reg.interface import Interface, abstractmethod, NoImplicitLookupError
+from reg.implicit import NoImplicitLookupError
 from reg.registry import Registry
 from reg.lookup import LookupError
 from reg.dispatch import dispatch
 
-class IAlpha(Interface):
+class IAlpha(object):
     pass
 
 
@@ -13,7 +13,7 @@ class Alpha(IAlpha):
     pass
 
 
-class IBeta(Interface):
+class IBeta(object):
     pass
 
 
