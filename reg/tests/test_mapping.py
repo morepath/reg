@@ -380,6 +380,7 @@ def test_classmap_key_repr():
     a = ClassMapKey(A)
     assert repr(a) == "<ClassMapKey: <class 'reg.tests.test_mapping.A'>>"
 
+
 def test_inverse_map():
     m = InverseMap()
 
@@ -400,7 +401,6 @@ def test_inverse_map_exact():
 
     animal = MapKey('animal')
     elephant = MapKey('elephant', parents=[animal])
-    african_elephant = MapKey('african elephant', parents=[elephant])
 
     m.register(animal, 'Animal')
 
@@ -410,6 +410,7 @@ def test_inverse_map_exact():
     assert m.exact_get(animal) == 'Animal'
     assert m.exact_get(elephant) is None
     assert m.exact_get(elephant, 'default') == 'default'
+
 
 def test_inverse_map_registration_order():
     m = InverseMap()

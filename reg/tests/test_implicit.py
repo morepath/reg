@@ -3,6 +3,7 @@ from reg.implicit import implicit
 from reg.registry import Registry
 from reg.dispatch import dispatch
 
+
 def setup_function(f):
     implicit.initialize(Registry())
 

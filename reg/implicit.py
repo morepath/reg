@@ -93,6 +93,7 @@ class Implicit(object):
 
     # XXX also document base_lookup
 
+
 class Local(threading.local):
     def __init__(self, **kw):
         self.__dict__.update(kw)

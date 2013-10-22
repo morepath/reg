@@ -1,6 +1,7 @@
 from reg.pep443 import singledispatch
 from decimal import Decimal
 
+
 @singledispatch
 def fun(arg, verbose=False):
     if verbose:
@@ -9,14 +10,14 @@ def fun(arg, verbose=False):
 
 
 @fun.register(int)
-def _(arg, verbose=False):
+def int_func(arg, verbose=False):
     if verbose:
         return "Strength in numbers, eh? %s" % arg
     return arg
 
 
 @fun.register(list)
-def _(arg, verbose=False):
+def list_fun(arg, verbose=False):
     result = []
     if verbose:
         result.append("Enumerate this:\n")

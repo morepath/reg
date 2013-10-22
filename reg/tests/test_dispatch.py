@@ -5,6 +5,7 @@ from reg.registry import Registry
 from reg.lookup import LookupError
 from reg.dispatch import dispatch
 
+
 class IAlpha(object):
     pass
 
@@ -67,7 +68,7 @@ def test_all():
     @dispatch
     def target(obj):
         pass
-    
+
     registry = Registry()
     registry.register(target, (Sub,), 'registered for sub')
     registry.register(target, (Base,), 'registered for base')
@@ -90,9 +91,11 @@ def test_all():
 def test_component_no_source():
     reg = Registry()
     foo = object()
+
     @dispatch
     def target():
         pass
+
     reg.register(target, (), foo)
     assert reg.component(target, []) is foo
     assert target.component(lookup=reg) is foo
@@ -101,22 +104,26 @@ def test_component_no_source():
 def test_component_one_source():
     reg = Registry()
     foo = object()
+
     @dispatch
     def target():
         pass
+
     reg.register(target, [Alpha], foo)
 
     alpha = Alpha()
     assert reg.component(target, [alpha]) is foo
     assert target.component(alpha, lookup=reg) is foo
 
-    
+
 def test_component_two_sources():
     reg = Registry()
     foo = object()
+
     @dispatch
     def target():
         pass
+
     reg.register(target, (IAlpha, IBeta), foo)
     alpha = Alpha()
     beta = Beta()
@@ -137,7 +144,7 @@ def test_component_inheritance():
     @dispatch
     def target():
         pass
-    
+
     reg.register(target, [Gamma], foo)
 
     delta = Delta()
@@ -187,7 +194,7 @@ def test_adapter_no_source():
     @dispatch
     def target():
         pass
-    
+
     def factory():
         return foo
 
@@ -203,7 +210,7 @@ def test_adapter_one_source():
     @dispatch
     def target(obj):
         pass
-    
+
     class Adapted(object):
         def __init__(self, context):
             self.context = context
@@ -250,7 +257,7 @@ def test_adapter_two_sources():
     @dispatch
     def target(a, b):
         pass
-    
+
     class Adapted(object):
         def __init__(self, alpha, beta):
             self.alpha = alpha
@@ -281,18 +288,19 @@ def test_default():
     @dispatch
     def target():
         pass
-    
+
     assert target.component(lookup=reg, default='blah') == 'blah'
     assert target(lookup=reg, default='blah') == 'blah'
 
-    
+
 def test_non_adapter_called():
     reg = Registry()
     foo = object()
+
     @dispatch
     def target(obj):
         pass
-    
+
     reg.register(target, [Alpha], foo)
     alpha = Alpha()
 
@@ -304,7 +312,7 @@ def test_adapter_with_wrong_args():
     @dispatch
     def target(obj):
         pass
-    
+
     class Adapter(object):
         # takes no args
         def __init__(self):
@@ -349,14 +357,15 @@ def test_extra_kw():
 
     with py.test.raises(TypeError) as e:
         target.component(alpha, lookup=reg, extra="illegal")
-    assert str(e.value) == "component() got an unexpected keyword argument 'extra'"
+    assert str(e.value) == ("component() got an unexpected keyword "
+                            "argument 'extra'")
 
 
 def test_no_implicit():
     @dispatch
     def target(obj):
         pass
-    
+
     alpha = Alpha()
     with py.test.raises(NoImplicitLookupError):
         target.component(alpha)

@@ -27,6 +27,7 @@ def test_list_class_lookup_not_found():
     lookup = ListClassLookup([reg1, reg2])
     assert lookup.get(target, ()) is None
 
+
 def test_list_class_lookup_all():
     reg1 = Registry()
     reg2 = Registry()

@@ -1,5 +1,6 @@
 from .sentinel import Sentinel
 
+
 class PredicateRegistryError(Exception):
     pass
 

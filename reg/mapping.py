@@ -1,6 +1,6 @@
 """Core data structures to allow registration and lookup by class.
 """
-from .sentinel import Sentinel
+
 
 class MapKey(object):
     """A map key that can have parents.

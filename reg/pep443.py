@@ -1,8 +1,8 @@
 from functools import update_wrapper
 from reg.mapping import Map, ClassMapKey
-from reg.implicit import implicit, NoImplicitLookupError
 
 # pep 443 dispatch function support
+
 
 # XXX absolutely no caching done
 def singledispatch(func):
@@ -20,8 +20,8 @@ def singledispatch(func):
     def register(typ, func=None):
         """generic_func.register(type, func) -> func
 
-        Registers a new implementation for the given `type` on a `generic_func`.
-
+        Registers a new implementation for the given `type` on a
+        `generic_func`.
         """
         if func is None:
             return lambda f: register(typ, f)
@@ -30,7 +30,6 @@ def singledispatch(func):
 
     def wrapper(*args, **kw):
         return dispatch(args[0].__class__)(*args, **kw)
-
 
     registry[ClassMapKey(object)] = func
     wrapper.register = register
@@ -42,8 +41,8 @@ def singledispatch(func):
 # abc support
 
 # def _compose_mro(cls, haystack):
-#     """Calculates the MRO for a given class `cls`, including relevant abstract
-#     base classes from `haystack`.
+#     """Calculates the MRO for a given class `cls`, including relevant
+#     abstract base classes from `haystack`.
 
 #     """
 #     bases = set(cls.__mro__)

@@ -7,6 +7,7 @@ from abc import ABCMeta, abstractmethod
 
 SENTINEL = Sentinel('Sentinel')
 
+
 class ILookup(object):
     """Look up components by the class of objects.
 
@@ -111,6 +112,7 @@ class IMatcher(object):
 class LookupError(Exception):
     pass
 
+
 class Lookup(ILookup):
     def __init__(self, class_lookup):
         self.class_lookup = class_lookup
@@ -145,5 +147,3 @@ class Lookup(ILookup):
                 found = found(*args)
             if found is not None:
                 yield found
-
-

@@ -2,6 +2,7 @@ from reg.registry import Registry
 from reg.lookup import IMatcher, LookupError
 import py.test
 
+
 def test_registry_sources():
     reg = Registry()
 
@@ -17,7 +18,7 @@ def test_registry_sources():
     reg.register(linecount, [Document], 'document line count')
     reg.register(linecount, [SpecialDocument], 'special document line count')
 
-    assert (reg.component(linecount, [Document()] ) ==
+    assert (reg.component(linecount, [Document()]) ==
             'document line count')
 
     assert (reg.component(linecount, [SpecialDocument()]) ==
@@ -71,7 +72,6 @@ def test_registry_target_find_specific():
 #     class Animal(object):
 #         pass
 
-#     def 
 #     class Elephant(Animal):
 #         pass
 
@@ -115,6 +115,7 @@ def test_matcher():
     assert reg.component(linecount, [Document(1)]) == 'normal'
     assert reg.component(linecount, [Document(2)]) == 'special'
 
+
 def test_matcher_inheritance():
     reg = Registry()
 
@@ -153,6 +154,7 @@ def test_matcher_inheritance():
     assert reg.component(linecount, [SpecialDocument(2)]) == 'extra normal'
     assert reg.component(linecount, [SpecialDocument(3)]) == 'special'
 
+
 def test_register_twice_with_sources():
     reg = Registry()
 
@@ -165,6 +167,7 @@ def test_register_twice_with_sources():
     reg.register(linecount, [Document], 'document line count')
     reg.register(linecount, [Document], 'another line count')
     assert reg.component(linecount, [Document()]) == 'another line count'
+
 
 def test_register_twice_without_sources():
     reg = Registry()
@@ -188,6 +191,7 @@ def test_clear():
     reg.clear()
     with py.test.raises(LookupError):
         reg.component(linecount, [])
+
 
 def test_exact():
     reg = Registry()

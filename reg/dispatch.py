@@ -1,6 +1,6 @@
 from functools import update_wrapper
-from reg.mapping import Map, ClassMapKey
 from reg.implicit import implicit, NoImplicitLookupError
+
 
 def dispatch(func):
     """Make a multiple dispatch function out of argument.

@@ -1,10 +1,11 @@
 """Registry where you can register components by function and classes
 that you look up the component for."""
 
-from .mapping import MultiMap, ClassMapKey, ClassMultiMapKey, InverseMap
+from .mapping import MultiMap, ClassMultiMapKey
 from .lookup import Lookup
 
 from abc import ABCMeta, abstractmethod
+
 
 class IRegistry(object):
     """A registration API for components.
@@ -56,6 +57,7 @@ class IRegistry(object):
 
         Returns ``None`` if no registration exists.
         """
+
 
 class IClassLookup(object):
     __metaclass__ = ABCMeta
@@ -119,6 +121,7 @@ class IClassLookup(object):
         If no components can be found, the iterable returned will be empty.
         """
 
+
 class ClassRegistry(IRegistry, IClassLookup):
     def __init__(self):
         self._d = {}
@@ -147,6 +150,7 @@ class ClassRegistry(IRegistry, IClassLookup):
             return
         for component in m.all(ClassMultiMapKey(*classes)):
             yield component
+
 
 class Registry(IRegistry, Lookup):
     """A registry that is also a lookup.
