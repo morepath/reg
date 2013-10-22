@@ -1,4 +1,5 @@
-from .interfaces import PredicateRegistryError
+class PredicateRegistryError(Exception):
+    pass
 
 
 class Sentinel(object):

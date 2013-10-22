@@ -1,7 +1,6 @@
 import py.test
 from reg.predicate import (PredicateRegistry, Predicate, KeyIndex, ANY,
-                           key_permutations)
-from reg.interfaces import PredicateRegistryError
+                           key_permutations, PredicateRegistryError)
 
 
 def test_predicate_registry():
