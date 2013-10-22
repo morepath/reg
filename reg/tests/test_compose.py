@@ -1,5 +1,4 @@
 from reg.registry import ClassRegistry as Registry
-from reg.interface import Interface
 from reg.compose import (
     ListClassLookup, ChainClassLookup, CachedClassLookup)
 

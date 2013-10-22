@@ -5,8 +5,9 @@ is a caching version of ClassLookup.
 """
 
 from .registry import IClassLookup
+from .sentinel import Sentinel
 
-CACHED_SENTINEL = object()
+CACHED_SENTINEL = Sentinel('CACHED_SENTINEL')
 
 
 class ListClassLookup(IClassLookup):

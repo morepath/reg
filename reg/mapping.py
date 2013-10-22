@@ -1,6 +1,6 @@
 """Core data structures to allow registration and lookup by class.
 """
-
+from .sentinel import Sentinel
 
 class MapKey(object):
     """A map key that can have parents.
@@ -167,11 +167,7 @@ class MultiMap(object):
                 pass
 
 
-class InverseMapSentinel(object):
-    pass
-
-
-IM_SENTINEL = InverseMapSentinel()
+IM_SENTINEL = Sentinel('IM_SENTINEL')
 
 
 class InverseMap(object):

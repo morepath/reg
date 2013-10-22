@@ -3,9 +3,8 @@ that you look up the component for."""
 
 from .mapping import MultiMap, ClassMapKey, ClassMultiMapKey, InverseMap
 from .lookup import Lookup
-from abc import ABCMeta, abstractmethod
 
-SENTINEL = object()
+from abc import ABCMeta, abstractmethod
 
 class IRegistry(object):
     __metaclass__ = ABCMeta

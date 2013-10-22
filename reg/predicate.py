@@ -1,16 +1,10 @@
+from .sentinel import Sentinel
+
 class PredicateRegistryError(Exception):
     pass
 
 
-class Sentinel(object):
-    def __init__(self, name):
-        self.name = name
-
-    def __repr__(self):
-        return '<%s>' % self.name
-
 ANY = Sentinel('ANY')
-SENTINEL = Sentinel('SENTINEL')
 
 
 class Predicate(object):

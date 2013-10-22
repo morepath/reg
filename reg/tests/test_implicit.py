@@ -1,8 +1,7 @@
 import threading
 from reg.implicit import implicit
 from reg.registry import Registry
-from reg.interface import Interface
-
+from reg.dispatch import dispatch
 
 def setup_function(f):
     implicit.initialize(Registry())
@@ -114,12 +113,13 @@ def test_lookup_in_thread_does_not_use_changed_default():
 
 
 def test_implicit_component_lookup():
-    class ITarget(Interface):
+    @dispatch
+    def func():
         pass
 
     reg = Registry()
 
-    reg.register(ITarget, (), 'test component')
+    reg.register(func, (), 'test component')
 
     implicit.initialize(reg)
-    assert ITarget.component() == 'test component'
+    assert func.component() == 'test component'

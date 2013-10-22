@@ -1,9 +1,11 @@
 """Look up components by instance (using their classes) and target class.
 """
 
-# XXX rename to LookupError?
-from .interface import SENTINEL
+from .sentinel import Sentinel
+
 from abc import ABCMeta, abstractmethod
+
+SENTINEL = Sentinel('Sentinel')
 
 class ILookup(object):
     """Look up components by the class of objects.
