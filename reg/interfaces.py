@@ -4,15 +4,6 @@
 from .interface import Interface, abstractmethod, abstractproperty, SENTINEL
 
 
-class IMatcher(Interface):
-    """Look up by calling and returning value.
-
-    If an IMatcher component is registered, it is called with the objects
-    as an argument, and the resulting value is considered to be the looked up
-    component. If the resulting value is None, no component is found for
-    this matcher.
-    """
-
 
 
 

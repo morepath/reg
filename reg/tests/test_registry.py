@@ -1,5 +1,5 @@
 from reg.registry import Registry
-from reg.interfaces import IMatcher
+from reg.lookup import IMatcher
 
 
 def test_registry_sources():

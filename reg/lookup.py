@@ -2,7 +2,7 @@
 """
 
 # XXX rename to LookupError?
-from .interfaces import IMatcher, ComponentLookupError
+from .interfaces import ComponentLookupError
 from .interface import SENTINEL
 from abc import ABCMeta, abstractmethod
 
@@ -74,6 +74,16 @@ class ILookup(object):
         included as a matching component.
         """
 
+class IMatcher(object):
+    """Look up by calling and returning value.
+
+    If an IMatcher component is registered, it is called with the objects
+    as an argument, and the resulting value is considered to be the looked up
+    component. If the resulting value is None, no component is found for
+    this matcher.
+    """
+    __metaclass__ = ABCMeta
+    
 class Lookup(ILookup):
     def __init__(self, class_lookup):
         self.class_lookup = class_lookup
