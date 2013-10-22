@@ -1,6 +1,6 @@
 from reg.registry import Registry
-from reg.lookup import IMatcher
-
+from reg.lookup import IMatcher, LookupError
+import py.test
 
 def test_registry_sources():
     reg = Registry()
@@ -108,7 +108,7 @@ def test_matcher():
                 return 'normal'
             else:
                 return 'special'
-            
+
     reg.register(linecount, [Document],
                  Matcher())
 
@@ -124,7 +124,7 @@ def test_matcher_inheritance():
 
     class SpecialDocument(Document):
         pass
-    
+
     def linecount(obj):
         pass
 
@@ -146,7 +146,7 @@ def test_matcher_inheritance():
                  DocumentMatcher())
     reg.register(linecount, [SpecialDocument],
                  SpecialDocumentMatcher())
-    
+
     assert reg.component(linecount, [Document(1)]) == 'normal'
     assert reg.component(linecount, [Document(2)]) == 'special'
     assert reg.component(linecount, [SpecialDocument(1)]) == 'normal'
@@ -176,5 +176,37 @@ def test_register_twice_without_sources():
     reg.register(linecount, [], 'twice')
     assert reg.component(linecount, []) == 'twice'
 
-    
+
+def test_clear():
+    reg = Registry()
+
+    def linecount(obj):
+        pass
+
+    reg.register(linecount, [], 'once')
+    assert reg.component(linecount, []) == 'once'
+    reg.clear()
+    with py.test.raises(LookupError):
+        reg.component(linecount, [])
+
+def test_exact():
+    reg = Registry()
+
+    class Document(object):
+        pass
+
+    class SubDocument(Document):
+        pass
+
+    def linecount(obj):
+        pass
+
+    def other(obj):
+        pass
+
+    reg.register(linecount, [Document], 'once')
+    assert reg.exact(linecount, [Document]) == 'once'
+    assert reg.exact(linecount, [SubDocument]) is None
+    assert reg.exact(other, [Document]) is None
+
 # XXX various default and component lookup error tests
