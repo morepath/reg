@@ -360,3 +360,9 @@ def test_no_implicit():
     alpha = Alpha()
     with py.test.raises(NoImplicitLookupError):
         target.component(alpha)
+
+# XXX fallback to original function if no default given
+# XXX passing through kw instead of erroring out, at least for adapt()
+# XXX testing all()
+# XXX testing with implicit lookup
+# XXX cleanups
