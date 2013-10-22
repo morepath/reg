@@ -97,9 +97,5 @@ class NoImplicitLookupError(Exception):
     pass
 
 
-class ComponentLookupError(TypeError):
-    pass
-
-
 class PredicateRegistryError(Exception):
     pass

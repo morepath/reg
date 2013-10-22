@@ -2,7 +2,7 @@ import py.test
 
 from reg.interface import Interface, abstractmethod, NoImplicitLookupError
 from reg.registry import Registry
-from reg.interfaces import ComponentLookupError
+from reg.lookup import LookupError
 from reg.dispatch import dispatch
 
 class IAlpha(Interface):
@@ -152,18 +152,18 @@ def test_component_not_found():
     @dispatch
     def target(obj):
         pass
-    
-    with py.test.raises(ComponentLookupError):
+
+    with py.test.raises(LookupError):
         reg.component(target, []) is None
     assert reg.component(target, [], 'default') == 'default'
 
     alpha = Alpha()
-    with py.test.raises(ComponentLookupError):
+    with py.test.raises(LookupError):
         assert reg.component(target, [alpha])
     assert reg.component(target, [], 'default') == 'default'
 
     assert target.component(alpha, lookup=reg, default='default') == 'default'
-    with py.test.raises(ComponentLookupError):
+    with py.test.raises(LookupError):
         target.component(alpha, lookup=reg)
 
 
@@ -323,13 +323,13 @@ def test_adapter_returns_none():
     @dispatch
     def target(obj):
         pass
-    
+
     def adapt(obj):
         return None
     reg = Registry()
     reg.register(target, [Alpha], adapt)
     alpha = Alpha()
-    with py.test.raises(ComponentLookupError):
+    with py.test.raises(LookupError):
         target(alpha, lookup=reg)
     assert target(alpha, lookup=reg, default='default') == 'default'
 
@@ -340,7 +340,7 @@ def test_extra_kw():
     @dispatch
     def target(obj):
         pass
-    
+
     reg = Registry()
     foo = object()
 

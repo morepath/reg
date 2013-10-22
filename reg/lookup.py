@@ -2,7 +2,6 @@
 """
 
 # XXX rename to LookupError?
-from .interfaces import ComponentLookupError
 from .interface import SENTINEL
 from abc import ABCMeta, abstractmethod
 
@@ -74,6 +73,7 @@ class ILookup(object):
         included as a matching component.
         """
 
+
 class IMatcher(object):
     """Look up by calling and returning value.
 
@@ -83,7 +83,11 @@ class IMatcher(object):
     this matcher.
     """
     __metaclass__ = ABCMeta
-    
+
+
+class LookupError(Exception):
+    pass
+
 class Lookup(ILookup):
     def __init__(self, class_lookup):
         self.class_lookup = class_lookup
@@ -94,7 +98,7 @@ class Lookup(ILookup):
             return result
         if default is not SENTINEL:
             return default
-        raise ComponentLookupError(
+        raise LookupError(
             "%r: no component found for args %r" % (
                 func,
                 args))
@@ -108,7 +112,7 @@ class Lookup(ILookup):
             return result
         if default is not SENTINEL:
             return default
-        raise ComponentLookupError(
+        raise LookupError(
             "%r: no function found for args %r" % (
                 func, args))
 
