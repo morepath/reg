@@ -186,7 +186,7 @@ def test_component_not_found():
 #     assert IAlpha.component(alpha, lookup=reg) is foo
 
 
-def test_adapter_no_source():
+def test_call_no_source():
     reg = Registry()
 
     foo = object()
@@ -200,11 +200,11 @@ def test_adapter_no_source():
 
     reg.register(target, (), factory)
 
-    assert reg.adapt(target, []) is foo
+    assert reg.call(target, []) is foo
     assert target(lookup=reg) is foo
 
 
-def test_adapter_one_source():
+def test_call_one_source():
     reg = Registry()
 
     @dispatch
@@ -221,7 +221,7 @@ def test_adapter_one_source():
     reg.register(target, [IAlpha], Adapted)
 
     alpha = Alpha()
-    adapted = reg.adapt(target, [alpha])
+    adapted = reg.call(target, [alpha])
     assert isinstance(adapted, Adapted)
     assert adapted.context is alpha
     adapted = target(alpha, lookup=reg)
@@ -229,29 +229,7 @@ def test_adapter_one_source():
     assert adapted.context is alpha
 
 
-# def test_adapter_to_itself():
-#     reg = Registry()
-
-#     alpha = Alpha()
-
-#     class Adapter(IAlpha):
-#         def __init__(self, context):
-#             self.context = context
-
-#     # behavior without any registration; we get the object back
-#     assert reg.adapt(IAlpha, [alpha]) is alpha
-#     assert IAlpha.adapt(alpha, lookup=reg) is alpha
-#     # it works even without registry (even implicitly registered!)
-#     assert IAlpha.adapt(alpha) is alpha
-
-#     # behavior is the same with registration
-#     reg.register(IAlpha, [IAlpha], Adapter)
-#     assert reg.adapt(IAlpha, [alpha]) is alpha
-#     assert IAlpha.adapt(alpha, lookup=reg) is alpha
-#     assert IAlpha.adapt(alpha) is alpha
-
-
-def test_adapter_two_sources():
+def test_call_two_sources():
     reg = Registry()
 
     @dispatch
@@ -270,7 +248,7 @@ def test_adapter_two_sources():
 
     alpha = Alpha()
     beta = Beta()
-    adapted = reg.adapt(target, [alpha, beta])
+    adapted = reg.call(target, [alpha, beta])
 
     assert isinstance(adapted, Adapted)
     assert adapted.alpha is alpha
@@ -293,7 +271,7 @@ def test_default():
     assert target(lookup=reg, default='blah') == 'blah'
 
 
-def test_non_adapter_called():
+def test_non_function_called():
     reg = Registry()
     foo = object()
 
@@ -308,7 +286,7 @@ def test_non_adapter_called():
         target(alpha, lookup=reg)
 
 
-def test_adapter_with_wrong_args():
+def test_call_with_wrong_args():
     @dispatch
     def target(obj):
         pass
@@ -327,7 +305,7 @@ def test_adapter_with_wrong_args():
     assert str(e.value) == ("__init__() takes exactly 1 argument (2 given)")
 
 
-def test_adapter_returns_none():
+def test_func_returns_none():
     @dispatch
     def target(obj):
         return 'fallback'
@@ -383,7 +361,6 @@ def test_fallback():
     beta = Beta()
     assert target(beta, lookup=reg) == 'fallback'
 
-# XXX adapt to call
 # XXX passing through kw instead of erroring out, at least for adapt()
 # XXX testing all()
 # XXX testing with implicit lookup

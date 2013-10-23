@@ -40,7 +40,7 @@ def dispatch(func):
 
     def wrapper(*args, **kw):
         try:
-            return get_lookup(kw).adapt(wrapper, args, **kw)
+            return get_lookup(kw).call(wrapper, args, **kw)
         except ComponentLookupError:
             return func(*args, **kw)
 

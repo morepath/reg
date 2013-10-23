@@ -54,7 +54,7 @@ class ILookup(object):
         """
 
     @abstractmethod
-    def adapt(self, key, args, default=SENTINEL):
+    def call(self, key, args, default=SENTINEL):
         """Call function based on multiple dispatch on args.
 
         :param key: Call function for this key.
@@ -127,7 +127,7 @@ class Lookup(ILookup):
             "%r: no component found for args %r" % (
                 key, args))
 
-    def adapt(self, key, args, default=SENTINEL):
+    def call(self, key, args, default=SENTINEL):
         adapter = self.component(key, args, default)
         if adapter is default:
             return default
