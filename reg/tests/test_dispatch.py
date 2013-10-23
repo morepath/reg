@@ -330,15 +330,14 @@ def test_adapter_with_wrong_args():
 def test_adapter_returns_none():
     @dispatch
     def target(obj):
-        pass
+        return 'fallback'
 
     def adapt(obj):
         return None
     reg = Registry()
     reg.register(target, [Alpha], adapt)
     alpha = Alpha()
-    with py.test.raises(LookupError):
-        target(alpha, lookup=reg)
+    assert target(alpha, lookup=reg) == 'fallback'
     assert target(alpha, lookup=reg, default='default') == 'default'
 
 
@@ -370,7 +369,21 @@ def test_no_implicit():
     with py.test.raises(NoImplicitLookupError):
         target.component(alpha)
 
-# XXX fallback to original function if no default given
+
+def test_fallback():
+    @dispatch
+    def target(obj):
+        return 'fallback'
+
+    reg = Registry()
+    def specific_target(obj):
+        return 'specific'
+
+    reg.register(target, [Alpha], specific_target)
+    beta = Beta()
+    assert target(beta, lookup=reg) == 'fallback'
+
+# XXX adapt to call
 # XXX passing through kw instead of erroring out, at least for adapt()
 # XXX testing all()
 # XXX testing with implicit lookup

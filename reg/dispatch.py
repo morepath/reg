@@ -1,6 +1,6 @@
 from functools import update_wrapper
 from reg.implicit import implicit, NoImplicitLookupError
-
+from reg.lookup import LookupError
 
 def dispatch(func):
     """Make a multiple dispatch function out of argument.
@@ -39,7 +39,10 @@ def dispatch(func):
         return lookup
 
     def wrapper(*args, **kw):
-        return get_lookup(kw).adapt(wrapper, args, **kw)
+        try:
+            return get_lookup(kw).adapt(wrapper, args, **kw)
+        except LookupError:
+            return func(*args, **kw)
 
     def component(*args, **kw):
         """Look up registered component for function and arguments.
