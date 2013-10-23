@@ -2,7 +2,7 @@ import py.test
 
 from reg.implicit import NoImplicitLookupError
 from reg.registry import Registry
-from reg.lookup import LookupError
+from reg.lookup import ComponentLookupError
 from reg.dispatch import dispatch
 
 
@@ -160,17 +160,17 @@ def test_component_not_found():
     def target(obj):
         pass
 
-    with py.test.raises(LookupError):
+    with py.test.raises(ComponentLookupError):
         reg.component(target, []) is None
     assert reg.component(target, [], 'default') == 'default'
 
     alpha = Alpha()
-    with py.test.raises(LookupError):
+    with py.test.raises(ComponentLookupError):
         assert reg.component(target, [alpha])
     assert reg.component(target, [], 'default') == 'default'
 
     assert target.component(alpha, lookup=reg, default='default') == 'default'
-    with py.test.raises(LookupError):
+    with py.test.raises(ComponentLookupError):
         target.component(alpha, lookup=reg)
 
 

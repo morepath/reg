@@ -28,7 +28,7 @@ class ILookup(object):
         :param default: default value to return if lookup fails.
         :type default: object.
         :returns: registered component.
-        :raises: LookupError
+        :raises: ComponentLookupError
 
         A component can be any Python object.
 
@@ -48,7 +48,7 @@ class ILookup(object):
         up the ancestor chain of args.
 
         If a component can be found, it will be returned. If the
-        component cannot be found, a :class:`LookupError` will be raised,
+        component cannot be found, a :class:`ComponentLookupError` will be raised,
         unless a default argument is specified, in which case it will
         be returned.
         """
@@ -64,7 +64,7 @@ class ILookup(object):
         :param default: default value to return if lookup fails.
         :type default: object.
         :returns: result of function call.
-        :raises: LookupError
+        :raises: ComponentLookupError
 
         The behavior of this method is like that of component, but it
         performs an extra step: it calls the found component with the
@@ -109,7 +109,7 @@ class IMatcher(object):
     __metaclass__ = ABCMeta
 
 
-class LookupError(Exception):
+class ComponentLookupError(LookupError):
     pass
 
 
@@ -123,7 +123,7 @@ class Lookup(ILookup):
             return result
         if default is not SENTINEL:
             return default
-        raise LookupError(
+        raise ComponentLookupError(
             "%r: no component found for args %r" % (
                 key, args))
 
@@ -136,7 +136,7 @@ class Lookup(ILookup):
             return result
         if default is not SENTINEL:
             return default
-        raise LookupError(
+        raise ComponentLookupError(
             "%r: no function found for args %r" % (
                 key, args))
 
