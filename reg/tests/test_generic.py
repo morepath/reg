@@ -379,7 +379,24 @@ def test_fallback():
     beta = Beta()
     assert target(beta, lookup=reg) == 'fallback'
 
-# XXX passing through kw instead of erroring out, at least for adapt()
+
+def test_calling_twice():
+    @generic
+    def target(obj):
+        return 'fallback'
+
+    reg = Registry()
+    def a(obj):
+        return 'a'
+    def b(obj):
+        return 'b'
+
+    reg.register(target, [Alpha], a)
+    reg.register(target, [Beta], b)
+
+    assert target(Alpha(), lookup=reg) == 'a'
+    assert target(Beta(), lookup=reg) == 'b'
+
 # XXX testing all()
 # XXX testing with implicit lookup
 # XXX cleanups
