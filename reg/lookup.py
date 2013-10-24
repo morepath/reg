@@ -8,16 +8,25 @@ from abc import ABCMeta, abstractmethod
 SENTINEL = Sentinel('Sentinel')
 
 
-class ILookup(object):
-    """Look up components by the class of objects.
+class IMatcher(object):
+    """Look up by calling and returning value.
 
-    This is the basic API on top of which the multiple dispatch API
-    of Reg is implemented.
+    If a component that subclasses from IMatcher is registered, it
+    it is called with args, i.e. ``matcher(*args)``. The resulting value
+    is considered to be the looked up component. If the resulting value is
+    ``None``, no component is found for this matcher.
     """
-
     __metaclass__ = ABCMeta
 
-    @abstractmethod
+
+class ComponentLookupError(LookupError):
+    pass
+
+
+class Lookup(object):
+    def __init__(self, class_lookup):
+        self.class_lookup = class_lookup
+
     def component(self, key, args, default=SENTINEL):
         """Look up a component.
 
@@ -52,9 +61,16 @@ class ILookup(object):
         unless a default argument is specified, in which case it will
         be returned.
         """
+        result = next(self.all(key, args), None)
+        if result is not None:
+            return result
+        if default is not SENTINEL:
+            return default
+        raise ComponentLookupError(
+            "%r: no component found for args %r" % (
+                key, args))
 
-    @abstractmethod
-    def call(self, key, args, default=SENTINEL):
+    def call(self, key, args, default=SENTINEL, **kw):
         """Call function based on multiple dispatch on args.
 
         :param key: Call function for this key.
@@ -63,6 +79,7 @@ class ILookup(object):
         :type args: list of objects.
         :param default: default value to return if lookup fails.
         :type default: object.
+        :param kw: extra keyword arguments passed to the function called.
         :returns: result of function call.
         :raises: ComponentLookupError
 
@@ -73,8 +90,18 @@ class ILookup(object):
         This amounts to an implementation of multiple dispatch: zero
         or more arguments can be used to dispatch the function on.
         """
+        adapter = self.component(key, args, default)
+        if adapter is default:
+            return default
+        result = adapter(*args, **kw)
+        if result is not None:
+            return result
+        if default is not SENTINEL:
+            return default
+        raise ComponentLookupError(
+            "%r: no function found for args %r" % (
+                key, args))
 
-    @abstractmethod
     def all(self, key, args):
         """Lookup up all components registered for args.
 
@@ -96,51 +123,6 @@ class ILookup(object):
 
         If no components can be found, the iterable will be empty.
         """
-
-
-class IMatcher(object):
-    """Look up by calling and returning value.
-
-    If a component that subclasses from IMatcher is registered, it
-    it is called with args, i.e. ``matcher(*args)``. The resulting value
-    is considered to be the looked up component. If the resulting value is
-    ``None``, no component is found for this matcher.
-    """
-    __metaclass__ = ABCMeta
-
-
-class ComponentLookupError(LookupError):
-    pass
-
-
-class Lookup(ILookup):
-    def __init__(self, class_lookup):
-        self.class_lookup = class_lookup
-
-    def component(self, key, args, default=SENTINEL):
-        result = next(self.all(key, args), None)
-        if result is not None:
-            return result
-        if default is not SENTINEL:
-            return default
-        raise ComponentLookupError(
-            "%r: no component found for args %r" % (
-                key, args))
-
-    def call(self, key, args, default=SENTINEL):
-        adapter = self.component(key, args, default)
-        if adapter is default:
-            return default
-        result = adapter(*args)
-        if result is not None:
-            return result
-        if default is not SENTINEL:
-            return default
-        raise ComponentLookupError(
-            "%r: no function found for args %r" % (
-                key, args))
-
-    def all(self, key, args):
         for found in self.class_lookup.all(
                 key, [arg.__class__ for arg in args]):
             if isinstance(found, IMatcher):

@@ -319,9 +319,7 @@ def test_func_returns_none():
     assert target(alpha, lookup=reg, default='default') == 'default'
 
 
-# XXX review this; pep 443 supports extra kw arguments passed through
-# to func
-def test_extra_kw():
+def test_extra_kw_for_component():
     @dispatch
     def target(obj):
         pass
@@ -336,6 +334,24 @@ def test_extra_kw():
         target.component(alpha, lookup=reg, extra="illegal")
     assert str(e.value) == ("component() got an unexpected keyword "
                             "argument 'extra'")
+
+
+def test_extra_kw_for_call():
+    @dispatch
+    def target(obj, extra):
+        return "General: %s" % extra
+
+    reg = Registry()
+    def specific(obj, extra):
+        return "Specific: %s" % extra
+
+    reg.register(target, [Alpha], specific)
+    alpha = Alpha()
+    beta = Beta()
+    assert target(alpha, lookup=reg, extra="allowed") == 'Specific: allowed'
+    assert target(beta, lookup=reg, extra="allowed") == 'General: allowed'
+    assert target(alpha, lookup=reg, default='default', extra='allowed') == 'Specific: allowed'
+    assert target(beta, lookup=reg, default='default', extra='allowed') == 'default'
 
 
 def test_no_implicit():
