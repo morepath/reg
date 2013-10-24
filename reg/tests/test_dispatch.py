@@ -350,8 +350,10 @@ def test_extra_kw_for_call():
     beta = Beta()
     assert target(alpha, lookup=reg, extra="allowed") == 'Specific: allowed'
     assert target(beta, lookup=reg, extra="allowed") == 'General: allowed'
-    assert target(alpha, lookup=reg, default='default', extra='allowed') == 'Specific: allowed'
-    assert target(beta, lookup=reg, default='default', extra='allowed') == 'default'
+    assert target(alpha, lookup=reg, default='default',
+                  extra='allowed') == 'Specific: allowed'
+    assert target(beta, lookup=reg, default='default',
+                  extra='allowed') == 'default'
 
 
 def test_no_implicit():

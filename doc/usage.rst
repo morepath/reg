@@ -9,23 +9,31 @@ Introduction
 ------------
 
 Reg introduces a few clever registries that can help you build very
-flexible pluggability systems for your Python project. See Reg as
-infrastructure that helps you build more powerful registration APIs
-for your applications and frameworks. Reg may seem like overkill to
-you. You may very well be right; it depends on what you're building.
+flexible pluggability systems for your Python project. It provides an
+approach to do `multiple dispatch`_ in Python. Reg is very much aware
+of classes and inheritance. Reg lets you write methods outside their
+class, and methods that relate multiple classes at once.
+
+Reg provides an infrastructure that helps you build more powerful
+registration APIs for your applications and frameworks. Reg may seem
+like overkill to you. You may very well be right; it depends on what
+you're building.
 
 With Reg you can:
 
-* look up a registered object that provides a certain interface/abc/class.
+* call functions which have multiple implementations; which
+  implementation gets called is based on the arguments you send in:
+  single and multiple dispatch.
 
-* do this lookup for zero or more objects.
+* provide a general way to look up and plug in services in your
+  application: it supports a form of dependency injection.
 
-* adapt an object to another with the desired interface/abc/class.
+* look up other objects registered for a set of arguments.
 
-* look up a registered object according to other criteria (predicates).
+* look up a registered function or object according to other criteria
+  (predicates).
 
-Reg is very much aware of classes and inheritance. It provides an
-approach to do `multiple dispatch`_ in Python.
+* compose registries together, or isolate them.
 
 .. _`multiple dispatch`: http://en.wikipedia.org/wiki/Multiple_dispatch
 
