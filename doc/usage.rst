@@ -8,43 +8,104 @@ Using Reg
 Introduction
 ------------
 
-Reg is an implementation of `multiple dispatch`_ in Python. Reg lets
-you write methods outside their class as plain Python functions, and
-methods that relate multiple classes at once.
+Reg lets you write `generic functions`_.  To support this, Reg
+provides an implementation of `multiple dispatch`_ in Python. Reg lets
+you define methods outside their classes as plain Python
+functions. Reg in its basic use is like the single dispatch
+implementation described in Python `PEP 443`_, but Reg provides a lot
+more flexibility.
 
-XXX code sample
+Reg supports loose coupling. You can define a function in your core
+application or framework but provide definitions of this function
+outside of it.
 
-XXX talk about loose coupling
+Reg gives developers fine control over how to find implemenations of
+these functions. You can have multiple independent dispatch
+registries, and you can also compose them together. For special use
+cases you can also register and look up other objects instead of
+functions.
 
-Reg gives developers fine control over how this dispatch works. For
-special use cases you can register and look up other objects instead
-of functions. You can have multiple independent dispatch registries,
-and you can also compose them together.
-
-With all this, Reg offers infrastructure that helps you build more
-powerful registration APIs for your applications and frameworks. Reg
-may seem like overkill to you. You may very well be right; it depends
-on what you're building.
-
-XXX pep 443
-
-With Reg you can:
-
-* call functions which have multiple implementations; which
-  implementation gets called is based on the arguments you send in:
-  single and multiple dispatch.
-
-* provide a general way to look up and plug in services in your
-  application: it supports a form of dependency injection.
-
-* look up other objects registered for a set of arguments.
-
-* look up a registered function or object according to other criteria
-  (predicates).
-
-* compose registries together, or isolate them.
+What is Reg for? Reg offers infrastructure that lets you build more
+powerful frameworks -- frameworks that can be extended and overridden
+in a general way. Reg may seem like overkill to you. You may very well
+be right; it depends on what you're building.
 
 .. _`multiple dispatch`: http://en.wikipedia.org/wiki/Multiple_dispatch
+
+.. _`generic functions`: https://en.wikipedia.org/wiki/Generic_function
+
+.. _`PEP 443`: http://www.python.org/dev/peps/pep-0443/
+
+Example
+-------
+
+Here is an example of Reg. First we define a generic function:
+
+.. testcode::
+
+  import reg
+  @reg.generic
+  def title(obj):
+     return "we don't know the title"
+
+We now create a few example classes. We want to be able to get the title
+for both.
+
+.. testcode::
+
+  class TitledReport(object):
+     def __init__(self, title):
+        self.title = title
+
+  class LabeledReport(object):
+     def __init__(self, label):
+        self.label = label
+
+In one case there's an attribute called ``title`` but in the
+other case we have an attribute ``label`` we want to use as the title. We
+will implement this behavior in a few plain python functions:
+
+.. testcode::
+
+  def titled_report_title(obj):
+      return obj.title
+
+  def labeled_report_title(obj):
+      return obj.label
+
+We now create a Reg registry, register our
+implementations in it, and then tell Reg to use it automatically:
+
+.. testcode::
+
+  registry = reg.Registry()
+  registry.register(title, [TitledReport], titled_report_title)
+  registry.register(title, [LabeledReport], labeled_report_title)
+  from reg import implicit
+  implicit.initialize(registry)
+
+Once we've done this, our generic ``title`` function works both both
+titled and labeled objects:
+
+.. doctest::
+
+  >>> titled = TitledReport('titled')
+  >>> labeled = LabeledReport('labeled')
+  >>> title(titled)
+  'titled'
+  >>> title(labeled)
+  'labeled'
+
+Our example is over, so we reset the implicit registry set up before:
+
+.. testcode::
+
+  implicit.clear()
+
+Why not just use plain functions or methods instead of generic
+functions? Often plain functions or methods will be the right solution.
+But not always -- in this document we will motivate a case where
+generic functions are useful.
 
 Generic functions
 =================
@@ -456,7 +517,7 @@ And it will work for folder too:
   >>> size(folder)
   25
 
-It will work for subclasses too::
+It will work for subclasses too:
 
 .. doctest::
 
