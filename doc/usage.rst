@@ -804,4 +804,195 @@ by ``Registry`` directly). Here's what to do:
   >>> list(r.all('some key', [doc]))
   ['some registered']
 
+Composition
+===========
 
+Reg separates the registration API from the lookup API. The
+``Registry`` implementation we've been using combines both in one, but
+we can separate the two instead. This is useful for a framework
+developer that may want to allow the composition of multiple lookups
+together. It also supports caching lookups to help performance.
+
+ClassRegistry
+-------------
+
+``ClassRegistry`` does not offer the full lookup API but does
+still allows registration:
+
+.. testcode::
+
+  cr = reg.ClassRegistry()
+
+We can use this to do registration as before:
+
+.. testcode::
+
+  @reg.generic
+  def example():
+      raise NotImplementedError
+
+  def document_example(doc):
+      return "Document Example"
+
+  cr.register(example, [Document], document_example)
+
+So far nothing is different. But ``ClassRegistry`` supports the *class
+lookup* API that lets you lookup registrations by the *class* of
+what was registered instead of by instance. Here's how:
+
+.. doctest::
+
+  >>> cr.get(example, [Document])
+  <function document_example at ...>
+
+It is still inheritance aware, too:
+
+.. doctest::
+
+  >>> cr.get(example, [HtmlDocument])
+  <function document_example at ...>
+
+We can get the original instance-based lookup API from a class lookup
+by wrapping it in a ``Lookup``:
+
+.. doctest::
+
+  >>> l = reg.Lookup(cr)
+  >>> l.component(example, [doc])
+  <function document_example at ...>
+
+Caching
+-------
+
+Now the fun starts. We can turn a class lookup in a faster, caching
+class lookup:
+
+.. doctest::
+
+  >>> caching = reg.CachingClassLookup(cr)
+  >>> caching.get(example, [Document])
+  <function document_example at ...>
+
+Turning it back into a lookup gives us a caching version of what we had
+before:
+
+.. doctest::
+
+  >>> caching_lookup = reg.Lookup(caching)
+  >>> caching_lookup.component(example, [doc])
+  <function document_example at ...>
+
+You'll have to trust us on this, but it's faster the second time as
+it's cached!
+
+Composing class lookups
+-----------------------
+
+You can also compose class lookups together into a bigger class
+lookup. This allows you to compose and partition behavior, sharing
+behavior where you want it but isolating it otherwise.
+
+The use case for this is a core framework that provides default
+behavior, with applications written on top that extend or override
+this default behavior. If one application overrides the behavior,
+another application written on top of the same framework should not be
+affected.
+
+Let's look at an example of this. First we define three registries:
+for the framework, for one application built with it, and for another
+application built with it:
+
+.. testcode::
+
+  framework = reg.ClassRegistry()
+  app = reg.ClassRegistry()
+  other_app = reg.ClassRegistry()
+
+We can now compose the ``framework`` and the ``app`` class lookup:
+
+.. testcode::
+
+  app_combined = reg.Lookup(reg.ListClassLookup([app, framework]))
+
+We compose the ``framework`` and the ``other_app`` class lookup
+separately:
+
+.. testcode::
+
+  other_app_combined = reg.Lookup(reg.ListClassLookup([other_app, framework]))
+
+Our hypothetical example framework provides a serialization API. The
+idea is that we can call ``serialize`` on an object to get a
+representation of that object as dictionaries and lists, JSON-style:
+
+.. testcode::
+
+  @reg.generic
+  def serialize(obj):
+     raise NotImplementedError
+
+We've also provided a default serialization for documents in our
+framework:
+
+.. testcode::
+
+  def document_serialize(doc):
+     return { 'text': doc.text }
+
+  framework.register(serialize, [Document], document_serialize)
+
+Let's try it with the core framework itself:
+
+.. doctest::
+
+  >>> serialize(doc, lookup=reg.Lookup(framework))
+  {'text': 'Hello world!'}
+
+It also works in the ``app_combined`` application and the
+``other_app_combined`` application:
+
+.. doctest::
+
+  >>> serialize(doc, lookup=app_combined)
+  {'text': 'Hello world!'}
+  >>> serialize(doc, lookup=other_app_combined)
+  {'text': 'Hello world!'}
+
+Now we decide that we want to override the default serialization for
+``Document``, but only in ``app``, not in the framework itself, so
+that ``other_app`` is unaffected:
+
+.. testcode::
+
+  def app_document_serialize(doc):
+     return { 'content': 'The content: %s' % doc.text }
+
+  app.register(serialize, [Document], app_document_serialize)
+
+Our application has the new behavior now:
+
+.. doctest::
+
+  >>> serialize(doc, lookup=app_combined)
+  {'content': 'The content: Hello world!'}
+
+But our framework is not affected, and neither is ``other_app``:
+
+.. doctest::
+
+  >>> serialize(doc, lookup=reg.Lookup(framework))
+  {'text': 'Hello world!'}
+  >>> serialize(doc, lookup=other_app_combined)
+  {'text': 'Hello world!'}
+
+So far in this example we've used the explicit ``lookup``
+argument. But how does this combine with the implict lookup facility?
+Changing the implicit lookup before each application switch seems
+daunting, but in practice you'd typically only switch the implicit
+application context once per thread. The implicit lookup is thread
+local, so that one thread's implicit lookup does not affect the other.
+Multiple threads can this way run different applications all sharing
+the same framework. This does require doing all the required
+registrations during application startup time, and then not modifying
+them anymore during run time, as registration is not thread-safe, just
+lookup.
