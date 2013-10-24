@@ -3,7 +3,7 @@ import py.test
 from reg.implicit import NoImplicitLookupError
 from reg.registry import Registry
 from reg.lookup import ComponentLookupError
-from reg.dispatch import dispatch
+from reg.generic import generic
 
 
 class IAlpha(object):
@@ -23,7 +23,7 @@ class Beta(IBeta):
 
 
 def test_call():
-    @dispatch
+    @generic
     def foo(obj):
         pass
 
@@ -47,7 +47,7 @@ def test_call():
 
 
 def test_component():
-    @dispatch
+    @generic
     def foo():
         pass
 
@@ -65,7 +65,7 @@ def test_all():
     class Sub(Base):
         pass
 
-    @dispatch
+    @generic
     def target(obj):
         pass
 
@@ -92,7 +92,7 @@ def test_component_no_source():
     reg = Registry()
     foo = object()
 
-    @dispatch
+    @generic
     def target():
         pass
 
@@ -105,7 +105,7 @@ def test_component_one_source():
     reg = Registry()
     foo = object()
 
-    @dispatch
+    @generic
     def target():
         pass
 
@@ -120,7 +120,7 @@ def test_component_two_sources():
     reg = Registry()
     foo = object()
 
-    @dispatch
+    @generic
     def target():
         pass
 
@@ -141,7 +141,7 @@ def test_component_inheritance():
     class Delta(Gamma):
         pass
 
-    @dispatch
+    @generic
     def target():
         pass
 
@@ -156,7 +156,7 @@ def test_component_inheritance():
 def test_component_not_found():
     reg = Registry()
 
-    @dispatch
+    @generic
     def target(obj):
         pass
 
@@ -191,7 +191,7 @@ def test_call_no_source():
 
     foo = object()
 
-    @dispatch
+    @generic
     def target():
         pass
 
@@ -207,7 +207,7 @@ def test_call_no_source():
 def test_call_one_source():
     reg = Registry()
 
-    @dispatch
+    @generic
     def target(obj):
         pass
 
@@ -232,7 +232,7 @@ def test_call_one_source():
 def test_call_two_sources():
     reg = Registry()
 
-    @dispatch
+    @generic
     def target(a, b):
         pass
 
@@ -263,7 +263,7 @@ def test_call_two_sources():
 def test_default():
     reg = Registry()
 
-    @dispatch
+    @generic
     def target():
         pass
 
@@ -275,7 +275,7 @@ def test_non_function_called():
     reg = Registry()
     foo = object()
 
-    @dispatch
+    @generic
     def target(obj):
         pass
 
@@ -287,7 +287,7 @@ def test_non_function_called():
 
 
 def test_call_with_wrong_args():
-    @dispatch
+    @generic
     def target(obj):
         pass
 
@@ -306,7 +306,7 @@ def test_call_with_wrong_args():
 
 
 def test_func_returns_none():
-    @dispatch
+    @generic
     def target(obj):
         return 'fallback'
 
@@ -320,7 +320,7 @@ def test_func_returns_none():
 
 
 def test_extra_kw_for_component():
-    @dispatch
+    @generic
     def target(obj):
         pass
 
@@ -337,7 +337,7 @@ def test_extra_kw_for_component():
 
 
 def test_extra_kw_for_call():
-    @dispatch
+    @generic
     def target(obj, extra):
         return "General: %s" % extra
 
@@ -357,7 +357,7 @@ def test_extra_kw_for_call():
 
 
 def test_no_implicit():
-    @dispatch
+    @generic
     def target(obj):
         pass
 
@@ -367,7 +367,7 @@ def test_no_implicit():
 
 
 def test_fallback():
-    @dispatch
+    @generic
     def target(obj):
         return 'fallback'
 

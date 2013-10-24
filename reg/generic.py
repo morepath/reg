@@ -2,8 +2,8 @@ from functools import update_wrapper
 from reg.implicit import implicit, NoImplicitLookupError
 from reg.lookup import ComponentLookupError
 
-def dispatch(func):
-    """Make a multiple dispatch function out of argument.
+def generic(func):
+    """Turn a function into a generic function.
 
     :param func: Function to turn into a multiple dispatch function.
     :type func: function.

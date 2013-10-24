@@ -1,7 +1,7 @@
 import threading
 from reg.implicit import implicit
 from reg.registry import Registry
-from reg.dispatch import dispatch
+from reg.generic import generic
 
 
 def setup_function(f):
@@ -114,7 +114,7 @@ def test_lookup_in_thread_does_not_use_changed_default():
 
 
 def test_implicit_component_lookup():
-    @dispatch
+    @generic
     def func():
         pass
 

@@ -5,3 +5,4 @@ from .lookup import Lookup, ComponentLookupError
 from .predicate import (PredicateRegistry, Predicate, KeyIndex,
                         PredicateRegistryError)
 from .compose import ListClassLookup, ChainClassLookup, CachingClassLookup
+from .generic import generic
