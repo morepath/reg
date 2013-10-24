@@ -656,3 +656,152 @@ Given a request and a document, we can now adapt it to ``IView``:
   >>> request = Request()
   >>> view(request, doc)
   'The document content is: Hello world!'
+
+Service Discovery
+=================
+
+Sometimes you want your application to have configurable services. The
+application may for instance need a way to send email, but you don't
+want to hardcode any particular way into your app, but instead leave
+this to a particular deployment-specific configuration. You can use the Reg
+infrastructure for this as well.
+
+The simplest way to do this with Reg is by using a generic service lookup
+function:
+
+.. testcode::
+
+  @reg.generic
+  def emailer():
+      raise NotImplementedError
+
+Here we've create a generic function that takes no arguments (and thus does
+no dynamic dispatch). But it's still generic, so we can plug in its actual
+implementation elsewhere, into the registry:
+
+.. testcode::
+
+  sent = []
+
+  def send_email(sender, subject, body):
+      # some specific way to send email
+      sent.append((sender, subject, body))
+
+  def actual_emailer():
+      return send_email
+
+  r.register(emailer, [], actual_emailer)
+
+Now when we call emailer, we'll get the specific service we want:
+
+.. doctest::
+
+  >>> the_emailer = emailer()
+  >>> the_emailer('someone@example.com', 'Hello', 'hello world!')
+  >>> sent
+  [('someone@example.com', 'Hello', 'hello world!')]
+
+In this case we return the function ``send_email`` from the
+``emailer()`` function, but we could return any object we want that
+implements the service, such as an instance with a more extensive API.
+
+Lower level API
+===============
+
+Registering non-functions
+-------------------------
+
+Some special use cases require the registration of other objects besides
+callables. Reg exposes an API to get at these:
+
+.. testcode::
+
+  @reg.generic
+  def foo(model):
+      raise NotImplementedError
+
+  thing = "Thing"
+
+  r.register(foo, [Document], thing)
+
+We've registered ``thing`` for generic ``foo`` of ``Document`` now,
+not a function. Because ``thing`` is not a function, calling ``foo``
+for ``Document`` will result in an error:
+
+.. doctest::
+
+  >>> foo(doc)
+  Traceback (most recent call last):
+    ...
+  TypeError: 'str' object is not callable
+
+We can still get at ``thing`` with a special method on the function called
+``component``::
+
+  >>> foo.component(doc)
+  "thing"
+
+Getting all
+-----------
+
+As we've seen, Reg supports inheritance. ``size`` for instance was
+registered for ``Document`` instances, and is therefore also available
+of instances of its subclass, ``HtmlDocument``:
+
+.. doctest::
+
+  >>> size.component(doc) is document_size
+  True
+  >>> size.component(htmldoc) is document_size
+  True
+
+Using the special ``all`` function we can also get an iterable of
+*all* the components registered for a particular instance, including
+those of base classes. Right now this is pretty boring as there's
+only one of them:
+
+.. doctest::
+
+  >>> list(size.all(doc))
+  [<function document_size at ...>]
+  >>> list(size.all(htmldoc))
+  [<function document_size at ...>]
+
+We can make this more interesting by registering a special
+``htmldocument_size`` to handle ``HtmlDocument`` instances:
+
+.. testcode::
+
+  def htmldocument_size(doc):
+     return len(doc.text) + 1 # 1 so we can see a difference
+
+  r.register(size, [HtmlDocument], htmldocument_size)
+
+``size.all()`` for ``htmldoc`` now also gives back the more specific
+``htmldocument_size``::
+
+  >>> list(size.all(htmldoc))
+  [<function htmldocument_size at ...>, <function document_size at ...>]
+
+Using the Registry directly
+---------------------------
+
+The key under which we register something in a registry in fact doesn't
+need to be a function. We can use any hashable object, such as a string:
+
+.. testcode::
+
+  r.register('some key', [Document], 'some registered')
+
+We can't get it at it using a generic dispatch function anymore
+now. We can use the ``Lookup`` API instead (in this case it's provided
+by ``Registry`` directly). Here's what to do:
+
+.. doctest::
+
+  >>> r.component('some key', [doc])
+  'some registered'
+  >>> list(r.all('some key', [doc]))
+  ['some registered']
+
+
