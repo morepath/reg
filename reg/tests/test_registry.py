@@ -1,5 +1,5 @@
 from reg.registry import Registry
-from reg.lookup import IMatcher, ComponentLookupError
+from reg.lookup import Matcher, ComponentLookupError
 import py.test
 
 
@@ -102,7 +102,7 @@ def test_matcher():
     def linecount(obj):
         pass
 
-    class Matcher(IMatcher):
+    class MyMatcher(Matcher):
         def __call__(self, doc):
             if doc.id == 1:
                 return 'normal'
@@ -110,7 +110,7 @@ def test_matcher():
                 return 'special'
 
     reg.register(linecount, [Document],
-                 Matcher())
+                 MyMatcher())
 
     assert reg.component(linecount, [Document(1)]) == 'normal'
     assert reg.component(linecount, [Document(2)]) == 'special'
@@ -129,14 +129,14 @@ def test_matcher_inheritance():
     def linecount(obj):
         pass
 
-    class DocumentMatcher(IMatcher):
+    class DocumentMatcher(Matcher):
         def __call__(self, doc):
             if doc.id == 1:
                 return 'normal'
             else:
                 return 'special'
 
-    class SpecialDocumentMatcher(IMatcher):
+    class SpecialDocumentMatcher(Matcher):
         def __call__(self, doc):
             if doc.id == 2:
                 return 'extra normal'

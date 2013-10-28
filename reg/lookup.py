@@ -3,20 +3,17 @@
 
 from .sentinel import Sentinel
 
-from abc import ABCMeta, abstractmethod
-
 SENTINEL = Sentinel('Sentinel')
 
 
-class IMatcher(object):
+class Matcher(object):
     """Look up by calling and returning value.
 
-    If a component that subclasses from IMatcher is registered, it
+    If a component that subclasses Matcher is registered, it
     it is called with args, i.e. ``matcher(*args)``. The resulting value
     is considered to be the looked up component. If the resulting value is
     ``None``, no component is found for this matcher.
     """
-    __metaclass__ = ABCMeta
 
 
 class ComponentLookupError(LookupError):
@@ -49,7 +46,7 @@ class Lookup(object):
         up. If multiple args are listed, the lookup is made for that
         combination of args.
 
-        If the component found is an instance of class:`IMatcher`, it
+        If the component found is an instance of class:`Matcher`, it
         will be called with args as parameters
         (``matcher(*args)``). The matcher can return an object, in
         which case will be returned as the real matching component. If
@@ -117,7 +114,7 @@ class Lookup(object):
         another for its base class, ``all()`` with an instance of the
         class as its argument will return both components.
 
-        Will check whether the found component is an IMatcher, in
+        Will check whether the found component is an Matcher, in
         which case it will be called with args. If non-None is
         returned, the found value is included as a matching component.
 
@@ -125,7 +122,7 @@ class Lookup(object):
         """
         for found in self.class_lookup.all(
                 key, [arg.__class__ for arg in args]):
-            if isinstance(found, IMatcher):
+            if isinstance(found, Matcher):
                 found = found(*args)
             if found is not None:
                 yield found
