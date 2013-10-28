@@ -8,11 +8,11 @@ Here's what we have:
 
 .. toctree::
    :maxdepth: 2
-   
+
    usage
+   api
    developing
    history
- 
 
 Indices and tables
 ==================

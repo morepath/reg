@@ -20,7 +20,7 @@ def generic(func):
 
     Can be used as a decorator::
 
-      @dispatch
+      @reg.generic
       def my_function(...):
           ...
     """

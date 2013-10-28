@@ -1,14 +1,18 @@
 from .sentinel import Sentinel
 
+# XXX needs a lot more documentation
 
 class PredicateRegistryError(Exception):
-    pass
+    """An error using the predicate registry.
+    """
 
 
 ANY = Sentinel('ANY')
 
 
 class Predicate(object):
+    """A predicate.
+    """
     def __init__(self, name, index_factory):
         self.name = name
         self.index_factory = index_factory
@@ -18,6 +22,8 @@ class Predicate(object):
 
 
 class KeyIndex(object):
+    """An index for matching predicates by key.
+    """
     def __init__(self):
         self.d = {}
 
@@ -29,6 +35,8 @@ class KeyIndex(object):
 
 
 class PredicateRegistry(object):
+    """A registry that can be used to index items by predicate.
+    """
     def __init__(self, predicates):
         self.predicates = predicates
         self.names = [predicate.name for predicate in predicates]

@@ -6,17 +6,22 @@ import threading
 
 
 class NoImplicitLookupError(Exception):
-    pass
+    """No implicit lookup was registered.
+
+    Register an implicit lookup by calling
+    `reg.implicit.initialize()`, or pass an explicit ``lookup``
+    argument to generic function calls.
+    """
 
 
 class Implicit(object):
     """Implicit global lookup.
 
     There will only one singleton instance of this, called
-    ``implicit``, in this module. The lookup can then be accessed
-    using ``implicit.lookup``.
+    ``reg.implicit``. The lookup can then be accessed using
+    ``reg.implicit.lookup``.
 
-    Dispatching functions as well as their ``component`` and ``all``
+    Generic functions as well as their ``component`` and ``all``
     methods make use of this information if you do not pass an
     explicit ``lookup`` argument to them. This is handy as it becomes
     unnecessary to have to pass a ``lookup`` object everywhere.
@@ -36,10 +41,10 @@ class Implicit(object):
 
     Reg offers facilities to compose such a custom lookup:
 
-    * ``reg.ListClassLookup`` and ``reg.ChainClassLookup``
-       which can be used to chain multiple ``IClassLookup``s together.
+    * ``reg.ListClassLookup`` and ``reg.ChainClassLookup`` which
+      can be used to chain multiple ``IClassLookup`` instances together.
 
-   * ``reg.CachingClassLookup`` which can be used to create a
+    * ``reg.CachingClassLookup`` which can be used to create a
       faster caching version of an ``IClassLookup``.
 
     * ``reg.Lookup`` which can be used to turn a ``IClassLookup``

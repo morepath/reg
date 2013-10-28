@@ -153,8 +153,6 @@ class ClassRegistry(IRegistry, IClassLookup):
 
 
 class Registry(IRegistry, Lookup):
-    """A registry that is also a lookup.
-    """
     def __init__(self):
         self.registry = ClassRegistry()
         # the class_lookup is this class itself

@@ -17,10 +17,22 @@ class Matcher(object):
 
 
 class ComponentLookupError(LookupError):
-    pass
+    """Error raised when a component cannot be found.
+
+    Will only be raised if nod ``default`` argument was supplied
+    during lookup.
+    """
 
 
 class Lookup(object):
+    """Look up objects for a key.
+
+    The lookup API is also available directly on a function decorated
+    with :func:`reg.generic`. The ``call`` method stands in for the actual
+    function call. If the call method is in use from ``reg.generic``,
+    :exc:`ComponentLookupError` is never raised, and instead the fall
+    back is to the function being decorated.
+    """
     def __init__(self, class_lookup):
         self.class_lookup = class_lookup
 

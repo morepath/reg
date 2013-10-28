@@ -73,8 +73,9 @@ will implement this behavior in a few plain python functions:
   def labeled_report_title(obj):
       return obj.label
 
-We now create a Reg registry, register our
-implementations in it, and then tell Reg to use it automatically:
+We now create a Reg :class:`reg.Registry`, register our
+implementations in it using :meth:`reg.IRegistry.register`, and then
+tell Reg to use it automatically using :meth:`reg.implicit.Implicit.initialize`:
 
 .. testcode::
 
@@ -442,7 +443,7 @@ need to transform the ``size`` function to a generic one:
   size = reg.generic(size)
 
 We can actually spell these two steps in a single step, as
-``generic`` can be used as decorator:
+:func:`reg.generic` can be used as decorator:
 
 .. testcode::
 
@@ -495,8 +496,9 @@ We can now use our ``size`` function:
       ...
     NoImplicitLookupError: Cannot lookup without explicit lookup argument because no implicit lookup was configured.
 
-We can specify an implicit lookup argument for all generic lookups so
-we don't have to pass it in anymore:
+Using :py:meth:`reg.implicit.Implicit.initialize` we can specify an
+implicit lookup argument for all generic lookups so we don't have to
+pass it in anymore:
 
 .. testcode::
 
@@ -855,8 +857,8 @@ need to be a function. We can use any hashable object, such as a string:
   r.register('some key', [Document], 'some registered')
 
 We can't get it at it using a generic dispatch function anymore
-now. We can use the ``Lookup`` API instead (in this case it's provided
-by ``Registry`` directly). Here's what to do:
+now. We can use the :class:`reg.Lookup` API instead (in this case it's
+provided by ``Registry`` directly). Here's what to do:
 
 .. doctest::
 
@@ -877,7 +879,7 @@ together. It also supports caching lookups to help performance.
 ClassRegistry
 -------------
 
-``ClassRegistry`` does not offer the full lookup API but does
+:class:`reg.ClassRegistry` does not offer the full lookup API but does
 still allows registration:
 
 .. testcode::
@@ -926,7 +928,7 @@ Caching
 -------
 
 Now the fun starts. We can turn a class lookup in a faster, caching
-class lookup:
+class lookup using :class:`reg.CachingClassLookup`:
 
 .. doctest::
 
@@ -969,7 +971,8 @@ application built with it:
   app = reg.ClassRegistry()
   other_app = reg.ClassRegistry()
 
-We can now compose the ``framework`` and the ``app`` class lookup:
+We can now compose the ``framework`` and the ``app`` class lookup using
+:class:`reg.ListClassLookup`:
 
 .. testcode::
 
