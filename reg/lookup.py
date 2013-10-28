@@ -54,9 +54,9 @@ class Lookup(object):
         up the ancestor chain of args.
 
         If a component can be found, it will be returned. If the
-        component cannot be found, a :class:`ComponentLookupError` will be raised,
-        unless a default argument is specified, in which case it will
-        be returned.
+        component cannot be found, a :class:`ComponentLookupError`
+        will be raised, unless a default argument is specified, in
+        which case it will be returned.
         """
         result = next(self.all(key, args), None)
         if result is not None:

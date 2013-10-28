@@ -342,6 +342,7 @@ def test_extra_kw_for_call():
         return "General: %s" % extra
 
     reg = Registry()
+
     def specific(obj, extra):
         return "Specific: %s" % extra
 
@@ -372,6 +373,7 @@ def test_fallback():
         return 'fallback'
 
     reg = Registry()
+
     def specific_target(obj):
         return 'specific'
 
@@ -386,8 +388,10 @@ def test_calling_twice():
         return 'fallback'
 
     reg = Registry()
+
     def a(obj):
         return 'a'
+
     def b(obj):
         return 'b'
 
@@ -396,7 +400,3 @@ def test_calling_twice():
 
     assert target(Alpha(), lookup=reg) == 'a'
     assert target(Beta(), lookup=reg) == 'b'
-
-# XXX testing all()
-# XXX testing with implicit lookup
-# XXX cleanups
