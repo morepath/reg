@@ -22,7 +22,7 @@ class IRegistry(object):
         :param classes: List of classes for which to register component.
         :type classes: list of classes.
         :param component: Any python object, often a function.
-                          Can be an IMatcher instance.
+                          Can be a :class:`reg.Matcher` instance.
         :type component: object.
 
         The key is a hashable object, often a function object, by
