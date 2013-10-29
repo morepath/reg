@@ -58,6 +58,18 @@ For a while during internal development this codebase was called
 call it ``Reg``, short for registry, as it's really about clever
 registries more than anything else.
 
+After my first announcement_ of Reg to the world in september 2013 I
+got the question why I shouldn't just use PEP 443, which has a generic
+function implementation (single dispatch). I started thinking I should
+convert Reg to a generic function implementation, as it was already
+very close. After talking to some people about this at PyCon DE in
+october, I did the refactoring_ to use generic functions throughout
+and no interfaces for lookup, and this is the current Reg you see.
+
+.. _announcement: http://blog.startifact.com/posts/reg-component-architecture-reimagined.html
+
+.. _refactoring: http://blog.startifact.com/posts/reg-now-with-more-generic.html
+
 Brief history of Zope Component Architecture
 --------------------------------------------
 
