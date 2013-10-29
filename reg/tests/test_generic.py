@@ -423,3 +423,14 @@ def test_lookup_passed_along():
     reg.register(g2, [Alpha], g2_impl)
 
     assert g1(Alpha(), lookup=reg) == 'g2'
+
+
+def test_lookup_passed_along_fallback():
+    @generic
+    def a(lookup):
+        return "fallback"
+
+    reg = Registry()
+
+    assert a(lookup=reg) == 'fallback'
+

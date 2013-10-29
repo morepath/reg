@@ -1,7 +1,7 @@
 from functools import update_wrapper
 from reg.implicit import implicit, NoImplicitLookupError
 from reg.lookup import ComponentLookupError
-
+from reg.mapply import mapply
 
 def generic(func):
     """Turn a function into a generic function.
@@ -40,10 +40,11 @@ def generic(func):
         return lookup
 
     def wrapper(*args, **kw):
+        lookup = get_lookup(kw)
         try:
-            return get_lookup(kw).call(wrapper, args, **kw)
+            return lookup.call(wrapper, args, **kw)
         except ComponentLookupError:
-            return func(*args, **kw)
+            return mapply(func, *args, lookup=lookup, **kw)
 
     def component(*args, **kw):
         """Look up registered component for function and arguments.
