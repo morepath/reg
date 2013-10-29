@@ -484,6 +484,11 @@ We can now use our ``size`` function:
       ...
     NoImplicitLookupError: Cannot lookup without explicit lookup argument because no implicit lookup was configured.
 
+  If your generic function implementation defines a ``lookup``
+  argument it will receive the lookup used. This way you can continue
+  passing the lookup along explicitly from generic function to generic
+  function if you want to.
+
   It's annoying to have to keep spelling this out all the time -- we
   don't do it in our ``folder_size`` implementation, for instance, so
   that will fail too, even if we pass a lookup to the our ``size``

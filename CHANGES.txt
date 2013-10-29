@@ -4,8 +4,12 @@ CHANGES
 0.2 (unreleased)
 ================
 
-- Nothing changed yet.
+- If a generic function implementation defines a ``lookup`` argument
+  that argument will be the lookup used to call it.
 
+- Added ``reg.mapply()``. This allows you to call things with more
+  keyword arguments than it accepts, ignoring those extra keyword
+  args.
 
 0.1 (2013-10-28)
 ================

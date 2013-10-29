@@ -2,6 +2,7 @@
 """
 
 from .sentinel import Sentinel
+from .mapply import mapply
 
 SENTINEL = Sentinel('Sentinel')
 
@@ -98,11 +99,15 @@ class Lookup(object):
 
         This amounts to an implementation of multiple dispatch: zero
         or more arguments can be used to dispatch the function on.
+
+        If the found component has a lookup argument, it will pass the
+        lookup to this argument too. This allows you to pass along lookup
+        completely explicitly between generic functions.
         """
-        adapter = self.component(key, args, default)
-        if adapter is default:
+        func = self.component(key, args, default)
+        if func is default:
             return default
-        result = adapter(*args, **kw)
+        result = mapply(func, *args, lookup=self, **kw)
         if result is not None:
             return result
         if default is not SENTINEL:

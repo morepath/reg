@@ -1,4 +1,4 @@
-import py.test
+import pytest
 
 from reg.implicit import NoImplicitLookupError
 from reg.registry import Registry
@@ -160,17 +160,17 @@ def test_component_not_found():
     def target(obj):
         pass
 
-    with py.test.raises(ComponentLookupError):
+    with pytest.raises(ComponentLookupError):
         reg.component(target, []) is None
     assert reg.component(target, [], 'default') == 'default'
 
     alpha = Alpha()
-    with py.test.raises(ComponentLookupError):
+    with pytest.raises(ComponentLookupError):
         assert reg.component(target, [alpha])
     assert reg.component(target, [], 'default') == 'default'
 
     assert target.component(alpha, lookup=reg, default='default') == 'default'
-    with py.test.raises(ComponentLookupError):
+    with pytest.raises(ComponentLookupError):
         target.component(alpha, lookup=reg)
 
 
@@ -282,7 +282,7 @@ def test_non_function_called():
     reg.register(target, [Alpha], foo)
     alpha = Alpha()
 
-    with py.test.raises(TypeError):
+    with pytest.raises(TypeError):
         target(alpha, lookup=reg)
 
 
@@ -299,7 +299,7 @@ def test_call_with_wrong_args():
     reg.register(target, [Alpha], Adapter)
     alpha = Alpha()
 
-    with py.test.raises(TypeError) as e:
+    with pytest.raises(TypeError) as e:
         target(alpha, lookup=reg)
 
     assert str(e.value) == ("__init__() takes exactly 1 argument (2 given)")
@@ -330,7 +330,7 @@ def test_extra_kw_for_component():
     reg.register(target, [Alpha], foo)
     alpha = Alpha()
 
-    with py.test.raises(TypeError) as e:
+    with pytest.raises(TypeError) as e:
         target.component(alpha, lookup=reg, extra="illegal")
     assert str(e.value) == ("component() got an unexpected keyword "
                             "argument 'extra'")
@@ -363,7 +363,7 @@ def test_no_implicit():
         pass
 
     alpha = Alpha()
-    with py.test.raises(NoImplicitLookupError):
+    with pytest.raises(NoImplicitLookupError):
         target.component(alpha)
 
 
@@ -400,3 +400,26 @@ def test_calling_twice():
 
     assert target(Alpha(), lookup=reg) == 'a'
     assert target(Beta(), lookup=reg) == 'b'
+
+
+def test_lookup_passed_along():
+    @generic
+    def g1(obj):
+        pass
+
+    @generic
+    def g2(obj):
+        pass
+
+    reg = Registry()
+
+    def g1_impl(obj, lookup):
+        return g2(obj, lookup=lookup)
+
+    def g2_impl(obj):
+        return "g2"
+
+    reg.register(g1, [Alpha], g1_impl)
+    reg.register(g2, [Alpha], g2_impl)
+
+    assert g1(Alpha(), lookup=reg) == 'g2'

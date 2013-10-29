@@ -50,3 +50,4 @@ API
 
 .. autoexception:: reg.NoImplicitLookupError
 
+.. autofunction:: reg.mapply
