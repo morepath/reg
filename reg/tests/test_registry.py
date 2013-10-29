@@ -1,6 +1,6 @@
 from reg.registry import Registry
 from reg.lookup import Matcher, ComponentLookupError
-import py.test
+import pytest
 
 
 def test_registry_sources():
@@ -189,7 +189,7 @@ def test_clear():
     reg.register(linecount, [], 'once')
     assert reg.component(linecount, []) == 'once'
     reg.clear()
-    with py.test.raises(ComponentLookupError):
+    with pytest.raises(ComponentLookupError):
         reg.component(linecount, [])
 
 

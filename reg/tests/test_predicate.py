@@ -1,4 +1,4 @@
-import py.test
+import pytest
 from reg.predicate import (PredicateRegistry, Predicate, KeyIndex, ANY,
                            key_permutations, PredicateRegistryError)
 
@@ -22,7 +22,7 @@ def test_predicate_registry_missing_key():
                            Predicate('request_method', KeyIndex)])
     m.register(dict(name='foo', request_method='POST'), 'registered for post')
 
-    with py.test.raises(PredicateRegistryError):
+    with pytest.raises(PredicateRegistryError):
         m.get(dict(name='foo'))
 
 
@@ -33,7 +33,7 @@ def test_duplicate_entry():
     m.register(dict(name='foo'), 'registered for all')
     m.register(dict(name='foo'), 'registered for all again')
 
-    with py.test.raises(PredicateRegistryError):
+    with pytest.raises(PredicateRegistryError):
         m.get(dict(name='foo', request_method='GET'))
 
 

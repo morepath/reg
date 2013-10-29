@@ -1,4 +1,4 @@
-import py.test
+import pytest
 from reg.mapping import (
     MapKey, Map, MultiMapKey, MultiMap, ClassMapKey, InverseMap)
 
@@ -57,7 +57,7 @@ def test_map_deletion():
     a = MapKey('a')
     m[a] = u'Value for A'
     del m[a]
-    with py.test.raises(KeyError):
+    with pytest.raises(KeyError):
         m[a]
 
 
@@ -68,9 +68,9 @@ def test_map_parent():
     c = MapKey('c', parents=[a])
     m[b] = u'Value for B'
     assert m[b] == u'Value for B'
-    with py.test.raises(KeyError):
+    with pytest.raises(KeyError):
         m[c]
-    with py.test.raises(KeyError):
+    with pytest.raises(KeyError):
         m[a]
 
 
@@ -159,7 +159,7 @@ def test_map_exact_getitem():
 
     m[a] = u"Value for A"
 
-    with py.test.raises(KeyError):
+    with pytest.raises(KeyError):
         m.exact_getitem(b)
     assert m.exact_getitem(a) == u'Value for A'
 
@@ -197,11 +197,11 @@ def test_multimap():
     assert m[MultiMapKey(beta, three)] == u'Value for beta, two'
     assert m[MultiMapKey(gamma, three)] == u'Value for beta, two'
 
-    with py.test.raises(KeyError):
+    with pytest.raises(KeyError):
         m[MultiMapKey(alpha, one)]
-    with py.test.raises(KeyError):
+    with pytest.raises(KeyError):
         m[MultiMapKey(alpha, two)]
-    with py.test.raises(KeyError):
+    with pytest.raises(KeyError):
         m[MultiMapKey(beta, one)]
 
 
@@ -405,7 +405,7 @@ def test_inverse_map_exact():
     m.register(animal, 'Animal')
 
     m.exact_getitem(animal) == 'Animal'
-    with py.test.raises(KeyError):
+    with pytest.raises(KeyError):
         m.exact_getitem(elephant)
     assert m.exact_get(animal) == 'Animal'
     assert m.exact_get(elephant) is None
