@@ -7,3 +7,4 @@ from .predicate import (PredicateRegistry, Predicate, KeyIndex,
 from .compose import ListClassLookup, ChainClassLookup, CachingClassLookup
 from .generic import generic
 from .mapply import mapply
+from .sentinel import Sentinel
