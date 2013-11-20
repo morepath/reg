@@ -1,6 +1,7 @@
 import pytest
 from reg.mapply import mapply
 
+
 def test_mapply():
     def foo(a):
         return "foo with %s" % a
@@ -66,3 +67,33 @@ def test_mapply_non_function():
 
     with pytest.raises(TypeError):
         assert mapply(a, a=1)
+
+
+def test_mapply_kw():
+    def foo(**kw):
+        return kw
+    assert mapply(foo, a=1) == {'a': 1}
+
+
+def test_mapply_args():
+    def foo(*args):
+        return args
+    assert mapply(foo, a=1) == ()
+    assert mapply(foo, 1) == (1,)
+
+
+def test_mapply_args_kw():
+    def foo(*args, **kw):
+        return args, kw
+    assert mapply(foo, a=1) == ((), {'a': 1})
+    assert mapply(foo, 1) == ((1,), {})
+    assert mapply(foo, 1, a=1) == ((1,), {'a': 1})
+
+
+def test_mapply_all_args_kw():
+    def foo(a, *args, **kw):
+        return a, args, kw
+    assert mapply(foo, 1) == (1, (), {})
+    assert mapply(foo, 2, b=1) == (2, (), {'b': 1})
+    assert mapply(foo, 2, 3, b=1) == (2, (3,), {'b': 1})
+

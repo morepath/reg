@@ -1,5 +1,8 @@
 import inspect
 
+VARARGS = 4
+KWARGS = 8
+
 def mapply(func, *args, **kw):
     """Apply keyword arguments to function only if it defines them.
 
@@ -14,19 +17,25 @@ def mapply(func, *args, **kw):
     an implementation of getting the argument names for a
     function/method that we've borrowed.
     """
-    new_kw = { name: kw[name] for name in argnames(func) if name in kw }
+    argnames, varargs, kwargs = arginfo(func)
+    if kwargs:
+        return func(*args, **kw)
+    new_kw = { name: kw[name] for name in argnames if name in kw }
     return func(*args, **new_kw)
 
-_argnames_cache = {}
 
-def argnames(func):
-    """Get arg names for given function or method or constructor.
+_arginfo_cache = {}
+
+
+def arginfo(func):
+    """Get arg names and kw arg flag for given function or method or
+    constructor.
 
     Taken from pytest.core, varnames. Adjusted to get argument names
-    for class constructors too.
+    for class constructors too and record keyword arguments.
     """
     try:
-        return _argnames_cache[func]
+        return _arginfo_cache[func]
     except KeyError:
         pass
     origfunc = func
@@ -39,10 +48,18 @@ def argnames(func):
     ismethod = inspect.ismethod(func)
     rawcode = getrawcode(func)
     try:
-        result = rawcode.co_varnames[ismethod:rawcode.co_argcount]
+        argnames = rawcode.co_varnames[ismethod:rawcode.co_argcount]
     except AttributeError:
-        result = ()
-    _argnames_cache[origfunc] = result
+        argnames = ()
+    try:
+        varargs = bool(rawcode.co_flags & VARARGS)
+    except AttributeError:
+        varargs = False
+    try:
+        kwargs = bool(rawcode.co_flags & KWARGS)
+    except AttributeError:
+        kwargs = False
+    result = _arginfo_cache[origfunc] = argnames, varargs, kwargs
     return result
 
 
