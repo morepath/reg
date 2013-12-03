@@ -26,6 +26,10 @@ def mapply(func, *args, **kw):
 
 _arginfo_cache = {}
 
+class Dummy(object):
+    pass
+
+WRAPPER_DESCRIPTOR = Dummy.__init__
 
 def arginfo(func):
     """Get arg names and kw arg flag for given function or method or
@@ -46,6 +50,9 @@ def arginfo(func):
     if inspect.isclass(func):
         try:
             func = func.__init__
+            if func is WRAPPER_DESCRIPTOR:
+                _arginfo_cache[origfunc] = [], False, False
+                return [], False, False
         except AttributeError:
             # classic class without __init__
             _arginfo_cache[origfunc] = [], False, False
