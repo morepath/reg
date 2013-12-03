@@ -112,11 +112,24 @@ def test_mapply_class_too_much():
     assert isinstance(mapply(Foo, a=1), Foo)
 
 
+def test_mapply_classic_class_too_much():
+    class Foo:
+        def __init__(self):
+            pass
+    assert isinstance(mapply(Foo, a=1), Foo)
+
+
 def test_mapply_class_no_init_too_much():
     class Foo(object):
         pass
     variables = {'base': None }
     assert isinstance(mapply(Foo, **variables), Foo)
+
+
+def test_mapply_classic_class_no_init_too_much():
+    class Foo:
+        pass
+    assert isinstance(mapply(Foo, a=1), Foo)
 
 
 def test_mapply_kw_class():

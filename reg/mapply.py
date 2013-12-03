@@ -44,7 +44,12 @@ def arginfo(func):
         not inspect.isclass(func)):
         func = getattr(func, '__call__', func)
     if inspect.isclass(func):
-        func = func.__init__
+        try:
+            func = func.__init__
+        except AttributeError:
+            # classic class without __init__
+            _arginfo_cache[origfunc] = [], False, False
+            return [], False, False
     ismethod = inspect.ismethod(func)
     rawcode = getrawcode(func)
     try:
