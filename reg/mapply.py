@@ -29,6 +29,10 @@ _arginfo_cache = {}
 class Dummy(object):
     pass
 
+class InitDummy(object):
+    def __init__(self):
+        pass
+
 WRAPPER_DESCRIPTOR = Dummy.__init__
 
 def arginfo(func):
@@ -50,15 +54,21 @@ def arginfo(func):
     if inspect.isclass(func):
         try:
             func = func.__init__
+            # new-style class without __init__, not pypy
             if func is WRAPPER_DESCRIPTOR:
-                _arginfo_cache[origfunc] = [], False, False
-                return [], False, False
+                return bare_arginfo(origfunc)
         except AttributeError:
             # classic class without __init__
-            _arginfo_cache[origfunc] = [], False, False
-            return [], False, False
+            return bare_arginfo(origfunc)
     ismethod = inspect.ismethod(func)
     rawcode = getrawcode(func)
+    # new-style class without __init__, pypy
+    try:
+        if rawcode.co_name == 'descr__init__':
+            return bare_arginfo(origfunc)
+    except AttributeError:
+        # not a function
+        return bare_arginfo(origfunc)
     try:
         argnames = rawcode.co_varnames[ismethod:rawcode.co_argcount]
     except AttributeError:
@@ -73,6 +83,11 @@ def arginfo(func):
         kwargs = False
     result = _arginfo_cache[origfunc] = argnames, varargs, kwargs
     return result
+
+
+def bare_arginfo(origfunc):
+    _arginfo_cache[origfunc] = [], False, False
+    return [], False, False
 
 
 def getrawcode(obj, trycall=True):
