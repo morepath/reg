@@ -43,6 +43,7 @@ def test_mapply_with_constructor():
     assert mapply(Foo, a=1).a == 1
     assert mapply(Foo, a=1, b=1).a == 1
 
+
 def test_mapply_with_old_style_class():
     class Foo:
         def __init__(self, a):
@@ -75,7 +76,7 @@ def test_mapply_kw():
     assert mapply(foo, a=1) == {'a': 1}
 
 
-def test_mapply_args():
+def test_mapply_args2():
     def foo(*args):
         return args
     assert mapply(foo, a=1) == ()
@@ -122,7 +123,7 @@ def test_mapply_classic_class_too_much():
 def test_mapply_class_no_init_too_much():
     class Foo(object):
         pass
-    variables = {'base': None }
+    variables = {'base': None}
     assert isinstance(mapply(Foo, **variables), Foo)
 
 
@@ -158,6 +159,7 @@ def test_mapply_args_kw_class():
     assert (r.args, r.kw) == ((1,), {})
     r = mapply(Foo, 1, a=1)
     assert (r.args, r.kw) == ((1,), {'a': 1})
+
 
 def test_mapply_all_args_kw_class():
     class Foo(object):

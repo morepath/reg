@@ -3,6 +3,7 @@ import inspect
 VARARGS = 4
 KWARGS = 8
 
+
 def mapply(func, *args, **kw):
     """Apply keyword arguments to function only if it defines them.
 
@@ -20,20 +21,24 @@ def mapply(func, *args, **kw):
     argnames, varargs, kwargs = arginfo(func)
     if kwargs:
         return func(*args, **kw)
-    new_kw = { name: kw[name] for name in argnames if name in kw }
+    new_kw = {name: kw[name] for name in argnames if name in kw}
     return func(*args, **new_kw)
 
 
 _arginfo_cache = {}
 
+
 class Dummy(object):
     pass
+
 
 class InitDummy(object):
     def __init__(self):
         pass
 
+
 WRAPPER_DESCRIPTOR = Dummy.__init__
+
 
 def arginfo(func):
     """Get arg names and kw arg flag for given function or method or

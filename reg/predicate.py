@@ -2,6 +2,7 @@ from .sentinel import Sentinel
 
 # XXX needs a lot more documentation
 
+
 class PredicateRegistryError(Exception):
     """An error using the predicate registry.
     """

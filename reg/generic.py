@@ -3,6 +3,7 @@ from reg.implicit import implicit, NoImplicitLookupError
 from reg.lookup import ComponentLookupError
 from reg.mapply import mapply
 
+
 def generic(func):
     """Turn a function into a generic function.
 

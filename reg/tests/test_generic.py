@@ -433,4 +433,3 @@ def test_lookup_passed_along_fallback():
     reg = Registry()
 
     assert a(lookup=reg) == 'fallback'
-
