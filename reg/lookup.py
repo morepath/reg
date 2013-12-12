@@ -108,10 +108,9 @@ class Lookup(object):
         if func is default:
             return default
         result = mapply(func, *args, lookup=self, **kw)
-        if result is not None:
-            return result
-        if default is not SENTINEL:
+        if result is None and default is not SENTINEL:
             return default
+        return result
         raise ComponentLookupError(
             "%r: no function found for args %r" % (
                 key, args))

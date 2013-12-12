@@ -11,6 +11,9 @@ CHANGES
   keyword arguments than it accepts, ignoring those extra keyword
   args.
 
+- A function that returns None is not assumed to fail, so no fallback
+  to the original generic function is triggered anymore.
+
 0.1 (2013-10-28)
 ================
 

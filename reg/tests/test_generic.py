@@ -308,14 +308,14 @@ def test_call_with_wrong_args():
 def test_func_returns_none():
     @generic
     def target(obj):
-        return 'fallback'
+        raise NotImplementedError
 
     def adapt(obj):
         return None
     reg = Registry()
     reg.register(target, [Alpha], adapt)
     alpha = Alpha()
-    assert target(alpha, lookup=reg) == 'fallback'
+    assert target(alpha, lookup=reg) is None
     assert target(alpha, lookup=reg, default='default') == 'default'
 
 
