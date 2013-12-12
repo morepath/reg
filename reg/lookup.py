@@ -111,9 +111,6 @@ class Lookup(object):
         if result is None and default is not SENTINEL:
             return default
         return result
-        raise ComponentLookupError(
-            "%r: no function found for args %r" % (
-                key, args))
 
     def all(self, key, args):
         """Lookup up all components registered for args.
