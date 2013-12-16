@@ -14,7 +14,19 @@ class Matcher(object):
     it is called with args, i.e. ``matcher(*args)``. The resulting value
     is considered to be the looked up component. If the resulting value is
     ``None``, no component is found for this matcher.
+
+    A matcher can be found multiple times during a lookup (if the
+    first matcher results in ``None``. Information such as predicates
+    may have to be calculated multiple times in that case. This can
+    be avoided by defining a ``precalc`` method which takes the arguments
+    used for the lookup as arguments. The result should be a dictionary
+    which is passed as keyword arguments into the next candidate matcher.
     """
+    def __call__(self, *args):
+        raise NotImplementedError
+
+    def precalc(self, *args):
+        return {}
 
 
 class ComponentLookupError(LookupError):
@@ -133,9 +145,12 @@ class Lookup(object):
 
         If no components can be found, the iterable will be empty.
         """
+        precalc = None
         for found in self.class_lookup.all(
                 key, [arg.__class__ for arg in args]):
             if isinstance(found, Matcher):
-                found = found(*args)
+                if precalc is None:
+                    precalc = found.precalc(*args)
+                found = found(*args, **precalc)
             if found is not None:
                 yield found

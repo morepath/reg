@@ -155,6 +155,54 @@ def test_matcher_inheritance():
     assert reg.component(linecount, [SpecialDocument(3)]) == 'special'
 
 
+def test_matcher_precalc():
+    reg = Registry()
+
+    class Document(object):
+        pass
+
+    class SpecialDocument(Document):
+        pass
+
+    def linecount(obj):
+        pass
+
+    count = {
+        'precalc': 0,
+        'called': 0
+        }
+
+    class DocumentMatcher(Matcher):
+        def precalc(self, doc):
+            count['precalc'] += 1
+            return dict(precalculated=100)
+
+        def __call__(self, doc, precalculated):
+            count['called'] += 1
+            return 'value: %s' % precalculated
+
+    class SpecialDocumentMatcher(Matcher):
+        def precalc(self, doc):
+            count['precalc'] += 1
+            return dict(precalculated=100)
+
+        def __call__(self, doc, precalculated):
+            count['called'] += 1
+            return None
+
+    reg.register(linecount, [Document],
+                 DocumentMatcher())
+    reg.register(linecount, [SpecialDocument],
+                 SpecialDocumentMatcher())
+
+    assert reg.component(linecount, [Document()]) == 'value: 100'
+    assert count['called'] == 1
+    assert count['precalc'] == 1
+    assert reg.component(linecount, [SpecialDocument()]) == 'value: 100'
+    # called two more times, but precalc only called once
+    assert count['called'] == 3
+    assert count['precalc'] == 2
+
 def test_register_twice_with_sources():
     reg = Registry()
 
