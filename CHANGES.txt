@@ -11,8 +11,11 @@ CHANGES
   keyword arguments than it accepts, ignoring those extra keyword
   args.
 
-- A function that returns None is not assumed to fail, so no fallback
+- A function that returns ``None`` is not assumed to fail, so no fallback
   to the original generic function is triggered anymore.
+
+- An optional ``precalc`` facility is made available on ``Matcher`` to
+  avoid some recalculation.
 
 0.1 (2013-10-28)
 ================
