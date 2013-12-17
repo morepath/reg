@@ -49,7 +49,7 @@ class Lookup(object):
     def __init__(self, class_lookup):
         self.class_lookup = class_lookup
 
-    def component(self, key, args, default=SENTINEL):
+    def component(self, key, args, default=SENTINEL, precalc=None):
         """Look up a component.
 
         :param key: Look up component for this key.
@@ -58,6 +58,9 @@ class Lookup(object):
         :type args: list of objects.
         :param default: default value to return if lookup fails.
         :type default: object.
+        :param precalc: optional precalculated info for matcher,
+          overriding the matcher's calculation.
+        :type precalc: dict.
         :returns: registered component.
         :raises: ComponentLookupError
 
@@ -76,14 +79,17 @@ class Lookup(object):
         (``matcher(*args)``). The matcher can return an object, in
         which case will be returned as the real matching component. If
         the matcher returns ``None`` it will look for a match higher
-        up the ancestor chain of args.
+        up the ancestor chain of args. If a ``precalc`` argument is
+        supplied this is used by the matcher instead of doing its own
+        calculation; this can be useful with the ``PredicateMatcher``
+        to override which predicates are used in a lookup.
 
         If a component can be found, it will be returned. If the
         component cannot be found, a :class:`ComponentLookupError`
         will be raised, unless a default argument is specified, in
         which case it will be returned.
         """
-        result = next(self.all(key, args), None)
+        result = next(self.all(key, args, precalc), None)
         if result is not None:
             return result
         if default is not SENTINEL:
@@ -124,13 +130,15 @@ class Lookup(object):
             return default
         return result
 
-    def all(self, key, args):
+    def all(self, key, args, precalc=None):
         """Lookup up all components registered for args.
 
         :param key: Look up components for this key.
         :type key: hashable object, normally function.
         :param args: Look up components for these arguments.
         :type args: list of objects.
+        :param precalc: precalculated predicates in case a matcher is involved.
+        :type args: dict.
         :returns: iterable of registered components.
 
         The behavior of this method is like that of component, but it
@@ -139,13 +147,16 @@ class Lookup(object):
         another for its base class, ``all()`` with an instance of the
         class as its argument will return both components.
 
-        Will check whether the found component is an Matcher, in
-        which case it will be called with args. If non-None is
-        returned, the found value is included as a matching component.
+        Will check whether the found component is an Matcher, in which
+        case it will be called with args. If non-None is returned, the
+        found value is included as a matching component.  If a matcher
+        is involved and the ``precalc`` parameter is supplied, this
+        will be used as a (predicate) precalc for the matcher,
+        overriding any calculation it may do itself. Otherwise the
+        ``precalc`` parameter has no effect.
 
         If no components can be found, the iterable will be empty.
         """
-        precalc = None
         for found in self.class_lookup.all(
                 key, [arg.__class__ for arg in args]):
             if isinstance(found, Matcher):
