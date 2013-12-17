@@ -15,10 +15,11 @@ ANY = Sentinel('ANY')
 class Predicate(object):
     """A predicate.
     """
-    def __init__(self, name, index_factory, priority=0):
+    def __init__(self, name, index_factory, calc=None, default=None):
         self.name = name
         self.index_factory = index_factory
-        self.priority = priority
+        self.calc = calc
+        self.default = default
 
     def create_index(self):
         return self.index_factory()
@@ -83,16 +84,13 @@ class PredicateRegistry(object):
         return default
 
 
-def _predicate_info_keyfunc(info):
-    predicate, func = info
-    return -predicate.priority
-
 
 class PredicateMatcher(Matcher):
-    def __init__(self, predicate_info):
-        predicate_info.sort(key=_predicate_info_keyfunc)
-        self.predicate_info = predicate_info
-        predicates = [predicate for (predicate, dummy) in predicate_info]
+    def __init__(self, predicates):
+        self.predicates = predicates
+        self.defaults = {}
+        for predicate in predicates:
+            self.defaults[predicate.name] = predicate.default
         self.reg = PredicateRegistry(predicates)
 
     def register(self, predicates, value):
@@ -100,12 +98,14 @@ class PredicateMatcher(Matcher):
 
     def precalc(self, *args):
         result = {}
-        for predicate, func in self.predicate_info:
-            result[predicate.name] = func(*args)
+        for predicate in self.predicates:
+            result[predicate.name] = predicate.calc(*args)
         return result
 
     def __call__(self, *args, **kw):
-        return self.reg.get(kw)
+        k = self.defaults.copy()
+        k.update(kw)
+        return self.reg.get(k)
 
 
 def key_permutations(names, d):

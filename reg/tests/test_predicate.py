@@ -88,12 +88,12 @@ def test_predicate_matcher():
     def foo(obj):
         pass
 
-    predicate_info = [
-        (Predicate('a', KeyIndex, 1), lambda doc: doc.a),
-        (Predicate('b', KeyIndex, 0), lambda doc: doc.b)
+    predicates = [
+        Predicate('a', KeyIndex, lambda doc: doc.a, 'A'),
+        Predicate('b', KeyIndex, lambda doc: doc.b, 'B')
         ]
 
-    matcher = PredicateMatcher(predicate_info)
+    matcher = PredicateMatcher(predicates)
     matcher.register({'a': 'A'}, 'a = A')
     matcher.register({'b': 'B'}, 'b = B')
     matcher.register({}, 'nothing matches')
@@ -108,3 +108,7 @@ def test_predicate_matcher():
     # we can also override lookup by supplying our own precalc
     assert reg.component(foo, [Document(a='C', b='C')],
                          precalc={'a': 'A', 'b': 'C'}) == 'a = A'
+    # if we don't supply something in precalc ourselves, a default will
+    # be used
+    assert reg.component(foo, [Document(a='C', b='C')],
+                         precalc={'a': 'C'}) == 'b = B'
