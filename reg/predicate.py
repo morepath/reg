@@ -87,7 +87,7 @@ class PredicateRegistry(object):
 
 class PredicateMatcher(Matcher):
     def __init__(self, predicates):
-        self.predicates = predicates
+        self._predicates = predicates
         self.defaults = {}
         for predicate in predicates:
             self.defaults[predicate.name] = predicate.default
@@ -96,9 +96,9 @@ class PredicateMatcher(Matcher):
     def register(self, predicates, value):
         self.reg.register(predicates, value)
 
-    def precalc(self, *args):
+    def predicates(self, *args):
         result = {}
-        for predicate in self.predicates:
+        for predicate in self._predicates:
             result[predicate.name] = predicate.calc(*args)
         return result
 

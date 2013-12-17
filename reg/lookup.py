@@ -17,15 +17,16 @@ class Matcher(object):
 
     A matcher can be found multiple times during a lookup (if the
     first matcher results in ``None``. Information such as predicates
-    may have to be calculated multiple times in that case. This can
-    be avoided by defining a ``precalc`` method which takes the arguments
-    used for the lookup as arguments. The result should be a dictionary
-    which is passed as keyword arguments into the next candidate matcher.
+    may have to be calculated multiple times in that case. This can be
+    avoided by defining a ``predicates`` method which takes the
+    arguments used for the lookup as arguments. The result should be a
+    dictionary which is passed as keyword arguments into this matcher,
+    as well as any further candidate matchers if this one returns ``None``.
     """
     def __call__(self, *args):
         raise NotImplementedError
 
-    def precalc(self, *args):
+    def predicates(self, *args):
         return {}
 
 
@@ -49,7 +50,7 @@ class Lookup(object):
     def __init__(self, class_lookup):
         self.class_lookup = class_lookup
 
-    def component(self, key, args, default=SENTINEL, precalc=None):
+    def component(self, key, args, default=SENTINEL, predicates=None):
         """Look up a component.
 
         :param key: Look up component for this key.
@@ -58,9 +59,9 @@ class Lookup(object):
         :type args: list of objects.
         :param default: default value to return if lookup fails.
         :type default: object.
-        :param precalc: optional precalculated info for matcher,
-          overriding the matcher's calculation.
-        :type precalc: dict.
+        :param predicates: optional predicate citionary for matcher,
+          overriding the matcher's predicate calculation.
+        :type predicates: dict.
         :returns: registered component.
         :raises: ComponentLookupError
 
@@ -79,17 +80,18 @@ class Lookup(object):
         (``matcher(*args)``). The matcher can return an object, in
         which case will be returned as the real matching component. If
         the matcher returns ``None`` it will look for a match higher
-        up the ancestor chain of args. If a ``precalc`` argument is
+        up the ancestor chain of args. If a ``predicates`` argument is
         supplied this is used by the matcher instead of doing its own
-        calculation; this can be useful with the ``PredicateMatcher``
-        to override which predicates are used in a lookup.
+        predicate calculation from the arguments. This can be useful
+        in combination with the :class:`reg.PredicateMatcher` to
+        override which predicates are used in a lookup.
 
         If a component can be found, it will be returned. If the
         component cannot be found, a :class:`ComponentLookupError`
         will be raised, unless a default argument is specified, in
         which case it will be returned.
         """
-        result = next(self.all(key, args, precalc), None)
+        result = next(self.all(key, args, predicates), None)
         if result is not None:
             return result
         if default is not SENTINEL:
@@ -130,15 +132,15 @@ class Lookup(object):
             return default
         return result
 
-    def all(self, key, args, precalc=None):
+    def all(self, key, args, predicates=None):
         """Lookup up all components registered for args.
 
         :param key: Look up components for this key.
         :type key: hashable object, normally function.
         :param args: Look up components for these arguments.
         :type args: list of objects.
-        :param precalc: precalculated predicates in case a matcher is involved.
-        :type args: dict.
+        :param predicates: predicates (used by Matcher)
+        :type predicates: dict.
         :returns: iterable of registered components.
 
         The behavior of this method is like that of component, but it
@@ -150,18 +152,18 @@ class Lookup(object):
         Will check whether the found component is an Matcher, in which
         case it will be called with args. If non-None is returned, the
         found value is included as a matching component.  If a matcher
-        is involved and the ``precalc`` parameter is supplied, this
-        will be used as a (predicate) precalc for the matcher,
-        overriding any calculation it may do itself. Otherwise the
-        ``precalc`` parameter has no effect.
+        is involved and the ``predicates`` parameter is supplied, this
+        will be used for the matcher, overriding any predicate
+        calculation it may do itself. Otherwise the ``predicates``
+        parameter has no effect.
 
         If no components can be found, the iterable will be empty.
         """
         for found in self.class_lookup.all(
                 key, [arg.__class__ for arg in args]):
             if isinstance(found, Matcher):
-                if precalc is None:
-                    precalc = found.precalc(*args)
-                found = found(*args, **precalc)
+                if predicates is None:
+                    predicates = found.predicates(*args)
+                found = found(*args, **predicates)
             if found is not None:
                 yield found

@@ -105,10 +105,10 @@ def test_predicate_matcher():
     assert reg.component(foo, [Document(a='A', b='B')]) == 'a = A'
     assert reg.component(foo, [Document(a='C', b='C')]) == 'nothing matches'
 
-    # we can also override lookup by supplying our own precalc
+    # we can also override lookup by supplying our own predicates
     assert reg.component(foo, [Document(a='C', b='C')],
-                         precalc={'a': 'A', 'b': 'C'}) == 'a = A'
-    # if we don't supply something in precalc ourselves, a default will
+                         predicates={'a': 'A', 'b': 'C'}) == 'a = A'
+    # if we don't supply something in predicates ourselves, a default will
     # be used
     assert reg.component(foo, [Document(a='C', b='C')],
-                         precalc={'a': 'C'}) == 'b = B'
+                         predicates={'a': 'C'}) == 'b = B'
