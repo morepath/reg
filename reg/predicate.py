@@ -1,4 +1,5 @@
 from .sentinel import Sentinel
+from .lookup import Matcher
 
 # XXX needs a lot more documentation
 
@@ -14,9 +15,10 @@ ANY = Sentinel('ANY')
 class Predicate(object):
     """A predicate.
     """
-    def __init__(self, name, index_factory):
+    def __init__(self, name, index_factory, priority=0):
         self.name = name
         self.index_factory = index_factory
+        self.priority = priority
 
     def create_index(self):
         return self.index_factory()
@@ -79,6 +81,31 @@ class PredicateRegistry(object):
             if result is not None:
                 return result
         return default
+
+
+def _predicate_info_keyfunc(info):
+    predicate, func = info
+    return -predicate.priority
+
+
+class PredicateMatcher(Matcher):
+    def __init__(self, predicate_info):
+        predicate_info.sort(key=_predicate_info_keyfunc)
+        self.predicate_info = predicate_info
+        predicates = [predicate for (predicate, dummy) in predicate_info]
+        self.reg = PredicateRegistry(predicates)
+
+    def register(self, predicates, value):
+        self.reg.register(predicates, value)
+
+    def precalc(self, *args):
+        result = {}
+        for predicate, func in self.predicate_info:
+            result[predicate.name] = func(*args)
+        return result
+
+    def __call__(self, *args, **kw):
+        return self.reg.get(kw)
 
 
 def key_permutations(names, d):

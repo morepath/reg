@@ -17,6 +17,9 @@ CHANGES
 - An optional ``precalc`` facility is made available on ``Matcher`` to
   avoid some recalculation.
 
+- Implement a specific ``PredicateMatcher`` that matches a value on
+  predicate.
+
 0.1 (2013-10-28)
 ================
 

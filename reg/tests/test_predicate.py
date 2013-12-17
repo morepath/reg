@@ -1,6 +1,8 @@
 import pytest
 from reg.predicate import (PredicateRegistry, Predicate, KeyIndex, ANY,
-                           key_permutations, PredicateRegistryError)
+                           key_permutations, PredicateRegistryError,
+                           PredicateMatcher)
+from reg.registry import Registry
 
 
 def test_predicate_registry():
@@ -73,3 +75,32 @@ def test_permutations():
         {'a': 'A', 'b': ANY},
         {'a': ANY, 'b': 'B'},
         {'a': ANY, 'b': ANY}]
+
+
+def test_predicate_matcher():
+    reg = Registry()
+
+    class Document(object):
+        def __init__(self, a, b):
+            self.a = a
+            self.b = b
+
+    def foo(obj):
+        pass
+
+    predicate_info = [
+        (Predicate('a', KeyIndex, 1), lambda doc: doc.a),
+        (Predicate('b', KeyIndex, 0), lambda doc: doc.b)
+        ]
+
+    matcher = PredicateMatcher(predicate_info)
+    matcher.register({'a': 'A'}, 'a = A')
+    matcher.register({'b': 'B'}, 'b = B')
+    matcher.register({}, 'nothing matches')
+
+    reg.register(foo, [Document], matcher)
+
+    assert reg.component(foo, [Document(a='A', b='C')]) == 'a = A'
+    assert reg.component(foo, [Document(a='C', b='B')]) == 'b = B'
+    assert reg.component(foo, [Document(a='A', b='B')]) == 'a = A'
+    assert reg.component(foo, [Document(a='C', b='C')]) == 'nothing matches'
