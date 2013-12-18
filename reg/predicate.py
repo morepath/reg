@@ -107,7 +107,7 @@ class PredicateMatcher(Matcher):
         k.update(kw)
         return self.reg.get(k)
 
-
+# not currently in use, see key_permutations
 def key_permutations_recursive(names, d):
     if len(names) == 0:
         yield {}
@@ -117,10 +117,7 @@ def key_permutations_recursive(names, d):
     rest = names[1:]
 
     d = d.copy()
-    try:
-        value = d.pop(first)
-    except KeyError:
-        raise PredicateRegistryError("no required key: %s" % first)
+    value = d.pop(first)
 
     for p in key_permutations(rest, d):
         r = p.copy()
