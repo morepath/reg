@@ -108,7 +108,7 @@ class PredicateMatcher(Matcher):
         return self.reg.get(k)
 
 
-def key_permutations(names, d):
+def key_permutations_recursive(names, d):
     if len(names) == 0:
         yield {}
         return
@@ -130,3 +130,25 @@ def key_permutations(names, d):
         r = p.copy()
         r[first] = ANY
         yield r
+
+# this helped enormously to make this iterative
+# http://blog.moertel.com/posts/2013-05-14-recursive-to-iterative-2.html
+# the question is still whether this pays off, as the recursive function
+# can start yielding immediately and does not have to generate all matches
+def key_permutations(names, d):
+    names = names[:]
+    permutations = [{}]
+    while names:
+        name = names.pop()
+        value = d[name]
+        l = []
+        for p in permutations:
+            r = p.copy()
+            r[name] = value
+            l.append(r)
+        for p in permutations:
+            r = p.copy()
+            r[name] = ANY
+            l.append(r)
+        permutations = l
+    return permutations

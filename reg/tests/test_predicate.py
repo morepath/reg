@@ -24,7 +24,7 @@ def test_predicate_registry_missing_key():
                            Predicate('request_method', KeyIndex)])
     m.register(dict(name='foo', request_method='POST'), 'registered for post')
 
-    with pytest.raises(PredicateRegistryError):
+    with pytest.raises(KeyError):
         m.get(dict(name='foo'))
 
 
@@ -75,6 +75,18 @@ def test_permutations():
         {'a': 'A', 'b': ANY},
         {'a': ANY, 'b': 'B'},
         {'a': ANY, 'b': ANY}]
+
+def test_permutations_bigger():
+    d = {'a': 'A', 'b': 'B', 'c': 'C'}
+    assert list(key_permutations(['a', 'b', 'c'], d)) == [
+        {'a': 'A', 'b': 'B', 'c': 'C'},
+        {'a': 'A', 'b': 'B', 'c': ANY},
+        {'a': 'A', 'b': ANY, 'c': 'C'},
+        {'a': 'A', 'b': ANY, 'c': ANY},
+        {'a': ANY, 'b': 'B', 'c': 'C'},
+        {'a': ANY, 'b': 'B', 'c': ANY},
+        {'a': ANY, 'b': ANY, 'c': 'C'},
+        {'a': ANY, 'b': ANY, 'c': ANY}]
 
 
 def test_predicate_matcher():
