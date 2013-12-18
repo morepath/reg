@@ -76,6 +76,7 @@ def test_permutations():
         {'a': ANY, 'b': 'B'},
         {'a': ANY, 'b': ANY}]
 
+
 def test_permutations_bigger():
     d = {'a': 'A', 'b': 'B', 'c': 'C'}
     assert list(key_permutations(['a', 'b', 'c'], d)) == [

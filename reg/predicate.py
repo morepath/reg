@@ -85,7 +85,6 @@ class PredicateRegistry(object):
         return default
 
 
-
 class PredicateMatcher(Matcher):
     def __init__(self, predicates):
         self._predicates = predicates
@@ -107,6 +106,7 @@ class PredicateMatcher(Matcher):
         k = self.defaults.copy()
         k.update(kw)
         return self.reg.get(k)
+
 
 # not currently in use, see key_permutations
 def key_permutations_recursive(names, d):
@@ -158,4 +158,3 @@ def key_permutations_names(names):
             l.append(r)
         permutations = l
     return permutations
-

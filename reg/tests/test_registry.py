@@ -203,6 +203,7 @@ def test_matcher_predicates():
     assert count['called'] == 3
     assert count['predicates'] == 2
 
+
 def test_register_twice_with_sources():
     reg = Registry()
 
