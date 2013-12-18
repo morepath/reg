@@ -128,22 +128,29 @@ def key_permutations_recursive(names, d):
         r[first] = ANY
         yield r
 
+
+def key_permutations(names, d):
+    for p in key_permutations_names(names):
+        for key, value in p.items():
+            if value is None:
+                p[key] = d[key]
+        yield p
+
 # this helped enormously to make this iterative
 # http://blog.moertel.com/posts/2013-05-14-recursive-to-iterative-2.html
 # the question is still whether this pays off, as the recursive function
 # can start yielding immediately and does not have to generate all matches
 # though if we were to introduce caching here, all matches would need to
 # be generated anyway
-def key_permutations(names, d):
+def key_permutations_names(names):
     names = names[:]
     permutations = [{}]
     while names:
         name = names.pop()
-        value = d[name]
         l = []
         for p in permutations:
             r = p.copy()
-            r[name] = value
+            r[name] = None
             l.append(r)
         for p in permutations:
             r = p.copy()
@@ -151,3 +158,4 @@ def key_permutations(names, d):
             l.append(r)
         permutations = l
     return permutations
+
