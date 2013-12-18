@@ -132,6 +132,8 @@ def key_permutations_recursive(names, d):
 # http://blog.moertel.com/posts/2013-05-14-recursive-to-iterative-2.html
 # the question is still whether this pays off, as the recursive function
 # can start yielding immediately and does not have to generate all matches
+# though if we were to introduce caching here, all matches would need to
+# be generated anyway
 def key_permutations(names, d):
     names = names[:]
     permutations = [{}]
