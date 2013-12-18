@@ -1,5 +1,6 @@
 from .sentinel import Sentinel
 from .lookup import Matcher
+from repoze.lru import lru_cache
 
 # XXX needs a lot more documentation
 
@@ -130,23 +131,22 @@ def key_permutations_recursive(names, d):
 
 
 def key_permutations(names, d):
-    for p in key_permutations_names(names):
-        for key, value in p.items():
+    for p in key_permutations_names(tuple(names)):
+        v = p.copy()
+        for key, value in v.items():
             if value is None:
-                p[key] = d[key]
-        yield p
+                v[key] = d[key]
+        yield v
+
 
 # this helped enormously to make this iterative
 # http://blog.moertel.com/posts/2013-05-14-recursive-to-iterative-2.html
-# the question is still whether this pays off, as the recursive function
-# can start yielding immediately and does not have to generate all matches
-# though if we were to introduce caching here, all matches would need to
-# be generated anyway
+# also introduced caching using repoze.lru. this cache should be big
+# enough to comfortably fit 10 predicates before having to evict
+@lru_cache(1024)
 def key_permutations_names(names):
-    names = names[:]
     permutations = [{}]
-    while names:
-        name = names.pop()
+    for name in reversed(names):
         l = []
         for p in permutations:
             r = p.copy()

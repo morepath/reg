@@ -30,7 +30,8 @@ setup(name='reg',
         'Development Status :: 4 - Beta'
         ],
       install_requires=[
-        'setuptools'
+        'setuptools',
+        'repoze.lru',
         ],
       tests_require=tests_require,
       extras_require = dict(
