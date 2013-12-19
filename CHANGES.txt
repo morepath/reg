@@ -1,7 +1,7 @@
 CHANGES
 *******
 
-0.2 (unreleased)
+0.2 (2013-12-19)
 ================
 
 - If a generic function implementation defines a ``lookup`` argument
