@@ -1,3 +1,4 @@
+from __future__ import division
 from reg.pep443 import singledispatch
 from decimal import Decimal
 

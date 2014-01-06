@@ -302,8 +302,6 @@ def test_call_with_wrong_args():
     with pytest.raises(TypeError) as e:
         target(alpha, lookup=reg)
 
-    assert str(e.value) == ("__init__() takes exactly 1 argument (2 given)")
-
 
 def test_func_returns_none():
     @generic

@@ -5,4 +5,6 @@ develop-eggs
 .coverage
 htmlcov
 doc/build
+.tox
+
 
