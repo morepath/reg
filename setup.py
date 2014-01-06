@@ -12,7 +12,7 @@ tests_require = [
     ]
 
 setup(name='reg',
-      version='0.3.dev0',
+      version='0.3',
       description="Generic functions. Clever registries and lookups",
       long_description=long_description,
       author="Martijn Faassen",
@@ -27,6 +27,7 @@ setup(name='reg',
         'License :: OSI Approved :: BSD License',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.3',
         'Development Status :: 4 - Beta'
         ],
       install_requires=[
