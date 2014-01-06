@@ -1,5 +1,6 @@
 """Look up components by instance (using their classes) and target class.
 """
+from __future__ import unicode_literals
 
 from .sentinel import Sentinel
 from .mapply import mapply

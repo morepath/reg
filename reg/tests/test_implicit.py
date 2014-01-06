@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+from future import standard_library
 import threading
 from reg.implicit import implicit
 from reg.registry import Registry

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from reg.registry import ClassRegistry as Registry
 from reg.compose import (
     ListClassLookup, ChainClassLookup, CachingClassLookup)

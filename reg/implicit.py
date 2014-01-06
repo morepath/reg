@@ -1,6 +1,7 @@
 """An implicit global component lookup facility that can be installed
 explicitly.
 """
+from __future__ import unicode_literals
 
 import threading
 

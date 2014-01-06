@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import pytest
 from reg.predicate import (PredicateRegistry, Predicate, KeyIndex, ANY,
                            key_permutations, PredicateRegistryError,

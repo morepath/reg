@@ -3,6 +3,7 @@ Compose ClassLookups. ListClassLookup and ChainClassLookup are different
 ways to compose ClassLookups together into a single one. CachingClassLookup
 is a caching version of ClassLookup.
 """
+from __future__ import unicode_literals
 
 from .registry import IClassLookup
 from .sentinel import Sentinel

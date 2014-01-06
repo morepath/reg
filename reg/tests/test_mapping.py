@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import pytest
 from reg.mapping import (
     MapKey, Map, MultiMapKey, MultiMap, ClassMapKey, InverseMap)
@@ -20,8 +21,8 @@ def test_mapkey_with_parents():
 
 
 def test_map_key_repr():
-    a = MapKey('a')
-    assert repr(a) == "<MapKey: 'a'>"
+    a = MapKey(1)
+    assert repr(a) == "<MapKey: 1>"
 
 
 def test_map_simple_key():
@@ -206,14 +207,14 @@ def test_multimap():
 
 
 def test_multimap_key_repr():
-    alpha = MapKey('alpha')
+    alpha = MapKey(100)
 
-    one = MapKey('one')
-    two = MapKey('two', [one])
-    three = MapKey('three', [two])
+    one = MapKey(1)
+    two = MapKey(2, [one])
+    three = MapKey(3, [two])
 
     assert (repr(MultiMapKey(alpha, three)) ==
-            "<MultiMapKey: (<MapKey: 'alpha'>, <MapKey: 'three'>)>")
+            "<MultiMapKey: (<MapKey: 100>, <MapKey: 3>)>")
 
 
 def test_multimap_get():

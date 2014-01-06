@@ -1,4 +1,5 @@
 from __future__ import division
+from __future__ import unicode_literals
 from reg.pep443 import singledispatch
 from decimal import Decimal
 

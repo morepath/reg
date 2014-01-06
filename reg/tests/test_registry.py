@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from reg.registry import Registry
 from reg.lookup import Matcher, ComponentLookupError
 import pytest

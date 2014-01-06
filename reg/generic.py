@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from functools import update_wrapper
 from reg.implicit import implicit, NoImplicitLookupError
 from reg.lookup import ComponentLookupError

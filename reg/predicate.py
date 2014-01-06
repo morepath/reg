@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from .sentinel import Sentinel
 from .lookup import Matcher
 from repoze.lru import lru_cache
@@ -133,7 +134,7 @@ def key_permutations_recursive(names, d):
 def key_permutations(names, d):
     for p in key_permutations_names(tuple(names)):
         v = p.copy()
-        for key, value in v.items():
+        for key, value in list(v.items()):
             if value is None:
                 v[key] = d[key]
         yield v

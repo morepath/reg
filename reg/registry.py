@@ -1,17 +1,17 @@
 """Registry where you can register components by function and classes
 that you look up the component for."""
+from __future__ import unicode_literals
 
 from .mapping import MultiMap, ClassMultiMapKey
 from .lookup import Lookup
 
 from abc import ABCMeta, abstractmethod
+from future.utils import with_metaclass
 
 
-class IRegistry(object):
+class IRegistry(with_metaclass(ABCMeta, object)):
     """A registration API for components.
     """
-
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def register(self, key, classes, component):
@@ -59,9 +59,7 @@ class IRegistry(object):
         """
 
 
-class IClassLookup(object):
-    __metaclass__ = ABCMeta
-
+class IClassLookup(with_metaclass(ABCMeta, object)):
     @abstractmethod
     def get(self, key, classes):
         """Look up a component, by key and classes of arguments.

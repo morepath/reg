@@ -1,6 +1,7 @@
 """Core data structures to allow registration and lookup by class.
 """
-
+from __future__ import unicode_literals
+from future.utils import native_str
 
 class MapKey(object):
     """A map key that can have parents.
@@ -11,7 +12,7 @@ class MapKey(object):
         # we need Python's mro, but we don't have classes. We create
         # some with the same structure as our parent structure. then we
         # get the mro
-        self._mro_helper = type('fake_type',
+        self._mro_helper = type(native_str('fake_type'),
                                 tuple(parent._mro_helper for
                                       parent in parents),
                                 {'mapkey': self})

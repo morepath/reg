@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 # flake8: noqa
 from .implicit import implicit, NoImplicitLookupError
 from .registry import ClassRegistry, Registry, IRegistry, IClassLookup
