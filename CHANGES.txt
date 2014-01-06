@@ -4,8 +4,7 @@ CHANGES
 0.3 (unreleased)
 ================
 
-- Nothing changed yet.
-
+- Experimental Python 3.3 support thanks to the future module.
 
 0.2 (2013-12-19)
 ================
