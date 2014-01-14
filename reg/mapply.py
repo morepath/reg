@@ -63,7 +63,7 @@ def arginfo(callable):
 
 
 def is_cached(callable):
-    if callable in  arginfo._cache:
+    if callable in arginfo._cache:
         return True
     return callable.__call__ in arginfo._cache
 
@@ -133,6 +133,7 @@ def get_class_init(class_):
     if is_pypy_default_init(func):
         return fake_empty_init
     return func
+
 
 def is_pypy_default_init(func):
     try:

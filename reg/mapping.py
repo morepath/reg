@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 from future.utils import native_str
 
+
 class MapKey(object):
     """A map key that can have parents.
     """

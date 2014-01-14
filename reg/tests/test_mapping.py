@@ -378,6 +378,7 @@ def test_class_mapkey():
 class A(object):
     pass
 
+
 def test_classmap_key_repr():
     a = ClassMapKey(A)
     assert repr(a) == "<ClassMapKey: <class 'reg.tests.test_mapping.A'>>"

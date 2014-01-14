@@ -301,7 +301,7 @@ def test_call_with_wrong_args():
     reg.register(target, [Alpha], Adapter)
     alpha = Alpha()
 
-    with pytest.raises(TypeError) as e:
+    with pytest.raises(TypeError):
         target(alpha, lookup=reg)
 
 
