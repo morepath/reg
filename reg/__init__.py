@@ -7,5 +7,5 @@ from .predicate import (PredicateRegistry, Predicate, KeyIndex,
                         PredicateRegistryError, PredicateMatcher)
 from .compose import ListClassLookup, ChainClassLookup, CachingClassLookup
 from .generic import generic
-from .mapply import mapply
+from .mapply import mapply, arginfo
 from .sentinel import Sentinel

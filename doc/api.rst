@@ -51,3 +51,5 @@ API
 .. autoexception:: reg.NoImplicitLookupError
 
 .. autofunction:: reg.mapply
+
+.. autofunction:: reg.arginfo

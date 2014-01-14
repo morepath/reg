@@ -42,8 +42,17 @@ WRAPPER_DESCRIPTOR = Dummy.__init__
 
 
 def arginfo(func):
-    """Get arg names and kw arg flag for given function or method or
-    constructor.
+    """Get arg info for given function or method or constructor.
+
+    Given a function, returns a tuple, containing three values:
+
+    * list of argument names
+
+    * a boolean indicating whether the function takes
+      variable positional arguments (``*args``).
+
+    * a boolean indicating whether the function takes
+      variable keyword arguments (``**kw``).
 
     Taken from pytest.core, varnames. Adjusted to get argument names
     for class constructors too and record keyword arguments.

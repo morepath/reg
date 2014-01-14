@@ -4,8 +4,7 @@ CHANGES
 0.4 (unreleased)
 ================
 
-- Nothing changed yet.
-
+- arginfo is now part of the public API of reg.
 
 0.3 (2014-01-06)
 ================
