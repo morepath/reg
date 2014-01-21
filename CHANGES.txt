@@ -1,7 +1,7 @@
 CHANGES
 *******
 
-0.5 (unreleased)
+0.5 (2014-01-21)
 ================
 
 - Make ``reg.ANY`` public. Used for predicates that match any value.
