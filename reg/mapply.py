@@ -109,11 +109,6 @@ class Dummy(object):
     pass
 
 
-class InitDummy(object):
-    def __init__(self):
-        pass
-
-
 WRAPPER_DESCRIPTOR = Dummy.__init__
 
 
