@@ -4,8 +4,7 @@ CHANGES
 0.6 (unreleased)
 ================
 
-- Nothing changed yet.
-
+- Removed unused code from mapply.py.
 
 0.5 (2014-01-21)
 ================
