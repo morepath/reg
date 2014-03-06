@@ -60,7 +60,7 @@ class Lookup(object):
         :type args: list of objects.
         :param default: default value to return if lookup fails.
         :type default: object.
-        :param predicates: optional predicate citionary for matcher,
+        :param predicates: optional predicate ditcionary for matcher,
           overriding the matcher's predicate calculation.
         :type predicates: dict.
         :returns: registered component.

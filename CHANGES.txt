@@ -6,6 +6,8 @@ CHANGES
 
 - Removed unused code from mapply.py.
 
+- Typo fix in API docs.
+
 0.5 (2014-01-21)
 ================
 
