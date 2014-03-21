@@ -743,7 +743,7 @@ function:
   def emailer():
       raise NotImplementedError
 
-Here we've create a generic function that takes no arguments (and thus does
+Here we've created a generic function that takes no arguments (and thus does
 no dynamic dispatch). But it's still generic, so we can plug in its actual
 implementation elsewhere, into the registry:
 
