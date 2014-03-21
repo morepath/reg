@@ -85,7 +85,7 @@ tell Reg to use it automatically using :meth:`reg.implicit.Implicit.initialize`:
   from reg import implicit
   implicit.initialize(registry)
 
-Once we've done this, our generic ``title`` function works both both
+Once we've done this, our generic ``title`` function works on both
 titled and labeled objects:
 
 .. doctest::
