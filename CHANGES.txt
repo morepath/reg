@@ -8,6 +8,9 @@ CHANGES
 
 - Typo fix in API docs.
 
+- A new ``named_mapply`` function that allows explicit control over
+  whether arguments show up in the callable's ``**kwargs`` or not.
+
 0.5 (2014-01-21)
 ================
 
