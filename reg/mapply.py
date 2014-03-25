@@ -24,6 +24,30 @@ def mapply(func, *args, **kw):
     return func(*args, **new_kw)
 
 
+def named_mapply(func, args, named, extra):
+    """Apply arguments to function only if it defines them.
+
+    :param func: the callable to apply the arguments to.
+    :param args: a list of positional arguments
+    :param named: a dictionary of arguments that should
+      match with named function arguments, but not go into any
+     ``**kwargs`` that ``func`` defines if unmatched.
+    :param extra: a dictionary of arguments that should
+      match with named function arguments, and if unmatched go
+      into the ``**kwargs`` of the func if it is defined.
+    """
+    info = arginfo(func)
+    kw = {name: named[name] for name in info.args if
+          name in named}
+    if info.keywords:
+        kw.update(extra)
+        return func(*args, **kw)
+    for name in info.args:
+        if name in extra:
+            kw[name] = extra[name]
+    return func(*args, **kw)
+
+
 def arginfo(callable):
     """Get information about the arguments of a callable.
 
