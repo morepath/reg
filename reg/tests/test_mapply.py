@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 import pytest
-from reg.mapply import mapply, named_mapply, arginfo
+from reg.mapply import mapply, arginfo
 
 
 def test_mapply():
@@ -79,44 +79,6 @@ def test_mapply_kw():
     def foo(**kw):
         return kw
     assert mapply(foo, a=1) == {'a': 1}
-
-
-def test_named_mapply_kw():
-    def foo(**kw):
-        return kw
-    assert named_mapply(foo, [], dict(a=1), dict(b=2)) == {'b': 2}
-
-
-def test_named_mapply_no_kw():
-    def foo(a):
-        return a
-    assert named_mapply(foo, [], dict(a=1), dict()) == 1
-
-
-def test_named_mapply_matching():
-    def foo(a, **kw):
-        return a, kw
-    assert named_mapply(foo, [], dict(a=1), dict(b=2)) == (1, {'b': 2})
-    assert named_mapply(foo, [], dict(b=2), dict(a=1)) == (1, {})
-
-
-def test_named_mapply_same_key():
-    def foo(a, **kw):
-        return a, kw
-    assert named_mapply(foo, [], dict(a=1), dict(a=2)) == (1, {})
-
-
-def test_named_mapply_same_key_no_kw():
-    def foo(a):
-        return a
-    assert named_mapply(foo, [], dict(a=1), dict(a=2)) == 1
-
-
-def test_named_mapply_errors():
-    def foo(a, **kw):
-        return kw
-    with pytest.raises(TypeError):
-        named_mapply(foo, [], dict(), dict(b=1))
 
 
 def test_mapply_args2():
