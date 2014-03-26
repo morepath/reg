@@ -100,6 +100,18 @@ def test_named_mapply_matching():
     assert named_mapply(foo, [], dict(b=2), dict(a=1)) == (1, {})
 
 
+def test_named_mapply_same_key():
+    def foo(a, **kw):
+        return a, kw
+    assert named_mapply(foo, [], dict(a=1), dict(a=2)) == (1, {})
+
+
+def test_named_mapply_same_key_no_kw():
+    def foo(a):
+        return a
+    assert named_mapply(foo, [], dict(a=1), dict(a=2)) == 1
+
+
 def test_named_mapply_errors():
     def foo(a, **kw):
         return kw

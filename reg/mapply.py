@@ -37,15 +37,16 @@ def named_mapply(func, args, named, extra):
       into the ``**kwargs`` of the func if it is defined.
     """
     info = arginfo(func)
-    kw = {name: named[name] for name in info.args if
-          name in named}
+    named_kw = {name: named[name] for name in info.args if
+                name in named}
     if info.keywords:
-        kw.update(extra)
+        kw = extra.copy()
+        kw.update(named_kw)
         return func(*args, **kw)
     for name in info.args:
-        if name in extra:
-            kw[name] = extra[name]
-    return func(*args, **kw)
+        if name in extra and name not in named_kw:
+            named_kw[name] = extra[name]
+    return func(*args, **named_kw)
 
 
 def arginfo(callable):
