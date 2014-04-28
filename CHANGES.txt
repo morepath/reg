@@ -1,10 +1,12 @@
 CHANGES
 *******
 
-0.6.1 (unreleased)
+0.7 (unreleased)
 ================
 
-- Mark as production/stable now.
+- Python 2.6 compatibility. (Ivo van der Wijk)
+
+- Marked as production/stable now in ``setup.py``.
 
 0.6 (2014-04-08)
 ================
