@@ -2,6 +2,7 @@
 """
 from __future__ import unicode_literals
 from future.utils import native_str
+import inspect
 
 
 class MapKey(object):
@@ -212,7 +213,7 @@ class ClassMapKey(object):
         self.parents = tuple(
             [ClassMapKey(base) for base in class_.__bases__])
         self.ancestors = [self] + [ClassMapKey(ancestor) for ancestor in
-                                   class_.__mro__[1:]]
+                                   inspect.getmro(class_)[1:]]
 
     def __hash__(self):
         return hash(self.key)

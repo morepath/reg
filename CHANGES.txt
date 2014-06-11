@@ -6,6 +6,9 @@ CHANGES
 
 - Python 2.6 compatibility. (Ivo van der Wijk)
 
+- Class maps (and thus generic function lookup) now works with old
+  style classes as well.
+
 - Marked as production/stable now in ``setup.py``.
 
 0.6 (2014-04-08)

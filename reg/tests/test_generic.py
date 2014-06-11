@@ -155,6 +155,33 @@ def test_component_inheritance():
     assert target.component(delta, lookup=reg) is foo
 
 
+def test_component_inheritance_old_style_class():
+    reg = Registry()
+    foo = object()
+
+    class Gamma:
+        pass
+
+    class Delta(Gamma):
+        pass
+
+    @generic
+    def target():
+        pass
+
+    reg.register(target, [Gamma], foo)
+
+    gamma = Gamma()
+    delta = Delta()
+
+    assert reg.component(target, [gamma]) is foo
+    assert target.component(gamma, lookup=reg) is foo
+
+    # inheritance case
+    assert reg.component(target, [delta]) is foo
+    assert target.component(delta, lookup=reg) is foo
+
+
 def test_component_not_found():
     reg = Registry()
 

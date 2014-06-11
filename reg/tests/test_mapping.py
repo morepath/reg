@@ -384,6 +384,71 @@ def test_classmap_key_repr():
     assert repr(a) == "<ClassMapKey: <class 'reg.tests.test_mapping.A'>>"
 
 
+def test_class_mapkey_old_style():
+    class A:
+        pass
+    a = ClassMapKey(A)
+
+    class B(A):
+        pass
+    b = ClassMapKey(B)
+
+    class C(B):
+        pass
+    c = ClassMapKey(C)
+
+    class D(B, A):
+        pass
+    d = ClassMapKey(D)
+
+    assert a.parents == ()
+    assert a.ancestors == [ClassMapKey(A)]
+
+    assert b.parents == (ClassMapKey(A),)
+    assert b.ancestors == [ClassMapKey(B), ClassMapKey(A)]
+
+    assert c.parents == (ClassMapKey(B),)
+    assert c.ancestors == [ClassMapKey(C), ClassMapKey(B),
+                           ClassMapKey(A)]
+
+    assert d.parents == (ClassMapKey(B), ClassMapKey(A))
+    assert d.ancestors == [ClassMapKey(D), ClassMapKey(B),
+                           ClassMapKey(A)]
+
+
+def test_class_mapkey_old_style_in_ancestor_chain():
+    class A:
+        pass
+    a = ClassMapKey(A)
+
+    class B(object):
+        pass
+    b = ClassMapKey(B)
+
+    class C(A, B):
+        pass
+    c = ClassMapKey(C)
+
+    class D(B, A):
+        pass
+
+    d = ClassMapKey(D)
+
+    assert c.parents == (ClassMapKey(A), ClassMapKey(B),)
+    assert c.ancestors == [ClassMapKey(C),
+                           ClassMapKey(A),
+                           ClassMapKey(B),
+                           ClassMapKey(object)]
+
+    # it is odd to make object not be at the end, but this is what
+    # you choose if you mix in a classic class
+    assert d.parents == (ClassMapKey(B), ClassMapKey(A),)
+    assert d.ancestors == [ClassMapKey(D),
+                           ClassMapKey(B),
+                           ClassMapKey(object),
+                           ClassMapKey(A)]
+
+
 def test_inverse_map():
     m = InverseMap()
 
