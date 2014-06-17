@@ -12,7 +12,7 @@ tests_require = [
     ]
 
 setup(name='reg',
-      version='0.7',
+      version='0.8.dev0',
       description="Generic functions. Clever registries and lookups",
       long_description=long_description,
       author="Martijn Faassen",
