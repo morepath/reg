@@ -1,7 +1,7 @@
 CHANGES
 *******
 
-0.7 (unreleased)
+0.7 (2014-06-17)
 ================
 
 - Python 2.6 compatibility. (Ivo van der Wijk)
