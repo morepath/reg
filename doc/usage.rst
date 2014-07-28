@@ -104,9 +104,9 @@ Our example is over, so we reset the implicit registry set up before:
   implicit.clear()
 
 Why not just use plain functions or methods instead of generic
-functions? Often plain functions or methods will be the right solution.
-But not always -- in this document we will examine a use case where
-generic functions are useful.
+functions? Often plain functions or methods will be the right
+solution.  But not always -- in this document we will examine a
+situation where generic functions are useful.
 
 Generic functions
 =================
