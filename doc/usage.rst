@@ -16,7 +16,7 @@ implementation described in Python `PEP 443`_, but Reg provides a lot
 more flexibility.
 
 Reg supports loose coupling. You can define a function in your core
-application or framework but provide definitions of this function
+application or framework but provide implementations of this function
 outside of it.
 
 Reg gives developers fine control over how to find implemenations of
@@ -90,12 +90,12 @@ titled and labeled objects:
 
 .. doctest::
 
-  >>> titled = TitledReport('titled')
-  >>> labeled = LabeledReport('labeled')
+  >>> titled = TitledReport('This is a report')
+  >>> labeled = LabeledReport('This is also a report')
   >>> title(titled)
-  'titled'
+  'This is a report'
   >>> title(labeled)
-  'labeled'
+  'This is also a report'
 
 Our example is over, so we reset the implicit registry set up before:
 
@@ -105,7 +105,7 @@ Our example is over, so we reset the implicit registry set up before:
 
 Why not just use plain functions or methods instead of generic
 functions? Often plain functions or methods will be the right solution.
-But not always -- in this document we will motivate a case where
+But not always -- in this document we will examine a use case where
 generic functions are useful.
 
 Generic functions
