@@ -16,7 +16,8 @@ CHANGES
 - Optimization: improve performance of generic function calls by
   employing ``lookup_mapply`` instead of general ``mapply``, as we
   only care about passing in the lookup argument when it's defined,
-  and any other arguments should work as before.
+  and any other arguments should work as before. Also added a
+  ``perf.py`` which is a simple generic function timing script.
 
 0.7 (2014-06-17)
 ================
