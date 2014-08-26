@@ -3,7 +3,8 @@
 from __future__ import unicode_literals
 
 from .sentinel import Sentinel
-from .mapply import mapply
+from .mapply import lookup_mapply
+
 
 SENTINEL = Sentinel('Sentinel')
 
@@ -133,7 +134,7 @@ class Lookup(object):
         func = self.component(key, args, default, class_method)
         if func is default:
             return default
-        result = mapply(func, *args, lookup=self, **kw)
+        result = lookup_mapply(func, self, *args, **kw)
         if result is None and default is not SENTINEL:
             return default
         return result

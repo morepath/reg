@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 from functools import update_wrapper
 from reg.implicit import implicit, NoImplicitLookupError
 from reg.lookup import ComponentLookupError
-from reg.mapply import mapply
+from reg.mapply import lookup_mapply
 
 
 def generic(func):
@@ -32,7 +32,7 @@ def generic(func):
         try:
             return lookup.call(wrapper, args, **kw)
         except ComponentLookupError:
-            return mapply(func, *args, lookup=lookup, **kw)
+            return lookup_mapply(func, lookup, *args, **kw)
 
     def component(*args, **kw):
         """Look up registered component for function and arguments.
@@ -83,7 +83,7 @@ def classgeneric(func):
         try:
             return lookup.call(wrapper, args, class_method=True, **kw)
         except ComponentLookupError:
-            return mapply(func, *args, lookup=lookup, **kw)
+            return lookup_mapply(func, lookup, *args, **kw)
 
     def component(*args, **kw):
         """Look up registered component for function and arguments.

@@ -13,6 +13,11 @@ CHANGES
   this did not work properly anymore without running sphinxpython
   explicitly.
 
+- Optimization: improve performance of generic function calls by
+  employing ``lookup_mapply`` instead of general ``mapply``, as we
+  only care about passing in the lookup argument when it's defined,
+  and any other arguments should work as before.
+
 0.7 (2014-06-17)
 ================
 
