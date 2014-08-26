@@ -773,6 +773,74 @@ In this case we return the function ``send_email`` from the
 ``emailer()`` function, but we could return any object we want that
 implements the service, such as an instance with a more extensive API.
 
+classgeneric
+------------
+
+Reg generic functions can be used to replace methods, so that you can
+follow the open/closed principle and add functionality to a class
+without modifying it. This works for instance methods, but what about
+``classmethod``? This takes the *class* as the first argument, not an
+instance. Reg's ``@reg.generic`` is not very useful there, as you
+cannot associate functions for class arguments. This is because the
+class of the class would be used, which is ``type``, rather useless
+for writing more specialized generic functions.
+
+Reg offers a special ``@reg.classgeneric`` that lets you write classmethods
+as generic functions. Here's what it looks like:
+
+.. testcode::
+
+  @reg.classgeneric
+  def something(cls):
+      raise NotImplementedError()
+
+Now you can write an implementation, this one a catch-all for
+all classes (that derive from ``object``):
+
+.. testcode::
+
+  def something_for_object(cls):
+      return "Something for %s" % cls
+
+  r.register(something, [object], something_for_object)
+
+  class DemoClass(object):
+      pass
+
+When we now call ``something()`` with ``DemoClass`` as the first
+argument we get the expected output:
+
+.. doctest::
+
+  >>> something(DemoClass)
+  "Something for <class 'DemoClass'>"
+
+Just like ``@reg.generic`` this knows about inheritance. So, you can
+write more specific implementations for particular classes:
+
+.. testcode::
+
+  class ParticularClass(object):
+      pass
+
+  def something_particular(cls):
+      return "Particular for %s" % cls
+
+  r.register(something, [ParticularClass], something_particular)
+
+When we call ``something`` now with ``ParticularClass`` as the argument,
+then ``something_particular`` is called:
+
+.. doctest::
+
+  >>> something(ParticularClass)
+  "Particular for <class 'ParticularClass'>"
+
+The rest of the arguments are as for ``@reg.generic`` and are normal
+instances, not classes. If they are listed in the second argument to
+``.register`` then they participate in multiple dispatch.
+
+
 Lower level API
 ===============
 

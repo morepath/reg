@@ -6,6 +6,6 @@ from .lookup import Lookup, ComponentLookupError, Matcher
 from .predicate import (PredicateRegistry, Predicate, KeyIndex,
                         PredicateRegistryError, PredicateMatcher, ANY)
 from .compose import ListClassLookup, ChainClassLookup, CachingClassLookup
-from .generic import generic
+from .generic import generic, classgeneric
 from .mapply import mapply, arginfo
 from .sentinel import Sentinel

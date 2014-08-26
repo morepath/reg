@@ -59,7 +59,7 @@ Running the documentation tests
 The documentation contains code. To check these code snippets, you
 can run this code using this command::
 
-  $ bin/sphinx-build  -b doctest doc out
+  $ bin/sphinxpython bin/sphinx-build  -b doctest doc out
 
 Building the HTML documentation
 -------------------------------

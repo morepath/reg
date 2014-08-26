@@ -424,7 +424,7 @@ def test_class_mapkey_old_style():
 def test_class_mapkey_old_style_in_ancestor_chain():
     class A:
         pass
-    a = ClassMapKey(A)
+    ClassMapKey(A)
 
     # this test does not have meaning on Python 3
     if is_new_style(A):
@@ -432,7 +432,7 @@ def test_class_mapkey_old_style_in_ancestor_chain():
 
     class B(object):
         pass
-    b = ClassMapKey(B)
+    ClassMapKey(B)
 
     class C(A, B):
         pass

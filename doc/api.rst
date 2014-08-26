@@ -34,6 +34,8 @@ API
 
 .. autofunction:: reg.generic
 
+.. autofunction:: reg.classgeneric
+
 .. autoclass:: reg.PredicateRegistry
    :members:
 

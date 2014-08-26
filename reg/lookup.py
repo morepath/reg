@@ -51,7 +51,8 @@ class Lookup(object):
     def __init__(self, class_lookup):
         self.class_lookup = class_lookup
 
-    def component(self, key, args, default=SENTINEL, predicates=None):
+    def component(self, key, args, default=SENTINEL, class_method=False,
+                  predicates=None):
         """Look up a component.
 
         :param key: Look up component for this key.
@@ -60,6 +61,8 @@ class Lookup(object):
         :type args: list of objects.
         :param default: default value to return if lookup fails.
         :type default: object.
+        :param class_method: Treat first argument as class instead of instance.
+        :type class_method: bool
         :param predicates: optional predicate ditcionary for matcher,
           overriding the matcher's predicate calculation.
         :type predicates: dict.
@@ -92,7 +95,7 @@ class Lookup(object):
         will be raised, unless a default argument is specified, in
         which case it will be returned.
         """
-        result = next(self.all(key, args, predicates), None)
+        result = next(self.all(key, args, class_method, predicates), None)
         if result is not None:
             return result
         if default is not SENTINEL:
@@ -101,7 +104,7 @@ class Lookup(object):
             "%r: no component found for args %r" % (
                 key, args))
 
-    def call(self, key, args, default=SENTINEL, **kw):
+    def call(self, key, args, default=SENTINEL, class_method=False, **kw):
         """Call function based on multiple dispatch on args.
 
         :param key: Call function for this key.
@@ -110,6 +113,8 @@ class Lookup(object):
         :type args: list of objects.
         :param default: default value to return if lookup fails.
         :type default: object.
+        :param class_method: Treat first argument as class instead of instance.
+        :type class_method: bool
         :param kw: extra keyword arguments passed to the function called.
         :returns: result of function call.
         :raises: ComponentLookupError
@@ -125,7 +130,7 @@ class Lookup(object):
         lookup to this argument too. This allows you to pass along lookup
         completely explicitly between generic functions.
         """
-        func = self.component(key, args, default)
+        func = self.component(key, args, default, class_method)
         if func is default:
             return default
         result = mapply(func, *args, lookup=self, **kw)
@@ -133,13 +138,15 @@ class Lookup(object):
             return default
         return result
 
-    def all(self, key, args, predicates=None):
+    def all(self, key, args, class_method=False, predicates=None):
         """Lookup up all components registered for args.
 
         :param key: Look up components for this key.
         :type key: hashable object, normally function.
         :param args: Look up components for these arguments.
         :type args: list of objects.
+        :param class_method: Treat first argument as class instead of instance.
+        :type class_method: bool
         :param predicates: predicates (used by Matcher)
         :type predicates: dict.
         :returns: iterable of registered components.
@@ -160,8 +167,16 @@ class Lookup(object):
 
         If no components can be found, the iterable will be empty.
         """
-        for found in self.class_lookup.all(
-                key, [arg.__class__ for arg in args]):
+        if not class_method:
+            classes = [arg.__class__ for arg in args]
+        else:
+            if args:
+                classes = [args[0]]
+                for arg in args[1:]:
+                    classes.append(arg.__class__)
+            else:
+                classes = ()
+        for found in self.class_lookup.all(key, classes):
             if isinstance(found, Matcher):
                 if predicates is None:
                     predicates = found.predicates(*args)

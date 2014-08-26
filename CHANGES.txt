@@ -4,8 +4,14 @@ CHANGES
 0.8 (unreleased)
 ================
 
-- Nothing changed yet.
+- Added a ``@reg.classgeneric``. This is like ``@reg.generic``, but
+  the first argument is treated as a class, not as an instance. This
+  makes it possible to replace ``@classmethod`` with a generic
+  function too.
 
+- Fix documentation on running documentation tests. For some reason
+  this did not work properly anymore without running sphinxpython
+  explicitly.
 
 0.7 (2014-06-17)
 ================
