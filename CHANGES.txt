@@ -4,8 +4,9 @@ CHANGES
 0.9 (unreleased)
 ================
 
-- Nothing changed yet.
-
+- Introduce a new ``ClassIndex`` index for predicates. This uses
+  ``reg.Map`` to key on classes. This way the index is
+  inheritance-aware.
 
 0.8 (2014-08-28)
 ================
