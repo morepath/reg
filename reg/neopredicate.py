@@ -9,9 +9,8 @@ NOT_FOUND = Sentinel('NOT_FOUND')
 
 
 class Predicate(object):
-    def __init__(self, name, get_key):
+    def __init__(self, name):
         self.name = name
-        self.get_key = get_key
 
     def create_index(self):
         raise NotImplementedError()  # pragma: nocoverage
@@ -42,8 +41,8 @@ class ClassPredicate(Predicate):
 
 
 class MultiPredicate(Predicate):
-    def __init__(self, name, get_key, predicates):
-        super(MultiPredicate, self).__init__(name, get_key)
+    def __init__(self, name, predicates):
+        super(MultiPredicate, self).__init__(name)
         self.predicates = predicates
 
     def create_index(self):
