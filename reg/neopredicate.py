@@ -14,22 +14,11 @@ class Predicate(object):
         self.get_key = get_key
 
     def create_index(self):
-        raise NotImplementedError()
+        raise NotImplementedError()  # pragma: nocoverage
 
     def permutations(self, key):
-        raise NotImplementedError()
+        raise NotImplementedError()  # pragma: nocoverage
 
-    def get_id(self, index, key):
-        return next(self.all_ids(index, key))
-
-    def all_ids(self, index, key):
-        ids = None
-        for permutation in self.permutations(key):
-            ids = index.get(permutation)
-            if not ids:
-                continue
-            assert len(ids) == 1
-            yield ids
 
 class KeyPredicate(Predicate):
     def create_index(self):
@@ -147,9 +136,6 @@ class Registry(object):
 # XXX it's possible that we should never return FALLBACK, <non-FALLBACK> as
 # fallbacks are only registered for the higher priority FALLBACK.
 def multipredicate_permutations(predicates, keys):
-    if not keys:
-        yield ()
-        return
     first = keys[0]
     rest = keys[1:]
     first_predicate = predicates[0]
