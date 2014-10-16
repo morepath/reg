@@ -2,7 +2,7 @@ from .sentinel import Sentinel
 import inspect
 
 
-ANY = Sentinel('ANY')
+FALLBACK = Sentinel('FALLBACK')
 
 
 NOT_FOUND = Sentinel('NOT_FOUND')
@@ -37,7 +37,7 @@ class KeyPredicate(Predicate):
 
     def permutations(self, key):
         yield key
-        yield ANY
+        yield FALLBACK
 
 
 
@@ -46,9 +46,10 @@ class ClassPredicate(Predicate):
         return KeyIndex()
 
     def permutations(self, key):
-        for class_ in inspect.getmro(key):
-            yield class_
-        yield ANY
+        if key is not FALLBACK:
+            for class_ in inspect.getmro(key):
+                yield class_
+        yield FALLBACK
 
 
 class MultiPredicate(Predicate):
@@ -143,8 +144,8 @@ class Registry(object):
 
 # XXX transform to non-recursive version
 # use # http://blog.moertel.com/posts/2013-05-14-recursive-to-iterative-2.html
-# XXX it's possible that we should never return ANY, <non-ANY> as
-# fallbacks are only registered for the higher priority ANY.
+# XXX it's possible that we should never return FALLBACK, <non-FALLBACK> as
+# fallbacks are only registered for the higher priority FALLBACK.
 def multipredicate_permutations(predicates, keys):
     if not keys:
         yield ()
