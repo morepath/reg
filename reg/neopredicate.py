@@ -3,12 +3,13 @@ import inspect
 
 
 FALLBACK = Sentinel('FALLBACK')
-
-
 NOT_FOUND = Sentinel('NOT_FOUND')
 
 
 class Predicate(object):
+    def __init__(self, get_key=None):
+        self.get_key = get_key
+
     def create_index(self):
         raise NotImplementedError()  # pragma: nocoverage
 
@@ -37,10 +38,12 @@ class ClassPredicate(Predicate):
         yield FALLBACK
 
 
-class MultiPredicate(Predicate):
+class MultiPredicate(object):
     def __init__(self, predicates):
-        super(MultiPredicate, self).__init__()
         self.predicates = predicates
+
+    def get_key(self, d):
+        return tuple([predicate.get_key(d) for predicate in self.predicates])
 
     def create_index(self):
         return MultiIndex(self.predicates)
@@ -115,6 +118,9 @@ class Registry(object):
         self.values[value_id] = value
         self.counter += 1
         self.index.add(key, value_id)
+
+    def key(self, d):
+        return self.predicate.get_key(d)
 
     def get(self, key, default=None):
         return next(self.all(key), default)

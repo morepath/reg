@@ -207,3 +207,25 @@ def test_registry_multi_mixed_predicate_key_class():
     assert r.get(('A', BB)) == 'foo'
     assert r.get(('A', Unknown)) == 'fallback'
     assert r.get(('unknown', Unknown)) == 'fallback'
+
+
+def test_single_predicate_get_key():
+    def get_key(foo):
+        return foo['key']
+
+    p = KeyPredicate(get_key)
+
+    assert p.get_key({'key': 'value'}) == 'value'
+
+
+def test_multi_predicate_get_key():
+    def a_key(foo):
+        return foo['k1']
+
+    def b_key(foo):
+        return foo['k2']
+
+    p = MultiPredicate([KeyPredicate(a_key), KeyPredicate(b_key)])
+
+    assert p.get_key(dict(k1='a', k2='b')) == ('a', 'b')
+
