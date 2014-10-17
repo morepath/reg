@@ -1,5 +1,5 @@
 import pytest
-from ..argextract import ArgDict, ArgExtractor
+from ..argextract import ArgDict, KeyExtractor
 
 
 def test_argdict_no_args():
@@ -162,5 +162,26 @@ def test_argdict_func_takes_normal_and_kw():
     assert d() == { 'kw': {} }
     assert d(1) == { 'a': 1, 'kw': {} }
 
+
+def test_keyextractor():
+    class Model(object):
+        pass
+
+    class Request(object):
+        def __init__(self, request_method):
+            self.request_method = request_method
+
+    def get_request_method(request):
+        return request.request_method
+
+    def foo(self, request):
+        pass
+
+    k = KeyExtractor(get_request_method)
+
+    d = ArgDict(foo)
+
+    assert k(d(Model(), Request('GET'))) == 'GET'
+    assert k(d(Model(), Request('POST'))) == 'POST'
 
 

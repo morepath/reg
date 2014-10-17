@@ -2,6 +2,14 @@ from .mapply import arginfo
 
 
 class ArgDict(object):
+    """Construct a dict according to the argument spec of callable.
+
+    Given a callable, the ArgDict extractor can turn arguments to this
+    callable into a dictionary, with as key the name of the argument
+    and as value the value of the argument. Reg can then use this
+    information to extract information for it to use for a generic
+    function call.
+    """
     def __init__(self, callable):
         self.callable = callable
         self.info = arginfo(callable)
@@ -34,13 +42,20 @@ class ArgDict(object):
         return result
 
 
-class ArgExtractor(object):
-    def __init__(self, argnames):
-        self.argnames = argnames
+class KeyExtractor(object):
+    """Extract those arguments from argdict that callable wants and call it.
+    """
+    def __init__(self, callable):
+        self.callable = callable
+        self.info = arginfo(callable)
+        if self.info.varargs is not None:
+            raise TypeError("KeyExtractor does not support *args")
+        if self.info.keywords is not None:
+            raise TypeError("KeyExtractor does not support **kw")
+        self.names = self.info.args
 
     def __call__(self, argdict):
-        result = {}
-        for argname in self.argnames:
-            d[argname] = d[argname]
-        return d
-
+        d = {}
+        for name in self.names:
+            d[name] = argdict[name]
+        return self.callable(**d)
