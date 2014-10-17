@@ -158,6 +158,13 @@ register(func, [Matcher(get_model, Foo),
                 Matcher(get_request_method, 'GET')], value)
 
 
-then predicate key extractor functions can operate:
+this is not right: we want to register the extraction logic and predicates
+for the function first, and then register the keys.
 
-@app.predicate(args=['a', 'b'])
+so:
+
+register_predicates(func, [(ClassPredicate(get_model)),
+                           (KeyPredicate(get_name)),
+                           (KeyPredicate(get_request_method))])
+
+register_value(func, (Foo, 'edit', 'POST'), real_func)
