@@ -1,9 +1,10 @@
-from ..neopredicate import (KeyPredicate, ClassPredicate, MultiPredicate, FALLBACK,
-                            Registry)
+from ..neopredicate import (
+    KeyPredicate, ClassPredicate, MultiPredicate, FALLBACK,
+    Registry)
 
 
 def test_key_predicate_permutations():
-    p = KeyPredicate('foo')
+    p = KeyPredicate()
     assert list(p.permutations('GET')) == ['GET', FALLBACK]
 
 
@@ -17,7 +18,7 @@ def test_class_predicate_permutations():
     class Qux:
         pass
 
-    p = ClassPredicate('foo')
+    p = ClassPredicate()
 
     assert list(p.permutations(Foo)) == [Foo, object, FALLBACK]
     assert list(p.permutations(Bar)) == [Bar, Foo, object, FALLBACK]
@@ -38,9 +39,7 @@ def test_multi_class_predicate_permutations():
     class BSub(BBase):
         pass
 
-    p = MultiPredicate('multi',
-                       [ClassPredicate('a'),
-                        ClassPredicate('b')])
+    p = MultiPredicate([ClassPredicate(), ClassPredicate()])
 
     assert list(p.permutations([ASub, BSub])) == [
         (ASub, BSub),
@@ -62,10 +61,10 @@ def test_multi_class_predicate_permutations():
 
 
 def test_multi_key_predicate_permutations():
-    p = MultiPredicate('multi', [
-        KeyPredicate('a'),
-        KeyPredicate('b'),
-        KeyPredicate('c'),
+    p = MultiPredicate([
+        KeyPredicate(),
+        KeyPredicate(),
+        KeyPredicate(),
     ])
 
     assert list(p.permutations(['A', 'B', 'C'])) == [
@@ -80,7 +79,7 @@ def test_multi_key_predicate_permutations():
 
 
 def test_registry_single_key_predicate():
-    r = Registry(KeyPredicate('a'))
+    r = Registry(KeyPredicate())
 
     r.register('A', 'A value')
 
@@ -92,7 +91,7 @@ def test_registry_single_key_predicate():
 
 
 def test_registry_single_class_predicate():
-    r = Registry(ClassPredicate('a'))
+    r = Registry(ClassPredicate())
 
     class Foo(object):
         pass
@@ -112,7 +111,7 @@ def test_registry_single_class_predicate():
 
 
 def test_registry_single_class_predicate_also_sub():
-    r = Registry(ClassPredicate('a'))
+    r = Registry(ClassPredicate())
 
     class Foo(object):
         pass
@@ -133,9 +132,9 @@ def test_registry_single_class_predicate_also_sub():
 
 
 def test_registry_multi_class_predicate():
-    r = Registry(MultiPredicate('multi', [
-        ClassPredicate('a'),
-        ClassPredicate('b'),
+    r = Registry(MultiPredicate([
+        ClassPredicate(),
+        ClassPredicate(),
     ]))
 
     class A(object):
@@ -162,9 +161,9 @@ def test_registry_multi_class_predicate():
 
 
 def test_registry_multi_mixed_predicate_class_key():
-    r = Registry(MultiPredicate('multi', [
-        ClassPredicate('a'),
-        KeyPredicate('b'),
+    r = Registry(MultiPredicate([
+        ClassPredicate(),
+        KeyPredicate(),
     ]))
 
     class A(object):
@@ -187,9 +186,9 @@ def test_registry_multi_mixed_predicate_class_key():
 
 
 def test_registry_multi_mixed_predicate_key_class():
-    r = Registry(MultiPredicate('multi', [
-        KeyPredicate('a'),
-        ClassPredicate('b'),
+    r = Registry(MultiPredicate([
+        KeyPredicate(),
+        ClassPredicate(),
     ]))
 
     class B(object):

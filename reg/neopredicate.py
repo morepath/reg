@@ -9,9 +9,6 @@ NOT_FOUND = Sentinel('NOT_FOUND')
 
 
 class Predicate(object):
-    def __init__(self, name):
-        self.name = name
-
     def create_index(self):
         raise NotImplementedError()  # pragma: nocoverage
 
@@ -41,8 +38,8 @@ class ClassPredicate(Predicate):
 
 
 class MultiPredicate(Predicate):
-    def __init__(self, name, predicates):
-        super(MultiPredicate, self).__init__(name)
+    def __init__(self, predicates):
+        super(MultiPredicate, self).__init__()
         self.predicates = predicates
 
     def create_index(self):
@@ -66,20 +63,20 @@ class KeyIndex(object):
 class MultiIndex(object):
     def __init__(self, predicates):
         self.predicates = predicates
-        self.indexes = {}
+        self.indexes = [None] * len(predicates)
 
     def add(self, keys, value):
-        for predicate, key in zip(self.predicates, keys):
-            index = self.indexes.get(predicate.name)
+        for i, (predicate, key) in enumerate(zip(self.predicates, keys)):
+            index = self.indexes[i]
             if index is None:
-                self.indexes[predicate.name] = index = predicate.create_index()
+                self.indexes[i] = index = predicate.create_index()
             index.add(key, value)
 
     def get(self, keys, default):
         matches = []
         # get all matching indexes first
-        for predicate, key in zip(self.predicates, keys):
-            index = self.indexes[predicate.name]
+        for i, key in enumerate(keys):
+            index = self.indexes[i]
             match = index.get(key)
             # bail out early if None or any match has 0 items
             if not match:
