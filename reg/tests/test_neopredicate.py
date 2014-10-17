@@ -211,21 +211,21 @@ def test_registry_multi_mixed_predicate_key_class():
 
 def test_single_predicate_get_key():
     def get_key(foo):
-        return foo['key']
+        return foo
 
     p = KeyPredicate(get_key)
 
-    assert p.get_key({'key': 'value'}) == 'value'
+    assert p.get_key({'foo': 'value'}) == 'value'
 
 
 def test_multi_predicate_get_key():
-    def a_key(foo):
-        return foo['k1']
+    def a_key(a):
+        return a
 
-    def b_key(foo):
-        return foo['k2']
+    def b_key(b):
+        return b
 
     p = MultiPredicate([KeyPredicate(a_key), KeyPredicate(b_key)])
 
-    assert p.get_key(dict(k1='a', k2='b')) == ('a', 'b')
+    assert p.get_key(dict(a='A', b='B')) == ('A', 'B')
 

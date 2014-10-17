@@ -1,5 +1,6 @@
 from .sentinel import Sentinel
 import inspect
+from .argextract import KeyExtractor
 
 
 FALLBACK = Sentinel('FALLBACK')
@@ -8,7 +9,7 @@ NOT_FOUND = Sentinel('NOT_FOUND')
 
 class Predicate(object):
     def __init__(self, get_key=None):
-        self.get_key = get_key
+        self.get_key = KeyExtractor(get_key)
 
     def create_index(self):
         raise NotImplementedError()  # pragma: nocoverage
