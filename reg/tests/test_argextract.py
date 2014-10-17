@@ -197,4 +197,3 @@ def test_keyextractor_error():
 
     with pytest.raises(TypeError):
         k = KeyExtractor(illegal_function2)
-
