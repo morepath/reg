@@ -185,3 +185,16 @@ def test_keyextractor():
     assert k(d(Model(), Request('POST'))) == 'POST'
 
 
+def test_keyextractor_error():
+    def illegal_function(*arg):
+        pass
+
+    def illegal_function2(*kw):
+        pass
+
+    with pytest.raises(TypeError):
+        k = KeyExtractor(illegal_function)
+
+    with pytest.raises(TypeError):
+        k = KeyExtractor(illegal_function2)
+
