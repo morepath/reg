@@ -81,9 +81,10 @@ class MultiIndex(object):
         self.indexes = [None] * len(predicates)
 
     def add(self, keys, value):
-        for i, (predicate, key) in enumerate(zip(self.predicates, keys)):
+        for i, key in enumerate(keys):
             index = self.indexes[i]
             if index is None:
+                predicate = self.predicates[i]
                 self.indexes[i] = index = predicate.create_index()
             index.add(key, value)
 
