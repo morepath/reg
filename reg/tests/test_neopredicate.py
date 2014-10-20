@@ -69,8 +69,8 @@ def test_registry_single_key_predicate():
 
     r.register('A', 'A value')
 
-    assert r.get('A') == 'A value'
-    assert r.get('B') is None
+    assert r.component('A') == 'A value'
+    assert r.component('B') is None
     assert list(r.all('A')) == ['A value']
     assert list(r.all('B')) == []
 
@@ -89,9 +89,9 @@ def test_registry_single_class_predicate():
 
     r.register(Foo, 'foo')
 
-    assert r.get(Foo) == 'foo'
-    assert r.get(FooSub) == 'foo'
-    assert r.get(Qux) is None
+    assert r.component(Foo) == 'foo'
+    assert r.component(FooSub) == 'foo'
+    assert r.component(Qux) is None
 
 
 def test_registry_single_class_predicate_also_sub():
@@ -109,9 +109,9 @@ def test_registry_single_class_predicate_also_sub():
     r.register(Foo, 'foo')
     r.register(FooSub, 'sub')
 
-    assert r.get(Foo) == 'foo'
-    assert r.get(FooSub) == 'sub'
-    assert r.get(Qux) is None
+    assert r.component(Foo) == 'foo'
+    assert r.component(FooSub) == 'sub'
+    assert r.component(Qux) is None
 
 
 def test_registry_multi_class_predicate():
@@ -134,12 +134,12 @@ def test_registry_multi_class_predicate():
 
     r.register((A, B), 'foo')
 
-    assert r.get((A, B)) == 'foo'
-    assert r.get((AA, BB)) == 'foo'
-    assert r.get((AA, B)) == 'foo'
-    assert r.get((A, BB)) == 'foo'
-    assert r.get((A, object)) is None
-    assert r.get((object, B)) is None
+    assert r.component((A, B)) == 'foo'
+    assert r.component((AA, BB)) == 'foo'
+    assert r.component((AA, B)) == 'foo'
+    assert r.component((A, BB)) == 'foo'
+    assert r.component((A, object)) is None
+    assert r.component((object, B)) is None
 
 
 def test_registry_multi_mixed_predicate_class_key():
@@ -159,11 +159,11 @@ def test_registry_multi_mixed_predicate_class_key():
 
     r.register((A, 'B'), 'foo')
 
-    assert r.get((A, 'B')) == 'foo'
-    assert r.get((A, 'unknown')) is None
-    assert r.get((AA, 'B')) == 'foo'
-    assert r.get((AA, 'unknown')) is None
-    assert r.get((Unknown, 'B')) is None
+    assert r.component((A, 'B')) == 'foo'
+    assert r.component((A, 'unknown')) is None
+    assert r.component((AA, 'B')) == 'foo'
+    assert r.component((AA, 'unknown')) is None
+    assert r.component((Unknown, 'B')) is None
 
 
 def test_registry_multi_mixed_predicate_key_class():
@@ -183,10 +183,10 @@ def test_registry_multi_mixed_predicate_key_class():
 
     r.register(('A', B), 'foo')
 
-    assert r.get(('A', B)) == 'foo'
-    assert r.get(('A', BB)) == 'foo'
-    assert r.get(('A', Unknown)) is None
-    assert r.get(('unknown', Unknown)) is None
+    assert r.component(('A', B)) == 'foo'
+    assert r.component(('A', BB)) == 'foo'
+    assert r.component(('A', Unknown)) is None
+    assert r.component(('unknown', Unknown)) is None
 
 
 def test_single_predicate_get_key():
@@ -215,7 +215,7 @@ def test_single_predicate_fallback():
 
     r.register('A', 'A value')
 
-    assert r.get('A') == 'A value'
-    assert r.get('B') is 'fallback'
+    assert r.component('A') == 'A value'
+    assert r.component('B') is 'fallback'
 
 
