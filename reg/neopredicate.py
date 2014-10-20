@@ -130,8 +130,11 @@ class Registry(object):
     def key(self, d):
         return self.predicate.get_key(d)
 
-    def get(self, key, default=None):
-        return next(self.all(key), default)
+    def component(self, key):
+        result = next(self.all(key), NOT_FOUND)
+        if result is NOT_FOUND:
+            return self.fallback(key)
+        return result
 
     def fallback(self, key):
         return self.predicate.fallback(self.index, key)

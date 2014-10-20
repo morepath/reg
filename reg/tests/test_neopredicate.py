@@ -208,3 +208,14 @@ def test_multi_predicate_get_key():
     p = MultiPredicate([KeyPredicate(a_key), KeyPredicate(b_key)])
 
     assert p.get_key(dict(a='A', b='B')) == ('A', 'B')
+
+
+def test_single_predicate_fallback():
+    r = Registry(KeyPredicate(fallback='fallback'))
+
+    r.register('A', 'A value')
+
+    assert r.get('A') == 'A value'
+    assert r.get('B') is 'fallback'
+
+
