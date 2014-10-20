@@ -90,8 +90,7 @@ class MultiIndex(object):
     def get(self, keys, default):
         matches = []
         # get all matching indexes first
-        for i, key in enumerate(keys):
-            index = self.indexes[i]
+        for index, key in zip(self.indexes, keys):
             match = index.get(key)
             # bail out early if None or any match has 0 items
             if not match:
