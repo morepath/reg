@@ -23,10 +23,19 @@ def test_registry():
     def get_request_method(request):
         return request.request_method
 
+    def model_fallback(self, request):
+        return "Model fallback"
+
+    def name_fallback(self, request):
+        return "Name fallback"
+
+    def request_method_fallback(self, request):
+        return "Request method fallback"
+
     r.register_callable_predicates(view, [
-        ClassPredicate(get_model_class),
-        KeyPredicate(get_name),
-        KeyPredicate(get_request_method)])
+        ClassPredicate(get_model_class, model_fallback),
+        KeyPredicate(get_name, name_fallback),
+        KeyPredicate(get_request_method, request_method_fallback)])
 
     def foo_default(self, request):
         return "foo default"
@@ -57,4 +66,11 @@ def test_registry():
     assert l.call(view, Foo(), Request('', 'GET')) == 'foo default'
     assert l.call(view, FooSub(), Request('', 'GET')) == 'foo default'
     assert l.call(view, FooSub(), Request('edit', 'POST')) == 'foo edit'
+
+    class Bar(object):
+        pass
+
+    assert l.call(view, Bar(), Request('', 'GET')) == 'Model fallback'
+    assert l.call(view, Foo(), Request('dummy', 'GET')) == 'Name fallback'
+    assert l.call(view, Foo(), Request('', 'PUT')) == 'Request method fallback'
 

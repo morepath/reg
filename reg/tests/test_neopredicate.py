@@ -1,11 +1,10 @@
 from ..neopredicate import (
-    KeyPredicate, ClassPredicate, MultiPredicate, FALLBACK,
-    Registry)
+    KeyPredicate, ClassPredicate, MultiPredicate, Registry)
 
 
 def test_key_predicate_permutations():
     p = KeyPredicate()
-    assert list(p.permutations('GET')) == ['GET', FALLBACK]
+    assert list(p.permutations('GET')) == ['GET']
 
 
 def test_class_predicate_permutations():
@@ -20,10 +19,10 @@ def test_class_predicate_permutations():
 
     p = ClassPredicate()
 
-    assert list(p.permutations(Foo)) == [Foo, object, FALLBACK]
-    assert list(p.permutations(Bar)) == [Bar, Foo, object, FALLBACK]
+    assert list(p.permutations(Foo)) == [Foo, object]
+    assert list(p.permutations(Bar)) == [Bar, Foo, object]
     # XXX do we want to fake Qux having object as a permutation?
-    assert list(p.permutations(Qux)) == [Qux, FALLBACK]
+    assert list(p.permutations(Qux)) == [Qux]
 
 
 def test_multi_class_predicate_permutations():
@@ -45,19 +44,13 @@ def test_multi_class_predicate_permutations():
         (ASub, BSub),
         (ASub, BBase),
         (ASub, object),
-        (ASub, FALLBACK),
         (ABase, BSub),
         (ABase, BBase),
         (ABase, object),
-        (ABase, FALLBACK),
         (object, BSub),
         (object, BBase),
         (object, object),
-        (object, FALLBACK),
-        (FALLBACK, BSub),
-        (FALLBACK, BBase),
-        (FALLBACK, object),
-        (FALLBACK, FALLBACK)]
+    ]
 
 
 def test_multi_key_predicate_permutations():
@@ -68,14 +61,7 @@ def test_multi_key_predicate_permutations():
     ])
 
     assert list(p.permutations(['A', 'B', 'C'])) == [
-        ('A', 'B', 'C'),
-        ('A', 'B', FALLBACK),
-        ('A', FALLBACK, 'C'),
-        ('A', FALLBACK, FALLBACK),
-        (FALLBACK, 'B', 'C'),
-        (FALLBACK, 'B', FALLBACK),
-        (FALLBACK, FALLBACK, 'C'),
-        (FALLBACK, FALLBACK, FALLBACK)]
+        ('A', 'B', 'C')]
 
 
 def test_registry_single_key_predicate():
@@ -87,7 +73,6 @@ def test_registry_single_key_predicate():
     assert r.get('B') is None
     assert list(r.all('A')) == ['A value']
     assert list(r.all('B')) == []
-    assert r.get(FALLBACK) is None
 
 
 def test_registry_single_class_predicate():
@@ -107,7 +92,6 @@ def test_registry_single_class_predicate():
     assert r.get(Foo) == 'foo'
     assert r.get(FooSub) == 'foo'
     assert r.get(Qux) is None
-    assert r.get(FALLBACK) is None
 
 
 def test_registry_single_class_predicate_also_sub():
@@ -128,7 +112,6 @@ def test_registry_single_class_predicate_also_sub():
     assert r.get(Foo) == 'foo'
     assert r.get(FooSub) == 'sub'
     assert r.get(Qux) is None
-    assert r.get(FALLBACK) is None
 
 
 def test_registry_multi_class_predicate():
@@ -157,7 +140,6 @@ def test_registry_multi_class_predicate():
     assert r.get((A, BB)) == 'foo'
     assert r.get((A, object)) is None
     assert r.get((object, B)) is None
-    assert r.get((FALLBACK, FALLBACK)) is None
 
 
 def test_registry_multi_mixed_predicate_class_key():
@@ -176,12 +158,11 @@ def test_registry_multi_mixed_predicate_class_key():
         pass
 
     r.register((A, 'B'), 'foo')
-    r.register((A, FALLBACK), 'fallback')
 
     assert r.get((A, 'B')) == 'foo'
-    assert r.get((A, 'unknown')) == 'fallback'
+    assert r.get((A, 'unknown')) is None
     assert r.get((AA, 'B')) == 'foo'
-    assert r.get((AA, 'unknown')) == 'fallback'
+    assert r.get((AA, 'unknown')) is None
     assert r.get((Unknown, 'B')) is None
 
 
@@ -201,12 +182,11 @@ def test_registry_multi_mixed_predicate_key_class():
         pass
 
     r.register(('A', B), 'foo')
-    r.register((FALLBACK, FALLBACK), 'fallback')
 
     assert r.get(('A', B)) == 'foo'
     assert r.get(('A', BB)) == 'foo'
-    assert r.get(('A', Unknown)) == 'fallback'
-    assert r.get(('unknown', Unknown)) == 'fallback'
+    assert r.get(('A', Unknown)) is None
+    assert r.get(('unknown', Unknown)) is None
 
 
 def test_single_predicate_get_key():
@@ -228,4 +208,3 @@ def test_multi_predicate_get_key():
     p = MultiPredicate([KeyPredicate(a_key), KeyPredicate(b_key)])
 
     assert p.get_key(dict(a='A', b='B')) == ('A', 'B')
-

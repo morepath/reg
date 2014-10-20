@@ -3,19 +3,22 @@ import inspect
 from .argextract import KeyExtractor
 
 
-FALLBACK = Sentinel('FALLBACK')
 NOT_FOUND = Sentinel('NOT_FOUND')
 
 
 class Predicate(object):
-    def __init__(self, get_key=None):
+    def __init__(self, get_key=None, fallback=None):
         self.get_key = KeyExtractor(get_key)
+        self._fallback = fallback
 
     def create_index(self):
         raise NotImplementedError()  # pragma: nocoverage
 
     def permutations(self, key):
         raise NotImplementedError()  # pragma: nocoverage
+
+    def fallback(self, index, key):
+        return self._fallback
 
 
 class KeyPredicate(Predicate):
@@ -24,7 +27,6 @@ class KeyPredicate(Predicate):
 
     def permutations(self, key):
         yield key
-        yield FALLBACK
 
 
 
@@ -33,10 +35,8 @@ class ClassPredicate(Predicate):
         return KeyIndex()
 
     def permutations(self, key):
-        if key is not FALLBACK:
-            for class_ in inspect.getmro(key):
-                yield class_
-        yield FALLBACK
+        for class_ in inspect.getmro(key):
+            yield class_
 
 
 class MultiPredicate(object):
@@ -51,6 +51,13 @@ class MultiPredicate(object):
 
     def permutations(self, key):
         return multipredicate_permutations(self.predicates, key)
+
+    def fallback(self, multi_index, key):
+        for index, k, predicate in zip(multi_index.indexes,
+                                       key, self.predicates):
+            if index.get(k, NOT_FOUND) is NOT_FOUND:
+                return predicate.fallback(index, k)
+        assert False, "Fallback should only be called if key doesn't match."
 
 
 class KeyIndex(object):
@@ -126,6 +133,9 @@ class Registry(object):
     def get(self, key, default=None):
         return next(self.all(key), default)
 
+    def fallback(self, key):
+        return self.predicate.fallback(self.index, key)
+
     def all(self, key):
         for p in self.predicate.permutations(key):
             result = self.index.get(p, NOT_FOUND)
@@ -136,8 +146,6 @@ class Registry(object):
 
 # XXX transform to non-recursive version
 # use # http://blog.moertel.com/posts/2013-05-14-recursive-to-iterative-2.html
-# XXX it's possible that we should never return FALLBACK, <non-FALLBACK> as
-# fallbacks are only registered for the higher priority FALLBACK.
 def multipredicate_permutations(predicates, keys):
     first = keys[0]
     rest = keys[1:]
