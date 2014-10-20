@@ -94,7 +94,7 @@ class MultiIndex(object):
                 return default
             matches.append(match)
         # sort matches by length.
-        # this optimizes for cheaper interaction calls later
+        # this allows cheaper intersection calls later
         matches.sort(key=lambda match: len(match))
 
         result = None
