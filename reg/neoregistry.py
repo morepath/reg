@@ -58,9 +58,6 @@ class Registry(object):
     def all(self, key, predicate_key):
         return self.predicate_registries[key].all(predicate_key)
 
-    def fallback(self, key, predicate_key):
-        return self.predicate_registries[key].fallback(predicate_key)
-
 
 class CachingKeyLookup(object):
     def __init__(self, key_lookup, component_cache_size, all_cache_size):
