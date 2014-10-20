@@ -20,7 +20,7 @@ class Predicate(object):
     def fallback(self, index, key):
         for k in self.permutations(key):
             if index.get(k, NOT_FOUND) is not NOT_FOUND:
-                return None
+                return NOT_FOUND
         return self._fallback
 
 
@@ -59,9 +59,9 @@ class MultiPredicate(object):
         for index, k, predicate in zip(multi_index.indexes,
                                        key, self.predicates):
             result = predicate.fallback(index, k)
-            if result is not None:
+            if result is not NOT_FOUND:
                 return result
-        return None
+        return NOT_FOUND
 
 
 class KeyIndex(object):
