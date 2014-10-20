@@ -170,43 +170,6 @@ class MultiMap(object):
                 pass
 
 
-class InverseMap(object):
-    def __init__(self):
-        self.d = {}
-        self.descendants = {}
-
-    def register(self, key, value):
-        self.d[key] = value
-        for ancestor in key.ancestors:
-            # sorted insert; insert before any descendant in list
-            l = self.descendants.setdefault(ancestor, [])
-            insert_point = None
-            for i, k in enumerate(l):
-                if key in k.ancestors:
-                    insert_point = i
-                    break
-            if insert_point is None:
-                l.append(key)
-            else:
-                l.insert(insert_point, key)
-
-    def exact_getitem(self, key):
-        return self.d[key]
-
-    def exact_get(self, key, default=None):
-        try:
-            return self.exact_getitem(key)
-        except KeyError:
-            return default
-
-    def all(self, key):
-        descendants = self.descendants.get(key)
-        if descendants is None:
-            return
-        for key in descendants:
-            yield self.d[key]
-
-
 class ClassMapKey(object):
     def __init__(self, class_):
         self.key = class_

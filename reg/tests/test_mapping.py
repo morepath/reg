@@ -1,8 +1,7 @@
 from __future__ import unicode_literals
 from future.utils import is_new_style
 import pytest
-from reg.mapping import (
-    MapKey, Map, MultiMapKey, MultiMap, ClassMapKey, InverseMap)
+from reg.mapping import MapKey, Map, MultiMapKey, MultiMap, ClassMapKey
 
 
 def test_mapkey_without_parents():
@@ -457,101 +456,3 @@ def test_class_mapkey_old_style_in_ancestor_chain():
                            ClassMapKey(object),
                            ClassMapKey(A)]
 
-
-def test_inverse_map():
-    m = InverseMap()
-
-    animal = MapKey('animal')
-    elephant = MapKey('elephant', parents=[animal])
-    african_elephant = MapKey('african elephant', parents=[elephant])
-
-    m.register(animal, 'Animal')
-    m.register(elephant, 'Elephant')
-
-    assert list(m.all(animal)) == ['Animal', 'Elephant']
-    assert list(m.all(elephant)) == ['Elephant']
-    assert list(m.all(african_elephant)) == []
-
-
-def test_inverse_map_exact():
-    m = InverseMap()
-
-    animal = MapKey('animal')
-    elephant = MapKey('elephant', parents=[animal])
-
-    m.register(animal, 'Animal')
-
-    m.exact_getitem(animal) == 'Animal'
-    with pytest.raises(KeyError):
-        m.exact_getitem(elephant)
-    assert m.exact_get(animal) == 'Animal'
-    assert m.exact_get(elephant) is None
-    assert m.exact_get(elephant, 'default') == 'default'
-
-
-def test_inverse_map_registration_order():
-    m = InverseMap()
-
-    animal = MapKey('animal')
-    elephant = MapKey('elephant', parents=[animal])
-    african_elephant = MapKey('african elephant', parents=[elephant])
-
-    m.register(elephant, 'Elephant')
-    m.register(animal, 'Animal')
-
-    assert list(m.all(animal)) == ['Animal', 'Elephant']
-    assert list(m.all(elephant)) == ['Elephant']
-    assert list(m.all(african_elephant)) == []
-
-
-def test_inverse_map_sub():
-    m = InverseMap()
-
-    animal = MapKey('animal')
-    elephant = MapKey('elephant', parents=[animal])
-    african_elephant = MapKey('african elephant', parents=[elephant])
-
-    m.register(elephant, 'Elephant')
-
-    assert list(m.all(animal)) == ['Elephant']
-    assert list(m.all(elephant)) == ['Elephant']
-    assert list(m.all(african_elephant)) == []
-
-
-def test_inverse_map_sub2():
-    m = InverseMap()
-
-    animal = MapKey('animal')
-    elephant = MapKey('elephant', parents=[animal])
-    african_elephant = MapKey('african elephant', parents=[elephant])
-
-    m.register(african_elephant, 'African Elephant')
-
-    assert list(m.all(animal)) == ['African Elephant']
-    assert list(m.all(elephant)) == ['African Elephant']
-    assert list(m.all(african_elephant)) == ['African Elephant']
-
-
-def test_inverse_map_two_descendants():
-    m = InverseMap()
-
-    animal = MapKey('animal')
-    elephant = MapKey('elephant', parents=[animal])
-    rhino = MapKey('rhino', parents=[animal])
-
-    m.register(elephant, 'Elephant')
-    m.register(rhino, 'Rhino')
-
-    assert list(m.all(elephant)) == ['Elephant']
-    assert list(m.all(rhino)) == ['Rhino']
-
-    # we get out the descendants in declaration order
-    assert list(m.all(animal)) == ['Elephant', 'Rhino']
-
-
-def test_inverse_map_empty():
-    m = InverseMap()
-
-    animal = MapKey('animal')
-
-    assert list(m.all(animal)) == []
