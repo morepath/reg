@@ -78,14 +78,10 @@ class KeyIndex(object):
 class MultiIndex(object):
     def __init__(self, predicates):
         self.predicates = predicates
-        self.indexes = [None] * len(predicates)
+        self.indexes = [predicate.create_index() for predicate in predicates]
 
     def add(self, keys, value):
-        for i, key in enumerate(keys):
-            index = self.indexes[i]
-            if index is None:
-                predicate = self.predicates[i]
-                self.indexes[i] = index = predicate.create_index()
+        for index, key in zip(self.indexes, keys):
             index.add(key, value)
 
     def get(self, keys, default):
