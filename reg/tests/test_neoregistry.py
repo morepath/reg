@@ -73,4 +73,4 @@ def test_registry():
     assert l.call(view, Bar(), Request('', 'GET')) == 'Model fallback'
     assert l.call(view, Foo(), Request('dummy', 'GET')) == 'Name fallback'
     assert l.call(view, Foo(), Request('', 'PUT')) == 'Request method fallback'
-
+    assert l.call(view, FooSub(), Request('dummy', 'GET')) == 'Name fallback'

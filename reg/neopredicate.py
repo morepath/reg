@@ -18,6 +18,9 @@ class Predicate(object):
         raise NotImplementedError()  # pragma: nocoverage
 
     def fallback(self, index, key):
+        for k in self.permutations(key):
+            if index.get(k, NOT_FOUND) is not NOT_FOUND:
+                return None
         return self._fallback
 
 
@@ -55,9 +58,10 @@ class MultiPredicate(object):
     def fallback(self, multi_index, key):
         for index, k, predicate in zip(multi_index.indexes,
                                        key, self.predicates):
-            if index.get(k, NOT_FOUND) is NOT_FOUND:
-                return predicate.fallback(index, k)
-        assert False, "Fallback should only be called if key doesn't match."
+            result = predicate.fallback(index, k)
+            if result is not None:
+                return result
+        return None
 
 
 class KeyIndex(object):
