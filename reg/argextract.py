@@ -9,6 +9,9 @@ class ArgDict(object):
     and as value the value of the argument. Reg can then use this
     information to extract information for it to use for a generic
     function call.
+
+    XXX consider optimization where we supply this with the list of names
+    we want to extract.
     """
     def __init__(self, callable):
         self.callable = callable
