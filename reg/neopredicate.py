@@ -1,21 +1,20 @@
 from .sentinel import Sentinel
 import inspect
 from .argextract import KeyExtractor
+from reg.lookup import ComponentLookupError
 
 
 NOT_FOUND = Sentinel('NOT_FOUND')
 
 
 class Predicate(object):
-    def __init__(self, get_key=None, fallback=None):
-        self.get_key = KeyExtractor(get_key)
+    def __init__(self, create_index, permutations,
+                 get_key=None,
+                 fallback=None):
+        self.create_index = create_index
+        self.permutations = permutations
+        self.get_key = get_key
         self._fallback = fallback
-
-    def create_index(self):
-        raise NotImplementedError()  # pragma: nocoverage
-
-    def permutations(self, key):
-        raise NotImplementedError()  # pragma: nocoverage
 
     def fallback(self, index, key):
         for k in self.permutations(key):
@@ -24,36 +23,60 @@ class Predicate(object):
         return self._fallback
 
 
-class KeyPredicate(Predicate):
-    def create_index(self):
-        return KeyIndex()
-
-    def permutations(self, key):
-        yield key
+def key_predicate(get_key=None, fallback=None):
+    return Predicate(KeyIndex, key_permutations, get_key, fallback)
 
 
+def key_permutations(key):
+    yield key
 
-class ClassPredicate(Predicate):
-    def create_index(self):
-        return KeyIndex()
 
-    def permutations(self, key):
-        for class_ in inspect.getmro(key):
-            yield class_
+def class_predicate(get_key=None, fallback=None):
+    return Predicate(KeyIndex, class_permutations, get_key, fallback)
+
+
+def class_permutations(key):
+    for class_ in inspect.getmro(key):
+        yield class_
+
+
+def component_lookup_error(*args, **kw):
+    raise ComponentLookupError()
+
+
+def match_key(func, fallback=None):
+    if fallback is None:
+        fallback = component_lookup_error
+    return key_predicate(KeyExtractor(func), fallback)
+
+
+def match_instance(func, fallback=None):
+    extract = KeyExtractor(func)
+    def get_class(d):
+        return extract(d).__class__
+    if fallback is None:
+        fallback = component_lookup_error
+    return class_predicate(get_class, fallback)
+
+
+def match_class(func, fallback=None):
+    if fallback is None:
+        fallback = component_lookup_error
+    return class_predicate(KeyExtractor(func), fallback)
 
 
 class MultiPredicate(object):
     def __init__(self, predicates):
         self.predicates = predicates
 
-    def get_key(self, d):
-        return tuple([predicate.get_key(d) for predicate in self.predicates])
-
     def create_index(self):
         return MultiIndex(self.predicates)
 
     def permutations(self, key):
         return multipredicate_permutations(self.predicates, key)
+
+    def get_key(self, d):
+        return tuple([predicate.get_key(d) for predicate in self.predicates])
 
     def fallback(self, multi_index, key):
         for index, k, predicate in zip(multi_index.indexes,

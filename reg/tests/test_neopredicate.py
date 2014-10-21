@@ -1,9 +1,9 @@
 from ..neopredicate import (
-    KeyPredicate, ClassPredicate, MultiPredicate, Registry)
+    key_predicate, class_predicate, MultiPredicate, Registry)
 
 
 def test_key_predicate_permutations():
-    p = KeyPredicate()
+    p = key_predicate()
     assert list(p.permutations('GET')) == ['GET']
 
 
@@ -17,7 +17,7 @@ def test_class_predicate_permutations():
     class Qux:
         pass
 
-    p = ClassPredicate()
+    p = class_predicate()
 
     assert list(p.permutations(Foo)) == [Foo, object]
     assert list(p.permutations(Bar)) == [Bar, Foo, object]
@@ -38,7 +38,7 @@ def test_multi_class_predicate_permutations():
     class BSub(BBase):
         pass
 
-    p = MultiPredicate([ClassPredicate(), ClassPredicate()])
+    p = MultiPredicate([class_predicate(), class_predicate()])
 
     assert list(p.permutations([ASub, BSub])) == [
         (ASub, BSub),
@@ -55,9 +55,9 @@ def test_multi_class_predicate_permutations():
 
 def test_multi_key_predicate_permutations():
     p = MultiPredicate([
-        KeyPredicate(),
-        KeyPredicate(),
-        KeyPredicate(),
+        key_predicate(),
+        key_predicate(),
+        key_predicate(),
     ])
 
     assert list(p.permutations(['A', 'B', 'C'])) == [
@@ -65,7 +65,7 @@ def test_multi_key_predicate_permutations():
 
 
 def test_registry_single_key_predicate():
-    r = Registry(KeyPredicate())
+    r = Registry(key_predicate())
 
     r.register('A', 'A value')
 
@@ -76,7 +76,7 @@ def test_registry_single_key_predicate():
 
 
 def test_registry_single_class_predicate():
-    r = Registry(ClassPredicate())
+    r = Registry(class_predicate())
 
     class Foo(object):
         pass
@@ -95,7 +95,7 @@ def test_registry_single_class_predicate():
 
 
 def test_registry_single_class_predicate_also_sub():
-    r = Registry(ClassPredicate())
+    r = Registry(class_predicate())
 
     class Foo(object):
         pass
@@ -116,8 +116,8 @@ def test_registry_single_class_predicate_also_sub():
 
 def test_registry_multi_class_predicate():
     r = Registry(MultiPredicate([
-        ClassPredicate(),
-        ClassPredicate(),
+        class_predicate(),
+        class_predicate(),
     ]))
 
     class A(object):
@@ -144,8 +144,8 @@ def test_registry_multi_class_predicate():
 
 def test_registry_multi_mixed_predicate_class_key():
     r = Registry(MultiPredicate([
-        ClassPredicate(),
-        KeyPredicate(),
+        class_predicate(),
+        key_predicate(),
     ]))
 
     class A(object):
@@ -168,8 +168,8 @@ def test_registry_multi_mixed_predicate_class_key():
 
 def test_registry_multi_mixed_predicate_key_class():
     r = Registry(MultiPredicate([
-        KeyPredicate(),
-        ClassPredicate(),
+        key_predicate(),
+        class_predicate(),
     ]))
 
     class B(object):
@@ -190,32 +190,42 @@ def test_registry_multi_mixed_predicate_key_class():
 
 
 def test_single_predicate_get_key():
-    def get_key(foo):
-        return foo
+    def get_key(argdict):
+        return argdict['foo']
 
-    p = KeyPredicate(get_key)
+    p = key_predicate(get_key)
 
     assert p.get_key({'foo': 'value'}) == 'value'
 
 
 def test_multi_predicate_get_key():
-    def a_key(a):
-        return a
+    def a_key(d):
+        return d['a']
 
-    def b_key(b):
-        return b
+    def b_key(d):
+        return d['b']
 
-    p = MultiPredicate([KeyPredicate(a_key), KeyPredicate(b_key)])
+    p = MultiPredicate([key_predicate(a_key), key_predicate(b_key)])
 
     assert p.get_key(dict(a='A', b='B')) == ('A', 'B')
 
 
 def test_single_predicate_fallback():
-    r = Registry(KeyPredicate(fallback='fallback'))
+    r = Registry(key_predicate(fallback='fallback'))
 
     r.register('A', 'A value')
 
     assert r.component('A') == 'A value'
     assert r.component('B') is 'fallback'
 
+
+def test_multi_predicate_fallback():
+    r = Registry(MultiPredicate([key_predicate(fallback='fallback1'),
+                                 key_predicate(fallback='fallback2')]))
+
+    r.register(('A', 'B'), 'value')
+
+    assert r.component(('A', 'B')) == 'value'
+    assert r.component(('A', 'C')) == 'fallback2'
+    assert r.component(('C', 'B')) == 'fallback1'
 

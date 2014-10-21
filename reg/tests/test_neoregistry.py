@@ -1,5 +1,5 @@
 from ..neoregistry import Registry, Lookup
-from ..neopredicate import KeyPredicate, ClassPredicate
+from ..neopredicate import match_instance, match_key, match_class
 
 
 def test_registry():
@@ -14,8 +14,8 @@ def test_registry():
     def view(self, request):
         raise NotImplementedError()
 
-    def get_model_class(self):
-        return self.__class__
+    def get_model(self):
+        return self
 
     def get_name(request):
         return request.name
@@ -33,9 +33,9 @@ def test_registry():
         return "Request method fallback"
 
     r.register_callable_predicates(view, [
-        ClassPredicate(get_model_class, model_fallback),
-        KeyPredicate(get_name, name_fallback),
-        KeyPredicate(get_request_method, request_method_fallback)])
+        match_instance(get_model, model_fallback),
+        match_key(get_name, name_fallback),
+        match_key(get_request_method, request_method_fallback)])
 
     def foo_default(self, request):
         return "foo default"

@@ -1,5 +1,4 @@
 from .neopredicate import (Registry as PredicateRegistry,
-                           KeyPredicate, ClassPredicate,
                            MultiPredicate, NOT_FOUND)
 from .argextract import ArgDict, KeyExtractor
 from .sentinel import Sentinel
@@ -43,10 +42,20 @@ class Registry(object):
         self.argdicts[callable] = ArgDict(callable)
         self.register_predicates(callable, predicates)
 
+    def register_dispatch(self, callable):
+        self.register_callable_predicates(callable.wrapped_func,
+                                          callable.predicates)
+
     def register_value(self, key, predicate_key, value):
-        # XXX if registering for callable we can check whether
-        # func signature matches that of key
+        # if we have a 1 tuple, we register the single value inside
+        if isinstance(predicate_key, tuple) and len(predicate_key) == 1:
+            predicate_key = predicate_key[0]
         self.predicate_registries[key].register(predicate_key, value)
+
+    def register_dispatch_value(self, callable, predicate_key, value):
+        # XXX we should check whether func signature of value matches that of
+        # callable.wrapped_func
+        self.register_value(callable.wrapped_func, predicate_key, value)
 
     def predicate_key(self, callable, *args, **kw):
         return self.predicate_registries[callable].key(
@@ -57,6 +66,9 @@ class Registry(object):
 
     def all(self, key, predicate_key):
         return self.predicate_registries[key].all(predicate_key)
+
+    def lookup(self):
+        return Lookup(self)
 
 
 class CachingKeyLookup(object):
@@ -95,3 +107,11 @@ class Lookup(object):
         key = self.key_lookup.predicate_key(callable, *args, **kw)
         component = self.key_lookup.component(callable, key)
         return component(*args, **kw)
+
+    def component(self, callable, *args, **kw):
+        key = self.key_lookup.predicate_key(callable, *args, **kw)
+        return self.key_lookup.component(callable, key)
+
+    def all(self, callable, *args, **kw):
+        key = self.key_lookup.predicate_key(callable, *args, **kw)
+        return self.key_lookup.all(callable, key)
