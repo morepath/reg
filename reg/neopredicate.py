@@ -52,11 +52,19 @@ def match_key(func, fallback=None):
 
 def match_instance(func, fallback=None):
     extract = KeyExtractor(func)
-    def get_class(d):
+    def get_key(d):
         return extract(d).__class__
     if fallback is None:
         fallback = component_lookup_error
-    return class_predicate(get_class, fallback)
+    return class_predicate(get_key, fallback)
+
+
+def match_argname(name, fallback=None):
+    def get_key(d):
+        return d[name].__class__
+    if fallback is None:
+        fallback = component_lookup_error
+    return class_predicate(get_key, fallback)
 
 
 def match_class(func, fallback=None):

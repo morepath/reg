@@ -3,6 +3,7 @@ from functools import update_wrapper
 from reg.implicit import implicit, NoImplicitLookupError
 from reg.lookup import ComponentLookupError
 from reg.mapply import lookup_mapply
+from reg.neopredicate import match_argname
 
 
 def generic(func):
@@ -30,7 +31,7 @@ def generic(func):
     def wrapper(*args, **kw):
         lookup = get_lookup(kw)
         try:
-            return lookup.call(wrapper, args, **kw)
+            return lookup.call(func, *args, **kw)
         except ComponentLookupError:
             return lookup_mapply(func, lookup, *args, **kw)
 
@@ -40,7 +41,7 @@ def generic(func):
         Does a dynamic lookup based on the classes of the arguments and
         returns whatever was registered (not calling it).
         """
-        return get_lookup(kw).component(wrapper, args, **kw)
+        return get_lookup(kw).component(func, *args, **kw)
 
     def all(*args, **kw):
         """Look up all registered components for function and arguments.
@@ -48,12 +49,46 @@ def generic(func):
         For all combinations of argument classes, returns an iterable of
         whatever was registered for this function.
         """
-        return get_lookup(kw).all(wrapper, args, **kw)
+        return get_lookup(kw).all(func, *args, **kw)
 
+    wrapper.wrapped_func = func
     wrapper.component = component
     wrapper.all = all
     update_wrapper(wrapper, func)
     return wrapper
+
+
+class dispatch(object):
+    def __init__(self, *predicates):
+        self.predicates = [self.make_predicate(predicate)
+                           for predicate in predicates]
+
+    def make_predicate(self, predicate):
+        if isinstance(predicate, basestring):
+            return match_argname(predicate)
+        return predicate
+
+    def __call__(self, callable):
+        return Dispatch(self.predicates, callable)
+
+
+class Dispatch(object):
+    def __init__(self, predicates, callable):
+        self.predicates = predicates
+        self.wrapped_func = callable
+
+    def __call__(self, *args, **kw):
+        lookup = get_lookup(kw)
+        try:
+            return lookup.call(self.wrapped_func, *args, **kw)
+        except ComponentLookupError:
+            return lookup_mapply(self.wrapped_func, lookup, *args, **kw)
+
+    def component(self, *args, **kw):
+        return get_lookup(kw).component(self.wrapped_func, *args, **kw)
+
+    def all(self, *args, **kw):
+        return get_lookup(kw).all(self.wrapped_func, *args, **kw)
 
 
 def classgeneric(func):

@@ -10,12 +10,17 @@ class SingleValueRegistry(object):
     def __init__(self):
         self.value = MISSING_VALUE
 
-    def register(self, predicate_key, value):
+    def register(self, key, value):
         self.value = value
 
-    def all(self, predicate_key):
-        if self.value is not MISSING_VALUE:
-            yield self.value
+    def key(self, d):
+        return ()
+
+    def component(self, key):
+        return self.value
+
+    def all(self, key):
+        yield self.value
 
 
 class Registry(object):

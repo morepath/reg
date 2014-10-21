@@ -3,9 +3,12 @@ from future.builtins import str
 import pytest
 
 from reg.implicit import NoImplicitLookupError
-from reg.registry import Registry
+#from reg.registry import Registry
+from reg.neoregistry import Registry
+from reg.neopredicate import (class_predicate, key_predicate,
+                              match_instance, match_key)
 from reg.lookup import ComponentLookupError
-from reg.generic import generic
+from reg.generic import generic, dispatch
 
 
 class IAlpha(object):
@@ -24,40 +27,86 @@ class Beta(IBeta):
     pass
 
 
-def test_call():
-    @generic
+def test_dispatch_argname():
+    @dispatch('obj')
     def foo(obj):
         pass
 
-    class Foo(object):
-        def __init__(self, bar):
-            self.bar = bar
+    def for_bar(obj):
+        return obj.method()
 
-        def foo(self):
-            return "Foo called: " + self.bar.bar()
+    def for_qux(obj):
+        return obj.method()
 
     class Bar(object):
-        def bar(self):
+        def method(self):
             return "bar's method"
+
+    class Qux(object):
+        def method(self):
+            return "qux's method"
 
     registry = Registry()
 
-    registry.register(foo, (Bar,), Foo)
+    registry.register_dispatch(foo)
 
-    bar = Bar()
-    assert foo(bar, lookup=registry).foo() == "Foo called: bar's method"
+    registry.register_dispatch_value(foo, (Bar,), for_bar)
+    registry.register_dispatch_value(foo, (Qux,), for_qux)
+
+    lookup = registry.lookup()
+    assert foo(Bar(), lookup=lookup) == "bar's method"
+    assert foo(Qux(), lookup=lookup) == "qux's method"
 
 
-def test_component():
-    @generic
+def test_dispatch_match_instance():
+    @dispatch(match_instance(lambda obj: obj))
+    def foo(obj):
+        pass
+
+    def for_bar(obj):
+        return obj.method()
+
+    def for_qux(obj):
+        return obj.method()
+
+    class Bar(object):
+        def method(self):
+            return "bar's method"
+
+    class Qux(object):
+        def method(self):
+            return "qux's method"
+
+    registry = Registry()
+
+    registry.register_dispatch(foo)
+
+    registry.register_dispatch_value(foo, (Bar,), for_bar)
+    registry.register_dispatch_value(foo, (Qux,), for_qux)
+
+    lookup = registry.lookup()
+    assert foo(Bar(), lookup=lookup) == "bar's method"
+    assert foo(Qux(), lookup=lookup) == "qux's method"
+
+
+def test_dispatch_no_arguments():
+    @dispatch()
     def foo():
         pass
 
     registry = Registry()
 
-    registry.register(foo, (), "test component")
+    registry.register_dispatch(foo)
 
-    assert foo.component(lookup=registry) == 'test component'
+    def special_foo():
+        return "special"
+
+    registry.register_dispatch_value(foo, (), special_foo)
+
+    lookup = registry.lookup()
+    assert foo.component(lookup=lookup) is special_foo
+    assert list(foo.all(lookup=lookup)) == [special_foo]
+    assert foo(lookup=lookup) == 'special'
 
 
 def test_all():
@@ -67,26 +116,23 @@ def test_all():
     class Sub(Base):
         pass
 
-    @generic
+    @dispatch('obj')
     def target(obj):
         pass
 
     registry = Registry()
-    registry.register(target, (Sub,), 'registered for sub')
-    registry.register(target, (Base,), 'registered for base')
+    registry.register_dispatch(target)
+    registry.register_dispatch_value(target, (Sub,), 'registered for sub')
+    registry.register_dispatch_value(target, (Base,), 'registered for base')
 
     base = Base()
     sub = Sub()
 
-    assert list(registry.all(target, [sub])) == [
-        'registered for sub', 'registered for base']
-    assert list(registry.all(target, [base])) == [
-        'registered for base'
-        ]
-    assert list(target.all(sub, lookup=registry)) == [
+    lookup = registry.lookup()
+    assert list(target.all(sub, lookup=lookup)) == [
         'registered for sub',
         'registered for base']
-    assert list(target.all(base, lookup=registry)) == [
+    assert list(target.all(base, lookup=lookup)) == [
         'registered for base']
 
 
@@ -94,43 +140,44 @@ def test_component_no_source():
     reg = Registry()
     foo = object()
 
-    @generic
+    @dispatch()
     def target():
         pass
 
-    reg.register(target, (), foo)
-    assert reg.component(target, []) is foo
-    assert target.component(lookup=reg) is foo
+    reg.register_dispatch(target)
+    reg.register_dispatch_value(target, (), foo)
+    assert target.component(lookup=reg.lookup()) is foo
 
 
 def test_component_one_source():
     reg = Registry()
     foo = object()
 
-    @generic
-    def target():
+    @dispatch('obj')
+    def target(obj):
         pass
 
-    reg.register(target, [Alpha], foo)
+    reg.register_dispatch(target)
+    reg.register_dispatch_value(target, (Alpha,), foo)
 
     alpha = Alpha()
-    assert reg.component(target, [alpha]) is foo
-    assert target.component(alpha, lookup=reg) is foo
+    assert target.component(alpha, lookup=reg.lookup()) is foo
 
 
 def test_component_two_sources():
     reg = Registry()
     foo = object()
 
-    @generic
-    def target():
+    @dispatch('a', 'b')
+    def target(a, b):
         pass
 
-    reg.register(target, (IAlpha, IBeta), foo)
+    reg.register_dispatch(target)
+    reg.register_dispatch_value(target, (IAlpha, IBeta), foo)
+
     alpha = Alpha()
     beta = Beta()
-    assert reg.component(target, [alpha, beta]) is foo
-    assert target.component(alpha, beta, lookup=reg) is foo
+    assert target.component(alpha, beta, lookup=reg.lookup()) is foo
 
 
 def test_component_inheritance():
@@ -143,16 +190,16 @@ def test_component_inheritance():
     class Delta(Gamma):
         pass
 
-    @generic
-    def target():
+    @dispatch('obj')
+    def target(obj):
         pass
 
-    reg.register(target, [Gamma], foo)
+    reg.register_dispatch(target)
+    reg.register_dispatch_value(target, (Gamma,), foo)
 
     delta = Delta()
 
-    assert reg.component(target, [delta]) is foo
-    assert target.component(delta, lookup=reg) is foo
+    assert target.component(delta, lookup=reg.lookup()) is foo
 
 
 def test_component_inheritance_old_style_class():
@@ -165,54 +212,38 @@ def test_component_inheritance_old_style_class():
     class Delta(Gamma):
         pass
 
-    @generic
-    def target():
+    @dispatch('obj')
+    def target(obj):
         pass
 
-    reg.register(target, [Gamma], foo)
+    reg.register_dispatch(target)
+    reg.register_dispatch_value(target, (Gamma,), foo)
 
     gamma = Gamma()
     delta = Delta()
 
-    assert reg.component(target, [gamma]) is foo
-    assert target.component(gamma, lookup=reg) is foo
+    lookup = reg.lookup()
+    assert target.component(gamma, lookup=lookup) is foo
 
     # inheritance case
-    assert reg.component(target, [delta]) is foo
-    assert target.component(delta, lookup=reg) is foo
+    assert target.component(delta, lookup=lookup) is foo
 
 
+# XXX either introduce a default value for .component or a ComponentLookupError
+@pytest.mark.xfail
 def test_component_not_found():
     reg = Registry()
 
-    @generic
+    @dispatch('obj')
     def target(obj):
         pass
 
-    with pytest.raises(ComponentLookupError):
-        reg.component(target, []) is None
-    assert reg.component(target, [], 'default') == 'default'
+    reg.register_dispatch(target)
 
     alpha = Alpha()
+
     with pytest.raises(ComponentLookupError):
-        assert reg.component(target, [alpha])
-    assert reg.component(target, [], 'default') == 'default'
-
-    assert target.component(alpha, lookup=reg, default='default') == 'default'
-    with pytest.raises(ComponentLookupError):
-        target.component(alpha, lookup=reg)
-
-
-# def test_component_to_itself():
-#     reg = Registry()
-#     alpha = Alpha()
-
-#     foo = object()
-
-#     reg.register(IAlpha, [IAlpha], foo)
-
-#     assert reg.component(IAlpha, [alpha]) is foo
-#     assert IAlpha.component(alpha, lookup=reg) is foo
+        target.component(alpha, lookup=reg.lookup())
 
 
 def test_call_no_source():
