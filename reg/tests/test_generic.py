@@ -251,99 +251,166 @@ def test_call_no_source():
 
     foo = object()
 
-    @generic
+    @dispatch()
     def target():
         pass
 
     def factory():
         return foo
 
-    reg.register(target, (), factory)
+    reg.register_dispatch(target)
+    reg.register_dispatch_value(target, (), factory)
 
-    assert reg.call(target, []) is foo
-    assert target(lookup=reg) is foo
+    assert target(lookup=reg.lookup()) is foo
 
 
 def test_call_one_source():
     reg = Registry()
 
-    @generic
+    @dispatch('obj')
     def target(obj):
         pass
 
-    class Adapted(object):
-        def __init__(self, context):
-            self.context = context
+    def foo(obj):
+        return "foo"
 
-        def foo(self):
-            pass
+    def bar(obj):
+        return "bar"
 
-    reg.register(target, [IAlpha], Adapted)
+    reg.register_dispatch(target)
+    reg.register_dispatch_value(target, (IAlpha,), foo)
+    reg.register_dispatch_value(target, (IBeta,), bar)
 
-    alpha = Alpha()
-    adapted = reg.call(target, [alpha])
-    assert isinstance(adapted, Adapted)
-    assert adapted.context is alpha
-    adapted = target(alpha, lookup=reg)
-    assert isinstance(adapted, Adapted)
-    assert adapted.context is alpha
+    lookup = reg.lookup()
+    assert target(Alpha(), lookup=lookup) == 'foo'
+    assert target(Beta(), lookup=lookup) == 'bar'
 
 
 def test_call_two_sources():
     reg = Registry()
 
-    @generic
+    @dispatch('a', 'b')
     def target(a, b):
         pass
 
-    class Adapted(object):
-        def __init__(self, alpha, beta):
-            self.alpha = alpha
-            self.beta = beta
+    def foo(a, b):
+        return "foo"
 
-        def foo(self):
-            pass
+    def bar(a, b):
+        return "bar"
 
-    reg.register(target, [IAlpha, IBeta], Adapted)
-
+    reg.register_dispatch(target)
+    reg.register_dispatch_value(target, (IAlpha, IBeta), foo)
+    reg.register_dispatch_value(target, (IBeta, IAlpha), bar)
     alpha = Alpha()
     beta = Beta()
-    adapted = reg.call(target, [alpha, beta])
 
-    assert isinstance(adapted, Adapted)
-    assert adapted.alpha is alpha
-    assert adapted.beta is beta
+    lookup = reg.lookup()
 
-    adapted = target(alpha, beta, lookup=reg)
-    assert isinstance(adapted, Adapted)
-    assert adapted.alpha is alpha
-    assert adapted.beta is beta
+    assert target(alpha, beta, lookup=lookup) == 'foo'
+    assert target(beta, alpha, lookup=lookup) == 'bar'
 
 
-def test_default():
+def test_component_not_found_no_sources():
     reg = Registry()
 
-    @generic
+    @dispatch()
     def target():
         pass
 
-    assert target.component(lookup=reg, default='blah') == 'blah'
-    assert target(lookup=reg, default='blah') == 'blah'
+    reg.register_dispatch(target)
+
+    lookup = reg.lookup()
+    assert target.component(lookup=lookup) is None
 
 
-def test_non_function_called():
+def test_call_not_found_no_sources():
     reg = Registry()
-    foo = object()
 
-    @generic
+    @dispatch()
+    def target():
+        return "default"
+
+    reg.register_dispatch(target)
+
+    lookup = reg.lookup()
+    assert target(lookup=lookup) == "default"
+
+
+def test_component_not_found_one_source():
+    reg = Registry()
+
+    @dispatch('obj')
     def target(obj):
         pass
 
-    reg.register(target, [Alpha], foo)
-    alpha = Alpha()
+    reg.register_dispatch(target)
 
-    with pytest.raises(TypeError):
-        target(alpha, lookup=reg)
+    lookup = reg.lookup()
+
+    assert target.component('dummy', lookup=lookup) is None
+
+
+def test_call_not_found_one_source():
+    reg = Registry()
+
+    @dispatch('obj')
+    def target(obj):
+        return "default: %s" % obj
+
+    reg.register_dispatch(target)
+
+    lookup = reg.lookup()
+
+    assert target('dummy', lookup=lookup) == 'default: dummy'
+
+
+def test_component_not_found_two_sources():
+    reg = Registry()
+
+    @dispatch('a', 'b')
+    def target(a, b):
+        pass
+
+    reg.register_dispatch(target)
+
+    lookup = reg.lookup()
+
+    assert target.component('dummy', 'dummy', lookup=lookup) is None
+
+
+def test_call_not_found_two_sources():
+    reg = Registry()
+
+    @dispatch('a', 'b')
+    def target(a, b):
+        return "a: %s b: %s" % (a, b)
+
+    reg.register_dispatch(target)
+
+    lookup = reg.lookup()
+
+    assert target('dummy1', 'dummy2', lookup=lookup) == "a: dummy1 b: dummy2"
+
+
+def test_non_callable_registered():
+    reg = Registry()
+    foo = object()
+
+    @dispatch('obj')
+    def target(obj):
+        pass
+
+    # XXX todo
+    reg.register_dispatch(target)
+    with pytest.raises(RegError):
+        reg.register_dispatch_value(target, (Alpha,), object())
+    #target(Alpha(), lookup=reg.lookup())
+
+    # alpha = Alpha()
+
+    # with pytest.raises(TypeError):
+    #     target(alpha, lookup=reg)
 
 
 def test_call_with_wrong_args():

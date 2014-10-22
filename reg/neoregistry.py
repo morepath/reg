@@ -3,12 +3,10 @@ from .neopredicate import (Registry as PredicateRegistry,
 from .argextract import ArgDict, KeyExtractor
 from .sentinel import Sentinel
 
-MISSING_VALUE = Sentinel('MISSING_VALUE')
-
 
 class SingleValueRegistry(object):
     def __init__(self):
-        self.value = MISSING_VALUE
+        self.value = None
 
     def register(self, key, value):
         self.value = value
@@ -111,6 +109,8 @@ class Lookup(object):
     def call(self, callable, *args, **kw):
         key = self.key_lookup.predicate_key(callable, *args, **kw)
         component = self.key_lookup.component(callable, key)
+        if component is None:
+            return callable(*args, **kw)
         return component(*args, **kw)
 
     def component(self, callable, *args, **kw):

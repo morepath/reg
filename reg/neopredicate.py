@@ -40,13 +40,7 @@ def class_permutations(key):
         yield class_
 
 
-def component_lookup_error(*args, **kw):
-    raise ComponentLookupError()
-
-
 def match_key(func, fallback=None):
-    if fallback is None:
-        fallback = component_lookup_error
     return key_predicate(KeyExtractor(func), fallback)
 
 
@@ -54,16 +48,12 @@ def match_instance(func, fallback=None):
     extract = KeyExtractor(func)
     def get_key(d):
         return extract(d).__class__
-    if fallback is None:
-        fallback = component_lookup_error
     return class_predicate(get_key, fallback)
 
 
 def match_argname(name, fallback=None):
     def get_key(d):
         return d[name].__class__
-    if fallback is None:
-        fallback = component_lookup_error
     return class_predicate(get_key, fallback)
 
 
