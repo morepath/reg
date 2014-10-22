@@ -1,4 +1,4 @@
-from .mapply import arginfo
+from .arginfo import arginfo
 
 
 class ArgDict(object):

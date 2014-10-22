@@ -2,6 +2,8 @@ from .neopredicate import (Registry as PredicateRegistry,
                            MultiPredicate, NOT_FOUND)
 from .argextract import ArgDict, KeyExtractor
 from .sentinel import Sentinel
+from .arginfo import arginfo
+from .error import RegError
 
 
 class SingleValueRegistry(object):
@@ -56,8 +58,15 @@ class Registry(object):
         self.predicate_registries[key].register(predicate_key, value)
 
     def register_dispatch_value(self, callable, predicate_key, value):
-        # XXX we should check whether func signature of value matches that of
-        # callable.wrapped_func
+        value_arginfo = arginfo(value)
+        if value_arginfo is None:
+            raise RegError("Cannot register non-callable for dispatch "
+                           "function %r: %r" % (callable, value))
+        # XXX shouldn't different defaults be okay?
+        if arginfo(callable.wrapped_func) != value_arginfo:
+            raise RegError("Arguments of callable dispatched to (%r)"
+                           "not that of dispatch function (%r)" % (
+                               value, callable))
         self.register_value(callable.wrapped_func, predicate_key, value)
 
     def predicate_key(self, callable, *args, **kw):

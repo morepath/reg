@@ -9,6 +9,7 @@ from reg.neopredicate import (class_predicate, key_predicate,
                               match_instance, match_key)
 from reg.lookup import ComponentLookupError
 from reg.generic import generic, dispatch
+from reg.error import RegError
 
 
 class IAlpha(object):
@@ -122,8 +123,8 @@ def test_all():
 
     registry = Registry()
     registry.register_dispatch(target)
-    registry.register_dispatch_value(target, (Sub,), 'registered for sub')
-    registry.register_dispatch_value(target, (Base,), 'registered for base')
+    registry.register_value(target.wrapped_func, (Sub,), 'registered for sub')
+    registry.register_value(target.wrapped_func, (Base,), 'registered for base')
 
     base = Base()
     sub = Sub()
@@ -145,7 +146,7 @@ def test_component_no_source():
         pass
 
     reg.register_dispatch(target)
-    reg.register_dispatch_value(target, (), foo)
+    reg.register_value(target.wrapped_func, (), foo)
     assert target.component(lookup=reg.lookup()) is foo
 
 
@@ -158,7 +159,7 @@ def test_component_one_source():
         pass
 
     reg.register_dispatch(target)
-    reg.register_dispatch_value(target, (Alpha,), foo)
+    reg.register_value(target.wrapped_func, (Alpha,), foo)
 
     alpha = Alpha()
     assert target.component(alpha, lookup=reg.lookup()) is foo
@@ -173,7 +174,7 @@ def test_component_two_sources():
         pass
 
     reg.register_dispatch(target)
-    reg.register_dispatch_value(target, (IAlpha, IBeta), foo)
+    reg.register_value(target.wrapped_func, (IAlpha, IBeta), foo)
 
     alpha = Alpha()
     beta = Beta()
@@ -195,7 +196,7 @@ def test_component_inheritance():
         pass
 
     reg.register_dispatch(target)
-    reg.register_dispatch_value(target, (Gamma,), foo)
+    reg.register_value(target.wrapped_func, (Gamma,), foo)
 
     delta = Delta()
 
@@ -217,7 +218,7 @@ def test_component_inheritance_old_style_class():
         pass
 
     reg.register_dispatch(target)
-    reg.register_dispatch_value(target, (Gamma,), foo)
+    reg.register_value(target.wrapped_func, (Gamma,), foo)
 
     gamma = Gamma()
     delta = Delta()
@@ -227,23 +228,6 @@ def test_component_inheritance_old_style_class():
 
     # inheritance case
     assert target.component(delta, lookup=lookup) is foo
-
-
-# XXX either introduce a default value for .component or a ComponentLookupError
-@pytest.mark.xfail
-def test_component_not_found():
-    reg = Registry()
-
-    @dispatch('obj')
-    def target(obj):
-        pass
-
-    reg.register_dispatch(target)
-
-    alpha = Alpha()
-
-    with pytest.raises(ComponentLookupError):
-        target.component(alpha, lookup=reg.lookup())
 
 
 def test_call_no_source():
@@ -259,7 +243,7 @@ def test_call_no_source():
         return foo
 
     reg.register_dispatch(target)
-    reg.register_dispatch_value(target, (), factory)
+    reg.register_value(target.wrapped_func, (), factory)
 
     assert target(lookup=reg.lookup()) is foo
 
@@ -393,41 +377,52 @@ def test_call_not_found_two_sources():
     assert target('dummy1', 'dummy2', lookup=lookup) == "a: dummy1 b: dummy2"
 
 
-def test_non_callable_registered():
+def test_wrong_callable_registered():
     reg = Registry()
-    foo = object()
 
     @dispatch('obj')
     def target(obj):
         pass
 
-    # XXX todo
+    def callable(a, b):
+        pass
+
     reg.register_dispatch(target)
     with pytest.raises(RegError):
-        reg.register_dispatch_value(target, (Alpha,), object())
-    #target(Alpha(), lookup=reg.lookup())
-
-    # alpha = Alpha()
-
-    # with pytest.raises(TypeError):
-    #     target(alpha, lookup=reg)
+        reg.register_dispatch_value(target, (Alpha,), callable)
 
 
-def test_call_with_wrong_args():
-    @generic
+def test_non_callable_registered():
+    reg = Registry()
+
+    @dispatch('obj')
     def target(obj):
         pass
 
-    class Adapter(object):
-        # takes no args
-        def __init__(self):
-            pass
-    reg = Registry()
-    reg.register(target, [Alpha], Adapter)
-    alpha = Alpha()
+    non_callable = None
 
+    reg.register_dispatch(target)
+    with pytest.raises(RegError):
+        reg.register_dispatch_value(target, (Alpha,), non_callable)
+
+
+
+def test_call_with_wrong_args():
+    @dispatch('obj')
+    def target(obj):
+        pass
+
+    def specific(obj):
+        return "specific"
+
+    reg = Registry()
+    reg.register_dispatch(target)
+    reg.register_dispatch_value(target, (Alpha,), specific)
+
+    # don't supply arguments, which is wrong
+    # XXX should raise TypeError but raises KeyError right now
     with pytest.raises(TypeError):
-        target(alpha, lookup=reg)
+        target(lookup=reg.lookup())
 
 
 def test_func_returns_none():
