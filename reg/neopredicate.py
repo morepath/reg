@@ -1,6 +1,7 @@
 from .sentinel import NOT_FOUND
 import inspect
 from .argextract import KeyExtractor, ClassKeyExtractor, NameKeyExtractor
+from .error import RegError
 
 
 class Predicate(object):
@@ -143,11 +144,11 @@ class Registry(object):
         self.index = self.predicate.create_index()
 
     def register(self, key, value):
+        if key in self.known_keys:
+            raise RegError("Already have registration for key: %s" % (
+                key,))
         self.index.add(key, value)
         self.known_keys.add(key)
-
-    def knows_key(self, key):
-        return key in self.known_keys
 
     def key(self, d):
         return self.predicate.get_key(d)
@@ -168,8 +169,30 @@ class Registry(object):
         for p in self.predicate.permutations(key):
             result = self.index.get(p, NOT_FOUND)
             if result is not NOT_FOUND:
-                assert len(result) == 1
                 yield tuple(result)[0]
+
+
+
+class SingleValueRegistry(object):
+    def __init__(self):
+        self.value = None
+
+    def register(self, key, value):
+        if self.value is not None:
+            raise RegError("Already have registration for key: %s" % (key,))
+        self.value = value
+
+    def key(self, d):
+        return ()
+
+    def argnames(self):
+        return set()
+
+    def component(self, key):
+        return self.value
+
+    def all(self, key):
+        yield self.value
 
 
 # XXX transform to non-recursive version

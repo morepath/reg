@@ -1,5 +1,5 @@
 from .neopredicate import (Registry as PredicateRegistry,
-                           MultiPredicate)
+                           MultiPredicate, SingleValueRegistry)
 from .sentinel import NOT_FOUND
 from .argextract import ArgExtractor, KeyExtractor
 from .sentinel import Sentinel
@@ -43,9 +43,6 @@ class KeyRegistry(object):
         # if we have a 1 tuple, we register the single value inside
         if isinstance(predicate_key, tuple) and len(predicate_key) == 1:
             predicate_key = predicate_key[0]
-        if self.predicate_registries[key].knows_key(predicate_key):
-            raise RegError("Already have registration for key: %s" % (
-                predicate_key,))
         self.predicate_registries[key].register(predicate_key, value)
 
     def register_dispatch_value(self, callable, predicate_key, value):
@@ -128,29 +125,6 @@ class Lookup(object):
     def all(self, callable, *args, **kw):
         key = self.key_lookup.predicate_key(callable, *args, **kw)
         return self.key_lookup.all(callable, key)
-
-
-class SingleValueRegistry(object):
-    def __init__(self):
-        self.value = None
-
-    def register(self, key, value):
-        self.value = value
-
-    def knows_key(self, key):
-        return self.value is not None
-
-    def key(self, d):
-        return ()
-
-    def argnames(self):
-        return set()
-
-    def component(self, key):
-        return self.value
-
-    def all(self, key):
-        yield self.value
 
 
 def same_signature(a, b):
