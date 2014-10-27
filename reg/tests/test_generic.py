@@ -9,7 +9,7 @@ from reg.neopredicate import (class_predicate, key_predicate,
                               match_instance, match_key)
 from reg.lookup import ComponentLookupError
 from reg.generic import generic, dispatch
-from reg.error import RegError
+from reg.error import RegError, KeyExtractorError
 
 
 class IAlpha(object):
@@ -407,6 +407,28 @@ def test_non_callable_registered():
 
 
 
+def test_call_with_no_args_while_arg_expected():
+    @dispatch('obj')
+    def target(obj):
+        pass
+
+    def specific(obj):
+        return "specific"
+
+    reg = Registry()
+    reg.register_dispatch(target)
+    reg.register_dispatch_value(target, (Alpha,), specific)
+
+    lookup = reg.lookup()
+
+    # we are not allowed to call target without arguments
+    with pytest.raises(TypeError):
+        target(lookup=lookup)
+
+    with pytest.raises(KeyExtractorError):
+        target.component(lookup=lookup)
+
+
 def test_call_with_wrong_args():
     @dispatch('obj')
     def target(obj):
@@ -419,45 +441,18 @@ def test_call_with_wrong_args():
     reg.register_dispatch(target)
     reg.register_dispatch_value(target, (Alpha,), specific)
 
-    # don't supply arguments, which is wrong
-    # XXX should raise TypeError but raises KeyError right now
+    lookup = reg.lookup()
+
+    # we are not allowed to call target without arguments
     with pytest.raises(TypeError):
-        target(lookup=reg.lookup())
+        target(wrong=1, lookup=lookup)
+
+    with pytest.raises(KeyExtractorError):
+        target.component(wrong=1, lookup=lookup)
 
 
-def test_func_returns_none():
-    @generic
-    def target(obj):
-        raise NotImplementedError
-
-    def adapt(obj):
-        return None
-    reg = Registry()
-    reg.register(target, [Alpha], adapt)
-    alpha = Alpha()
-    assert target(alpha, lookup=reg) is None
-    assert target(alpha, lookup=reg, default='default') == 'default'
-
-
-def test_extra_kw_for_component():
-    @generic
-    def target(obj):
-        pass
-
-    reg = Registry()
-    foo = object()
-
-    reg.register(target, [Alpha], foo)
-    alpha = Alpha()
-
-    with pytest.raises(TypeError) as e:
-        target.component(alpha, lookup=reg, extra="illegal")
-    assert str(e.value) == ("component() got an unexpected keyword "
-                            "argument 'extra'")
-
-
-def test_extra_kw_for_call():
-    @generic
+def test_extra_arg_for_call():
+    @dispatch('obj')
     def target(obj, extra):
         return "General: %s" % extra
 
@@ -466,19 +461,22 @@ def test_extra_kw_for_call():
     def specific(obj, extra):
         return "Specific: %s" % extra
 
-    reg.register(target, [Alpha], specific)
+    reg.register_dispatch(target)
+    reg.register_dispatch_value(target, (Alpha,), specific)
+
     alpha = Alpha()
     beta = Beta()
-    assert target(alpha, lookup=reg, extra="allowed") == 'Specific: allowed'
-    assert target(beta, lookup=reg, extra="allowed") == 'General: allowed'
-    assert target(alpha, lookup=reg, default='default',
-                  extra='allowed') == 'Specific: allowed'
-    assert target(beta, lookup=reg, default='default',
-                  extra='allowed') == 'default'
+
+    lookup = reg.lookup()
+
+    assert target(alpha, lookup=lookup, extra="allowed") == 'Specific: allowed'
+    assert target(beta, lookup=lookup, extra="allowed") == 'General: allowed'
+    assert target(alpha, 'allowed', lookup=lookup) == 'Specific: allowed'
+    assert target(beta, 'allowed', lookup=lookup) == 'General: allowed'
 
 
 def test_no_implicit():
-    @generic
+    @dispatch('obj')
     def target(obj):
         pass
 
@@ -488,7 +486,7 @@ def test_no_implicit():
 
 
 def test_fallback():
-    @generic
+    @dispatch('obj')
     def target(obj):
         return 'fallback'
 
@@ -497,13 +495,15 @@ def test_fallback():
     def specific_target(obj):
         return 'specific'
 
-    reg.register(target, [Alpha], specific_target)
+    reg.register_dispatch(target)
+    reg.register_dispatch_value(target, (Alpha,), specific_target)
+
     beta = Beta()
-    assert target(beta, lookup=reg) == 'fallback'
+    assert target(beta, lookup=reg.lookup()) == 'fallback'
 
 
 def test_calling_twice():
-    @generic
+    @dispatch('obj')
     def target(obj):
         return 'fallback'
 
@@ -515,19 +515,23 @@ def test_calling_twice():
     def b(obj):
         return 'b'
 
-    reg.register(target, [Alpha], a)
-    reg.register(target, [Beta], b)
+    reg.register_dispatch(target)
 
-    assert target(Alpha(), lookup=reg) == 'a'
-    assert target(Beta(), lookup=reg) == 'b'
+    reg.register_dispatch_value(target, (Alpha,), a)
+    reg.register_dispatch_value(target, (Beta,), b)
+
+    lookup = reg.lookup()
+
+    assert target(Alpha(), lookup=lookup) == 'a'
+    assert target(Beta(), lookup=lookup) == 'b'
 
 
 def test_lookup_passed_along():
-    @generic
+    @dispatch('obj')
     def g1(obj):
         pass
 
-    @generic
+    @dispatch('obj')
     def g2(obj):
         pass
 
@@ -539,17 +543,79 @@ def test_lookup_passed_along():
     def g2_impl(obj):
         return "g2"
 
-    reg.register(g1, [Alpha], g1_impl)
-    reg.register(g2, [Alpha], g2_impl)
+    reg.register_dispatch(g1)
+    reg.register_dispatch(g2)
 
-    assert g1(Alpha(), lookup=reg) == 'g2'
+    reg.register_dispatch_value(g1, (Alpha,), g1_impl)
+    reg.register_dispatch_value(g2, (Alpha,), g2_impl)
+
+    assert g1(Alpha(), lookup=reg.lookup()) == 'g2'
+
+
+def test_different_defaults_in_specific_non_dispatch_arg():
+    @dispatch('obj')
+    def target(obj, blah='default'):
+        return 'fallback: %s' % blah
+
+    reg = Registry()
+
+    def a(obj, blah='default 2'):
+        return 'a: %s' % blah
+
+    reg.register_dispatch(target)
+    reg.register_dispatch_value(target, (Alpha,), a)
+
+    lookup = reg.lookup()
+
+    assert target(Alpha(), lookup=lookup) == 'a: default 2'
+
+
+def test_different_defaults_in_specific_dispatch_arg():
+    @dispatch(match_key(lambda key: key))
+    def target(key='default'):
+        return 'fallback: %s' % key
+
+    reg = Registry()
+
+    def a(key='default 2'):
+        return 'a: %s' % key
+
+    reg.register_dispatch(target)
+    reg.register_dispatch_value(target, ('foo',), a)
+
+    lookup = reg.lookup()
+
+    assert target('foo', lookup=lookup) == 'a: foo'
+    assert target('bar', lookup=lookup) == 'fallback: bar'
+    assert target(lookup=lookup) == 'fallback: default'
+
+
+def test_different_defaults_in_specific_dispatch_arg_causes_dispatch():
+    @dispatch(match_key(lambda key: key))
+    def target(key='foo'):
+        return 'fallback: %s' % key
+
+    reg = Registry()
+
+    def a(key='default 2'):
+        return 'a: %s' % key
+
+    reg.register_dispatch(target)
+    reg.register_dispatch_value(target, ('foo',), a)
+
+    lookup = reg.lookup()
+
+    assert target('foo', lookup=lookup) == 'a: foo'
+    assert target('bar', lookup=lookup) == 'fallback: bar'
+    assert target(lookup=lookup) == 'a: default 2'
 
 
 def test_lookup_passed_along_fallback():
-    @generic
+    @dispatch()
     def a(lookup):
         return "fallback"
 
     reg = Registry()
+    reg.register_dispatch(a)
 
-    assert a(lookup=reg) == 'fallback'
+    assert a(lookup=reg.lookup()) == 'fallback'

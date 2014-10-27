@@ -1,9 +1,11 @@
 from .neopredicate import (Registry as PredicateRegistry,
-                           MultiPredicate, NOT_FOUND)
-from .argextract import ArgDict, KeyExtractor
+                           MultiPredicate)
+from .sentinel import NOT_FOUND
+from .argextract import ArgExtractor, KeyExtractor
 from .sentinel import Sentinel
 from .arginfo import arginfo
-from .error import RegError
+from .error import RegError, KeyExtractorError
+from .mapply import lookup_mapply
 
 
 class SingleValueRegistry(object):
@@ -15,6 +17,9 @@ class SingleValueRegistry(object):
 
     def key(self, d):
         return ()
+
+    def argnames(self):
+        return set()
 
     def component(self, key):
         return self.value
@@ -28,24 +33,24 @@ class Registry(object):
         self.clear()
 
     def clear(self):
-        self.argdicts = {}
+        self.arg_extractors = {}
         self.predicate_registries = {}
 
     def register_predicates(self, key, predicates):
         if len(predicates) == 0:
-            self.predicate_registries[key] = SingleValueRegistry()
-            return
+            result = self.predicate_registries[key] = SingleValueRegistry()
+            return result
         if len(predicates) == 1:
             # an optimization in case just one predicate in use
             predicate = predicates[0]
         else:
             predicate = MultiPredicate(predicates)
-        self.predicate_registries[key] = PredicateRegistry(
-            predicate)
+        self.predicate_registries[key] = result = PredicateRegistry(predicate)
+        return result
 
     def register_callable_predicates(self, callable, predicates):
-        self.argdicts[callable] = ArgDict(callable)
-        self.register_predicates(callable, predicates)
+        r = self.register_predicates(callable, predicates)
+        self.arg_extractors[callable] = ArgExtractor(callable, r.argnames())
 
     def register_dispatch(self, callable):
         self.register_callable_predicates(callable.wrapped_func,
@@ -62,16 +67,15 @@ class Registry(object):
         if value_arginfo is None:
             raise RegError("Cannot register non-callable for dispatch "
                            "function %r: %r" % (callable, value))
-        # XXX shouldn't different defaults be okay?
-        if arginfo(callable.wrapped_func) != value_arginfo:
-            raise RegError("Arguments of callable dispatched to (%r)"
+        if not same_signature(arginfo(callable.wrapped_func), value_arginfo):
+            raise RegError("Signature of callable dispatched to (%r) "
                            "not that of dispatch function (%r)" % (
-                               value, callable))
+                               value, callable.wrapped_func))
         self.register_value(callable.wrapped_func, predicate_key, value)
 
     def predicate_key(self, callable, *args, **kw):
         return self.predicate_registries[callable].key(
-            self.argdicts[callable](*args, **kw))
+            self.arg_extractors[callable](*args, **kw))
 
     def component(self, key, predicate_key):
         return self.predicate_registries[key].component(predicate_key)
@@ -81,6 +85,21 @@ class Registry(object):
 
     def lookup(self):
         return Lookup(self)
+
+
+def same_signature(a, b):
+    """Check whether a arginfo and b arginfo are the same signature.
+
+    Signature may have an extra 'lookup' argument. Default arguments may
+    be different.
+    """
+    a_args = set(a.args)
+    b_args = set(b.args)
+    a_args.discard('lookup')
+    b_args.discard('lookup')
+    return (a_args == b_args and
+            a.varargs == b.varargs and
+            a.keywords == b.keywords)
 
 
 class CachingKeyLookup(object):
@@ -116,11 +135,20 @@ class Lookup(object):
         self.key_lookup = key_lookup
 
     def call(self, callable, *args, **kw):
-        key = self.key_lookup.predicate_key(callable, *args, **kw)
-        component = self.key_lookup.component(callable, key)
+        try:
+            key = self.key_lookup.predicate_key(callable, *args, **kw)
+            component = self.key_lookup.component(callable, key)
+        except KeyExtractorError:
+            # if we cannot extract the key we cannot find the component
+            # later on this will result in a TypeError as we try to
+            # call the callable with the wrong arguments, which is what
+            # we want
+            component = None
+        # if we cannot find the component, use the original
+        # callable as a fallback.
         if component is None:
-            return callable(*args, **kw)
-        return component(*args, **kw)
+            component = callable
+        return lookup_mapply(component, self, *args, **kw)
 
     def component(self, callable, *args, **kw):
         key = self.key_lookup.predicate_key(callable, *args, **kw)

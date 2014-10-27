@@ -1,10 +1,7 @@
-from .sentinel import Sentinel
+from .sentinel import NOT_FOUND
 import inspect
-from .argextract import KeyExtractor
+from .argextract import KeyExtractor, ClassKeyExtractor, NameKeyExtractor
 from reg.lookup import ComponentLookupError
-
-
-NOT_FOUND = Sentinel('NOT_FOUND')
 
 
 class Predicate(object):
@@ -15,6 +12,11 @@ class Predicate(object):
         self.permutations = permutations
         self.get_key = get_key
         self._fallback = fallback
+
+    def argnames(self):
+        if self.get_key is None:
+            return set()
+        return set(self.get_key.names)
 
     def fallback(self, index, key):
         for k in self.permutations(key):
@@ -45,16 +47,11 @@ def match_key(func, fallback=None):
 
 
 def match_instance(func, fallback=None):
-    extract = KeyExtractor(func)
-    def get_key(d):
-        return extract(d).__class__
-    return class_predicate(get_key, fallback)
+    return class_predicate(ClassKeyExtractor(func), fallback)
 
 
 def match_argname(name, fallback=None):
-    def get_key(d):
-        return d[name].__class__
-    return class_predicate(get_key, fallback)
+    return class_predicate(NameKeyExtractor(name), fallback)
 
 
 def match_class(func, fallback=None):
@@ -75,6 +72,12 @@ class MultiPredicate(object):
 
     def get_key(self, d):
         return tuple([predicate.get_key(d) for predicate in self.predicates])
+
+    def argnames(self):
+        result = set()
+        for predicate in self.predicates:
+            result.update(predicate.argnames())
+        return result
 
     def fallback(self, multi_index, key):
         for index, k, predicate in zip(multi_index.indexes,
@@ -150,6 +153,9 @@ class Registry(object):
 
     def key(self, d):
         return self.predicate.get_key(d)
+
+    def argnames(self):
+        return self.predicate.argnames()
 
     def component(self, key):
         result = next(self.all(key), NOT_FOUND)
