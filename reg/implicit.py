@@ -15,7 +15,7 @@ class Implicit(object):
     ``reg.implicit``. The lookup can then be accessed using
     ``reg.implicit.lookup``.
 
-    Generic functions as well as their ``component`` and ``all``
+    Dispatch functions as well as their ``component`` and ``all``
     methods make use of this information if you do not pass an
     explicit ``lookup`` argument to them. This is handy as it becomes
     unnecessary to have to pass a ``lookup`` object everywhere.
@@ -32,17 +32,6 @@ class Implicit(object):
     during run-time. This is done by simply assigning to
     ``implicit.lookup``. The lookup is stored on a thread-local and is
     unique per thread.
-
-    Reg offers facilities to compose such a custom lookup:
-
-    * ``reg.ListClassLookup`` and ``reg.ChainClassLookup`` which
-      can be used to chain multiple ``IClassLookup`` instances together.
-
-    * ``reg.CachingClassLookup`` which can be used to create a
-      faster caching version of an ``IClassLookup``.
-
-    * ``reg.Lookup`` which can be used to turn a ``IClassLookup``
-      into a proper ``ILookup``.
 
     To change the lookup back to a lookup in the global implicit
     registry, call ``reset``.

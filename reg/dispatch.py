@@ -6,11 +6,16 @@ from .compat import string_types
 
 
 class dispatch(object):
+    """Decorator to make a function dispatch based on its arguments.
+
+    :param predicates: sequence of :class:`Predicate` instances
+      to do the dispatch on.
+    """
     def __init__(self, *predicates):
-        self.predicates = [self.make_predicate(predicate)
+        self.predicates = [self._make_predicate(predicate)
                            for predicate in predicates]
 
-    def make_predicate(self, predicate):
+    def _make_predicate(self, predicate):
         if isinstance(predicate, string_types):
             return match_argname(predicate)
         return predicate
@@ -38,7 +43,7 @@ class Dispatch(object):
 
 
 def get_lookup(kw):
-    """Find ILookup to use.
+    """Find lookup to use.
 
     First inspects ``kw``, a dictionary of keyword arguments given for
     an argument called ``lookup``. If that cannot be found, fall back

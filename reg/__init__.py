@@ -6,3 +6,8 @@ from .mapply import mapply
 from .arginfo import arginfo
 from .sentinel import Sentinel
 from .error import RegistrationError, KeyExtractorError, NoImplicitLookupError
+from .predicate import (Predicate, PredicateRegistry,
+                        key_predicate, key_permutations,
+                        class_predicate, class_permutations,
+                        match_key, match_instance, match_argname,
+                        match_class)

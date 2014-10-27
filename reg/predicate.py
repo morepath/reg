@@ -5,20 +5,41 @@ from .error import RegistrationError
 
 
 class Predicate(object):
+    """A dispatch predicate.
+    """
     def __init__(self, create_index, permutations,
                  get_key=None,
                  fallback=None):
+        """
+        :param create_index: a function that constructs an index;
+          typically you supply either a :class:`KeyIndex` or
+          :class:`ClassIndex`.
+        :param permutations: a function that can construct an iterable of
+           permutations for a predicate_key, from most specific to least
+           specific.
+        :param get_key: optional :class:`KeyExtractor`.
+        :param fallback: optional fallback value. This value is returned
+          if this is the most generic index for which no values could be
+          found.
+        """
         self.create_index = create_index
         self.permutations = permutations
         self.get_key = get_key
         self._fallback = fallback
 
     def argnames(self):
+        """argnames that this predicate needs to dispatch on.
+        """
         if self.get_key is None:
             return set()
         return set(self.get_key.names)
 
     def fallback(self, index, key):
+        """Return fallback if this index does not contain key.
+
+        If index contains no permutations of key, then ``NOT_FOUND``
+        is returned.
+        """
         for k in self.permutations(key):
             if index.get(k, NOT_FOUND) is not NOT_FOUND:
                 return NOT_FOUND
@@ -26,24 +47,40 @@ class Predicate(object):
 
 
 def key_predicate(get_key=None, fallback=None):
+    """Construct predicate indexed on any immutable value.
+
+    :get_key: a :class:`KeyExtractor`. Should return key to dispatch on.
+    :fallback: a fallback value. By default is ``None``.
+    :returns: a :class:`Predicate`.
+    """
     return Predicate(KeyIndex, key_permutations, get_key, fallback)
 
 
 def key_permutations(key):
+    """Permutations for a simple immutable key.
+
+    There is only a single permutation: the key itself.
+    """
     yield key
 
 
 def class_predicate(get_key=None, fallback=None):
+    """Construct predicate indexed on class.
+
+    :get_key: a :class:`KeyExtractor`. Should return class to dispatch on.
+    :fallback: a fallback value. By default is ``None``.
+    :returns: a :class:`Predicate`.
+    """
     return Predicate(KeyIndex, class_permutations, get_key, fallback)
 
 
-def instance_predicate(get_key=None, fallback=None):
-    def permutations(obj):
-        return class_permutations(obj.__class_)
-    return Predicate(KeyIndex, permutations, get_key, fallback)
-
-
 def class_permutations(key):
+    """Permutations for class key.
+
+    Returns class and its based in mro order. If a classic class in
+    Python 2, smuggle in ``object`` as the base class anyway to make
+    lookups consistent.
+    """
     for class_ in inspect.getmro(key):
         yield class_
     if class_ is not object:
@@ -51,18 +88,51 @@ def class_permutations(key):
 
 
 def match_key(func, fallback=None):
+    """Predicate that extracts immutable key according to func.
+
+    :func: argument that takes arguments. These arguments are
+      extracted from the arguments given to the dispatch function.
+      This function should return what to dispatch on.
+    :fallback: the fallback value. By default it is ``None``.
+    :returns: a :class:`Predicate`.
+    """
     return key_predicate(KeyExtractor(func), fallback)
 
 
 def match_instance(func, fallback=None):
+    """Predicate that extracts class of instance returned by func.
+
+    :func: argument that takes arguments. These arguments are
+      extracted from the arguments given to the dispatch function.
+      This function should return an instance; dispatching is done
+      on the class of that instance.
+    :fallback: the fallback value. By default it is ``None``.
+    :returns: a :class:`Predicate`.
+    """
     return class_predicate(ClassKeyExtractor(func), fallback)
 
 
 def match_argname(name, fallback=None):
+    """Predicate that extracts class of specified argument.
+
+    :name: name of the argument to dispatch on - its class will
+      be used for the dispatch.
+    :fallback: the fallback value. By default it is ``None``.
+    :returns: a :class:`Predicate`.
+    """
     return class_predicate(NameKeyExtractor(name), fallback)
 
 
 def match_class(func, fallback=None):
+    """Predicate that extracts class returned by func.
+
+    :func: argument that takes arguments. These arguments are
+      extracted from the arguments given to the dispatch function.
+      This function should return a class; dispatching is done
+      on this class.
+    :fallback: the fallback value. By default it is ``None``.
+    :returns: a :class:`Predicate`.
+    """
     return class_predicate(KeyExtractor(func), fallback)
 
 
