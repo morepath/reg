@@ -1,12 +1,12 @@
 from __future__ import unicode_literals
-from reg.registry import KeyRegistry, CachingKeyLookup
+from reg.registry import Registry, CachingKeyLookup
 from reg.predicate import class_predicate, match_instance, match_key
 from reg.error import RegistrationError
 import pytest
 
 
 def test_registry():
-    r = KeyRegistry()
+    r = Registry()
 
     class Foo(object):
         pass
@@ -80,7 +80,7 @@ def test_registry():
 
 
 def test_registry_class_lookup():
-    reg = KeyRegistry()
+    reg = Registry()
 
     class Document(object):
         pass
@@ -114,7 +114,7 @@ def test_registry_class_lookup():
 
 
 def test_registry_target_find_specific():
-    reg = KeyRegistry()
+    reg = Registry()
 
     class Document(object):
         pass
@@ -143,7 +143,7 @@ def test_registry_target_find_specific():
 
 
 def test_registry_no_sources():
-    reg = KeyRegistry()
+    reg = Registry()
 
     class Animal(object):
         pass
@@ -157,7 +157,7 @@ def test_registry_no_sources():
 
 
 def test_register_twice_with_predicate():
-    reg = KeyRegistry()
+    reg = Registry()
 
     class Document(object):
         pass
@@ -172,7 +172,7 @@ def test_register_twice_with_predicate():
 
 
 def test_register_twice_without_predicates():
-    reg = KeyRegistry()
+    reg = Registry()
 
     def linecount(obj):
         pass
@@ -184,7 +184,7 @@ def test_register_twice_without_predicates():
 
 
 def test_clear():
-    reg = KeyRegistry()
+    reg = Registry()
 
     def linecount():
         pass
@@ -198,7 +198,7 @@ def test_clear():
 
 
 def test_caching_registry():
-    r = KeyRegistry()
+    r = Registry()
 
     class Foo(object):
         pass

@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 import pytest
 
 from reg.implicit import NoImplicitLookupError
-from reg.registry import KeyRegistry as Registry
+from reg.registry import Registry
 from reg.predicate import match_instance, match_key
 from reg.dispatch import dispatch
 from reg.error import RegistrationError, KeyExtractorError

@@ -1,5 +1,5 @@
 import reg
-from reg.registry import KeyRegistry as Registry
+from reg.registry import Registry
 from reg.predicate import match_class
 
 

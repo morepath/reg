@@ -7,7 +7,7 @@ from .error import RegistrationError, KeyExtractorError
 from .mapply import lookup_mapply
 
 
-class KeyRegistry(object):
+class Registry(object):
     """A registry of predicate registries
 
     The key is an immutable that we perform the lookup for. The
@@ -19,13 +19,13 @@ class KeyRegistry(object):
     others, that a value registered for a base class is also matched
     when you look up a subclass.
 
-    The KeyRegistry is designed to be easily cacheable.
+    The Registry is designed to be easily cacheable.
     """
     def __init__(self):
         self.clear()
 
     def clear(self):
-        """Clear the KeyRegistry.
+        """Clear the registry.
         """
         self.known_keys = set()
         self.arg_extractors = {}
@@ -52,7 +52,7 @@ class KeyRegistry(object):
     def register_callable_predicates(self, callable, predicates):
         """Register predicates for a callable key.
 
-        Works as :meth:`KeyRegistry.register_predicates`, but also
+        Works as :meth:`register_predicates`, but also
         makes sure a predicate key can be constructed from arguments
         to this callable.
 
@@ -174,14 +174,14 @@ class KeyRegistry(object):
 class CachingKeyLookup(object):
     """A key lookup that caches.
 
-    Implements the read-only API of :class:`KeyRegistry`, using
+    Implements the read-only API of :class:`Registry`, using
     a cache to speed up access.
 
     The cache is LRU.
     """
     def __init__(self, key_lookup, component_cache_size, all_cache_size):
         """
-        :param: key_lookup - the :class:`KeyRegistry` to cache.
+        :param: key_lookup - the :class:`Registry` to cache.
         :component_cache_size: how many cache entries to store for
           the :meth:`component` method. This is also used by dispatch
           calls.
