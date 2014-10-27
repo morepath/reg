@@ -1,8 +1,9 @@
 from __future__ import unicode_literals
 from functools import update_wrapper
-from reg.implicit import implicit, NoImplicitLookupError
-from reg.mapply import lookup_mapply
-from reg.predicate import match_argname
+from .implicit import implicit, NoImplicitLookupError
+from .mapply import lookup_mapply
+from .predicate import match_argname
+from .compat import string_types
 
 
 class dispatch(object):
@@ -11,7 +12,7 @@ class dispatch(object):
                            for predicate in predicates]
 
     def make_predicate(self, predicate):
-        if isinstance(predicate, basestring):
+        if isinstance(predicate, string_types):
             return match_argname(predicate)
         return predicate
 

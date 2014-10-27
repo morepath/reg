@@ -24,8 +24,7 @@ def test_class_predicate_permutations():
 
     assert list(p.permutations(Foo)) == [Foo, object]
     assert list(p.permutations(Bar)) == [Bar, Foo, object]
-    # XXX do we want to fake Qux having object as a permutation?
-    assert list(p.permutations(Qux)) == [Qux]
+    assert list(p.permutations(Qux)) == [Qux, object]
 
 
 def test_multi_class_predicate_permutations():

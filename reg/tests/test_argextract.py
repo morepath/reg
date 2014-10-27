@@ -219,7 +219,7 @@ def test_argextractor_illegal_names():
     with pytest.raises(TypeError) as e:
         ArgExtractor(foo, ['not_there'])
     assert str(e.value).startswith(
-        'Argument not_there not in signature of callable: <function foo at ')
+        'Argument not_there not in signature of callable: ')
 
 
 def test_argextractor_illegal_names_kw():
@@ -230,4 +230,4 @@ def test_argextractor_illegal_names_kw():
         ArgExtractor(foo, ['not_there'])
 
     assert str(e.value).startswith(
-        'Argument not_there not in signature of callable: <function foo at ')
+        'Argument not_there not in signature of callable: ')

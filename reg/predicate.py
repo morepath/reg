@@ -46,7 +46,8 @@ def instance_predicate(get_key=None, fallback=None):
 def class_permutations(key):
     for class_ in inspect.getmro(key):
         yield class_
-
+    if class_ is not object:
+        yield object
 
 def match_key(func, fallback=None):
     return key_predicate(KeyExtractor(func), fallback)
