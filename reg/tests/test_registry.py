@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from reg.neoregistry import KeyRegistry
-from reg.neopredicate import (class_predicate,
-                              match_instance, match_key, match_class)
+from reg.predicate import (class_predicate,
+                           match_instance, match_key, match_class)
 from reg.dispatch import dispatch
 from reg.error import RegError
 import pytest

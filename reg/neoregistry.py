@@ -1,5 +1,5 @@
-from .neopredicate import (Registry as PredicateRegistry,
-                           MultiPredicate, SingleValueRegistry)
+from .predicate import (Registry as PredicateRegistry,
+                        MultiPredicate, SingleValueRegistry)
 from .sentinel import NOT_FOUND
 from .argextract import ArgExtractor, KeyExtractor
 from .sentinel import Sentinel

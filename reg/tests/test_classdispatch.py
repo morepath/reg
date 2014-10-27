@@ -1,6 +1,6 @@
 import reg
 from reg.neoregistry import KeyRegistry as Registry
-from reg.neopredicate import match_class
+from reg.predicate import match_class
 
 
 class DemoClass(object):

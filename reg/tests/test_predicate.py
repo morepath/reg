@@ -1,4 +1,4 @@
-from ..neopredicate import (
+from ..predicate import (
     key_predicate, class_predicate, MultiPredicate, Registry)
 from ..error import RegError
 import pytest

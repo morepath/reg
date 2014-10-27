@@ -4,8 +4,8 @@ import pytest
 
 from reg.implicit import NoImplicitLookupError
 from reg.neoregistry import KeyRegistry as Registry
-from reg.neopredicate import (class_predicate, key_predicate,
-                              match_instance, match_key)
+from reg.predicate import (class_predicate, key_predicate,
+                           match_instance, match_key)
 from reg.dispatch import dispatch
 from reg.error import RegError, KeyExtractorError
 
