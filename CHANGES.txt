@@ -4,6 +4,15 @@ CHANGES
 0.9 (unreleased)
 ================
 
+- BREAKING CHANGES:
+
+  * pep443 support is gone. Reg is focused on something else.
+
+  * compose functionality is gone -- it turns out Morepath doesn't use
+    lookup composition to support App inheritance. The cached lookup
+    functionality has moved into ``lookup.py`` and now also supports
+    caching of predicate-based lookups.
+
 - Introduce a new ``ClassIndex`` index for predicates. This uses
   ``reg.Map`` to key on classes. This way the index is
   inheritance-aware.
