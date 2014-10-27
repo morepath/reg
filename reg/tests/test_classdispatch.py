@@ -21,7 +21,7 @@ class Bar(object):
         return "<instance of Bar>"
 
 
-def test_classgeneric_basic():
+def test_dispatch_basic():
     @reg.dispatch(match_class(lambda cls: cls))
     def something(cls):
         raise NotImplementedError()
@@ -35,13 +35,13 @@ def test_classgeneric_basic():
 
     l = r.lookup()
     assert something(DemoClass, lookup=l) == (
-        "Something for <class 'reg.tests.test_classgeneric.DemoClass'>")
+        "Something for <class 'reg.tests.test_classdispatch.DemoClass'>")
 
     assert something.component(DemoClass, lookup=l) is something_for_object
     assert list(something.all(DemoClass, lookup=l)) == [something_for_object]
 
 
-def test_classgeneric_multidispatch():
+def test_classdispatch_multidispatch():
     @reg.dispatch(match_class(lambda cls: cls), 'other')
     def something(cls, other):
         raise NotImplementedError()
@@ -71,7 +71,7 @@ def test_classgeneric_multidispatch():
         "Something, other is Foo: <instance of Foo>")
 
 
-def test_classgeneric_extra_arguments():
+def test_classdispatch_extra_arguments():
     @reg.dispatch(match_class(lambda cls: cls))
     def something(cls, extra):
         raise NotImplementedError()
@@ -86,7 +86,7 @@ def test_classgeneric_extra_arguments():
     assert something(DemoClass, 'foo', lookup=r.lookup()) == "Extra: foo"
 
 
-def test_classgeneric_no_arguments():
+def test_classdispatch_no_arguments():
     @reg.dispatch()
     def something():
         raise NotImplementedError()
@@ -101,7 +101,7 @@ def test_classgeneric_no_arguments():
     assert something(lookup=r.lookup()) == 'Something!'
 
 
-def test_classgeneric_override():
+def test_classdispatch_override():
     @reg.dispatch(match_class(lambda cls: cls))
     def something(cls):
         raise NotImplementedError()
@@ -120,10 +120,10 @@ def test_classgeneric_override():
                               something_for_special)
 
     assert something(SpecialClass, lookup=r.lookup()) == (
-        "Special for <class 'reg.tests.test_classgeneric.SpecialClass'>")
+        "Special for <class 'reg.tests.test_classdispatch.SpecialClass'>")
 
 
-def test_classgeneric_fallback():
+def test_classdispatch_fallback():
     @reg.dispatch()
     def something(cls):
         return "Fallback"
