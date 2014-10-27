@@ -331,13 +331,13 @@ class Lookup(object):
 def same_signature(a, b):
     """Check whether a arginfo and b arginfo are the same signature.
 
-    Signature may have an extra 'lookup' argument. Default arguments may
-    be different.
+    Signature may have an extra 'lookup' argument. Actual names of
+    argument may differ. Default arguments may be different.
     """
     a_args = set(a.args)
     b_args = set(b.args)
     a_args.discard('lookup')
     b_args.discard('lookup')
-    return (a_args == b_args and
+    return (len(a_args) == len(b_args) and
             a.varargs == b.varargs and
             a.keywords == b.keywords)

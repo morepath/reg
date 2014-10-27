@@ -30,7 +30,7 @@ API
 
 .. autofunction:: class_permutations
 
-.. autoclass:: KeyRegistry
+.. autoclass:: Registry
    :members:
 
 .. autoclass:: CachingKeyLookup
