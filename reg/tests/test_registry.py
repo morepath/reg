@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from reg.registry import KeyRegistry
+from reg.registry import KeyRegistry, CachingKeyLookup
 from reg.predicate import (class_predicate,
                            match_instance, match_key, match_class)
 from reg.dispatch import dispatch
@@ -197,3 +197,88 @@ def test_clear():
     reg.clear()
     reg.register_predicates(linecount, [])
     assert reg.component(linecount, ()) is None
+
+
+def test_caching_registry():
+    r = KeyRegistry()
+
+    class Foo(object):
+        pass
+
+    class FooSub(Foo):
+        pass
+
+    def view(self, request):
+        raise NotImplementedError()
+
+    def get_model(self):
+        return self
+
+    def get_name(request):
+        return request.name
+
+    def get_request_method(request):
+        return request.request_method
+
+    def model_fallback(self, request):
+        return "Model fallback"
+
+    def name_fallback(self, request):
+        return "Name fallback"
+
+    def request_method_fallback(self, request):
+        return "Request method fallback"
+
+    r.register_callable_predicates(view, [
+        match_instance(get_model, model_fallback),
+        match_key(get_name, name_fallback),
+        match_key(get_request_method, request_method_fallback)])
+
+    def foo_default(self, request):
+        return "foo default"
+
+    def foo_post(self, request):
+        return "foo default post"
+
+    def foo_edit(self, request):
+        return "foo edit"
+
+    r.register_value(view, (Foo, '', 'GET'), foo_default)
+    r.register_value(view, (Foo, '', 'POST'), foo_post)
+    r.register_value(view, (Foo, 'edit', 'POST'), foo_edit)
+
+    l = CachingKeyLookup(r, 100, 100).lookup()
+
+    class Request(object):
+        def __init__(self, name, request_method):
+            self.name = name
+            self.request_method = request_method
+
+    assert l.call(view, Foo(), Request('', 'GET')) == 'foo default'
+    assert l.call(view, FooSub(), Request('', 'GET')) == 'foo default'
+    assert l.call(view, FooSub(), Request('edit', 'POST')) == 'foo edit'
+
+    # use a bit of inside knowledge to check the cache is filled
+    assert l.key_lookup.component_cache.get(
+        (view, (Foo, '', 'GET'))) is not None
+    assert l.key_lookup.component_cache.get(
+        (view, (FooSub, '', 'GET'))) is not None
+    assert l.key_lookup.component_cache.get(
+        (view, (FooSub, 'edit', 'POST'))) is not None
+
+    # prime and check the all cache
+    assert list(l.all(view, Foo(), Request('', 'GET'))) == [foo_default]
+    assert l.key_lookup.all_cache.get(
+        (view, (Foo, '', 'GET'))) is not None
+
+    class Bar(object):
+        pass
+
+    assert l.call(view, Bar(), Request('', 'GET')) == 'Model fallback'
+    assert l.call(view, Foo(), Request('dummy', 'GET')) == 'Name fallback'
+    assert l.call(view, Foo(), Request('', 'PUT')) == 'Request method fallback'
+    assert l.call(view, FooSub(), Request('dummy', 'GET')) == 'Name fallback'
+
+    # fallbacks get cached too
+    assert l.key_lookup.component_cache.get(
+        (view, (Bar, '', 'GET'))) is model_fallback

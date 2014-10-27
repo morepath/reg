@@ -1,3 +1,4 @@
+from repoze.lru import LRUCache
 from .predicate import PredicateRegistry, MultiPredicate, SingleValueRegistry
 from .sentinel import NOT_FOUND
 from .argextract import ArgExtractor, KeyExtractor
@@ -78,13 +79,11 @@ class CachingKeyLookup(object):
     def predicate_key(self, callable, *args, **kw):
         return self.key_lookup.predicate_key(callable, *args, **kw)
 
-    def component(self, key, predicate_key, default=None):
+    def component(self, key, predicate_key):
         result = self.component_cache.get((key, predicate_key), NOT_FOUND)
         if result is not NOT_FOUND:
             return result
-        result = self.key_lookup.component(key, predicate_key, NOT_FOUND)
-        if result is NOT_FOUND:
-            return default
+        result = self.key_lookup.component(key, predicate_key)
         self.component_cache.put((key, predicate_key), result)
         return result
 
@@ -93,8 +92,11 @@ class CachingKeyLookup(object):
         if result is not NOT_FOUND:
             return result
         result = list(self.key_lookup.all(key, predicate_key))
-        self.component_cache.put((key, predicate_key), result)
+        self.all_cache.put((key, predicate_key), result)
         return result
+
+    def lookup(self):
+        return Lookup(self)
 
 
 class Lookup(object):
