@@ -7,7 +7,7 @@ from reg.neoregistry import Registry
 from reg.neopredicate import (class_predicate, key_predicate,
                               match_instance, match_key)
 from reg.lookup import ComponentLookupError
-from reg.generic import generic, dispatch
+from reg.dispatch import dispatch
 from reg.error import RegError, KeyExtractorError
 
 
