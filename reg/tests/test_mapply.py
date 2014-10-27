@@ -68,7 +68,7 @@ def test_mapply_callable_object():
 def test_mapply_non_function():
     a = 1
 
-    with pytest.raises(TypeError):
+    with pytest.raises(Exception):
         assert mapply(a, a=1)
 
 
