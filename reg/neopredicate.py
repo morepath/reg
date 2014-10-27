@@ -55,8 +55,6 @@ def match_argname(name, fallback=None):
 
 
 def match_class(func, fallback=None):
-    if fallback is None:
-        fallback = component_lookup_error
     return class_predicate(KeyExtractor(func), fallback)
 
 

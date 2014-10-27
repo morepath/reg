@@ -3,7 +3,6 @@ from future.builtins import str
 import pytest
 
 from reg.implicit import NoImplicitLookupError
-#from reg.registry import Registry
 from reg.neoregistry import Registry
 from reg.neopredicate import (class_predicate, key_predicate,
                               match_instance, match_key)
