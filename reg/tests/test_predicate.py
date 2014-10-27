@@ -325,7 +325,6 @@ def test_name_request_method_body_model_registered_for_base():
     assert m.component(('foo', 'POST', Bar)) == 'post foo'
 
 
-
 def test_name_request_method_body_model_registered_for_base_and_sub():
     m = Registry(MultiPredicate([
         key_predicate(fallback='name fallback'),

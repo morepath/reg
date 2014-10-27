@@ -49,6 +49,7 @@ def class_permutations(key):
     if class_ is not object:
         yield object
 
+
 def match_key(func, fallback=None):
     return key_predicate(KeyExtractor(func), fallback)
 
@@ -171,7 +172,6 @@ class PredicateRegistry(object):
             result = self.index.get(p, NOT_FOUND)
             if result is not NOT_FOUND:
                 yield tuple(result)[0]
-
 
 
 class SingleValueRegistry(object):

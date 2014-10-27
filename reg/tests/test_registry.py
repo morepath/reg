@@ -1,8 +1,6 @@
 from __future__ import unicode_literals
 from reg.registry import KeyRegistry, CachingKeyLookup
-from reg.predicate import (class_predicate,
-                           match_instance, match_key, match_class)
-from reg.dispatch import dispatch
+from reg.predicate import class_predicate, match_instance, match_key
 from reg.error import RegError
 import pytest
 

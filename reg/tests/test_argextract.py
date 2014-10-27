@@ -32,10 +32,10 @@ def test_keyextractor_error():
         pass
 
     with pytest.raises(TypeError):
-        k = KeyExtractor(illegal_function)
+        KeyExtractor(illegal_function)
 
     with pytest.raises(TypeError):
-        k = KeyExtractor(illegal_function2)
+        KeyExtractor(illegal_function2)
 
 
 def test_argextractor_no_args():
@@ -52,8 +52,8 @@ def test_argextractor_one_arg():
 
     d = ArgExtractor(foo, ['a'])
 
-    assert d(1) == { 'a': 1 }
-    assert d(a=1) == { 'a': 1 }
+    assert d(1) == {'a': 1}
+    assert d(a=1) == {'a': 1}
 
 
 def test_argextractor_two_args():
@@ -61,8 +61,8 @@ def test_argextractor_two_args():
         pass
 
     d = ArgExtractor(foo, ['a', 'b'])
-    assert d(1, 2) == { 'a': 1, 'b': 2}
-    assert d(a=1, b=2) == { 'a': 1, 'b': 2}
+    assert d(1, 2) == {'a': 1, 'b': 2}
+    assert d(a=1, b=2) == {'a': 1, 'b': 2}
 
 
 def test_argextractor_one_arg_default():
@@ -70,9 +70,9 @@ def test_argextractor_one_arg_default():
         pass
 
     d = ArgExtractor(foo, ['a'])
-    assert d(1) == { 'a': 1 }
-    assert d(a=1) == { 'a': 1 }
-    assert d() == { 'a': 'default' }
+    assert d(1) == {'a': 1}
+    assert d(a=1) == {'a': 1}
+    assert d() == {'a': 'default'}
 
 
 def test_argextractor_two_args_default():
@@ -80,10 +80,10 @@ def test_argextractor_two_args_default():
         pass
 
     d = ArgExtractor(foo, ['a', 'b'])
-    assert d(1, 2) == { 'a': 1, 'b': 2 }
-    assert d(a=1, b=2) == { 'a': 1, 'b': 2 }
-    assert d(1) == { 'a': 1, 'b': 'default' }
-    assert d(a=1) == { 'a': 1, 'b': 'default' }
+    assert d(1, 2) == {'a': 1, 'b': 2}
+    assert d(a=1, b=2) == {'a': 1, 'b': 2}
+    assert d(1) == {'a': 1, 'b': 'default'}
+    assert d(a=1) == {'a': 1, 'b': 'default'}
 
 
 def test_argextractor_no_args_but_got_arg():
@@ -117,7 +117,7 @@ def test_argextractor_explicit_args():
         pass
 
     d = ArgExtractor(foo, ['a', 'b'])
-    assert d(*[1, 2]) == { 'a': 1, 'b': 2 }
+    assert d(*[1, 2]) == {'a': 1, 'b': 2}
 
 
 def test_argextractor_explicit_kw():
@@ -125,7 +125,7 @@ def test_argextractor_explicit_kw():
         pass
 
     d = ArgExtractor(foo, ['a', 'b'])
-    assert d(**{'a': 1, 'b': 2}) == { 'a': 1, 'b': 2 }
+    assert d(**{'a': 1, 'b': 2}) == {'a': 1, 'b': 2}
 
 
 def test_argextractor_func_takes_args():
@@ -133,9 +133,9 @@ def test_argextractor_func_takes_args():
         pass
 
     d = ArgExtractor(foo, ['args'])
-    assert d(1, 2) == { 'args': (1, 2) }
-    assert d() == {'args': () }
-    assert d(args=[1, 2]) == { 'args': () }
+    assert d(1, 2) == {'args': (1, 2)}
+    assert d() == {'args': ()}
+    assert d(args=[1, 2]) == {'args': ()}
 
 
 def test_argextractor_func_takes_normal_and_args():
@@ -143,11 +143,11 @@ def test_argextractor_func_takes_normal_and_args():
         pass
 
     d = ArgExtractor(foo, ['a', 'args'])
-    assert d(1, 2, 3) == { 'a': 1, 'args': (2, 3) }
-    assert d(1, 2) == { 'a': 1, 'args': (2,) }
-    assert d(1) == { 'a': 1, 'args': () }
+    assert d(1, 2, 3) == {'a': 1, 'args': (2, 3)}
+    assert d(1, 2) == {'a': 1, 'args': (2,)}
+    assert d(1) == {'a': 1, 'args': ()}
     # XXX this is actually not valid Python
-    assert d(2, 3, a=1) == { 'a': 1, 'args': (2, 3) }
+    assert d(2, 3, a=1) == {'a': 1, 'args': (2, 3)}
 
 
 def test_argextractor_func_takes_normal_with_default_and_args():
@@ -155,10 +155,10 @@ def test_argextractor_func_takes_normal_with_default_and_args():
         pass
 
     d = ArgExtractor(foo, ['a', 'args'])
-    assert d(1, 2, 3) == { 'a': 1, 'args': (2, 3) }
-    assert d(1, 2) == { 'a': 1, 'args': (2,) }
-    assert d(1) == { 'a': 1, 'args': () }
-    assert d() == { 'a': 'default', 'args': () }
+    assert d(1, 2, 3) == {'a': 1, 'args': (2, 3)}
+    assert d(1, 2) == {'a': 1, 'args': (2,)}
+    assert d(1) == {'a': 1, 'args': ()}
+    assert d() == {'a': 'default', 'args': ()}
 
 
 def test_argextractor_func_positional_other_name():
@@ -166,7 +166,7 @@ def test_argextractor_func_positional_other_name():
         pass
 
     d = ArgExtractor(foo, ['a'])
-    assert d(1, 2) == { 'a': (1, 2) }
+    assert d(1, 2) == {'a': (1, 2)}
 
 
 def test_argextractor_func_takes_kw():
@@ -174,10 +174,10 @@ def test_argextractor_func_takes_kw():
         pass
 
     d = ArgExtractor(foo, ['kw'])
-    assert d(a=1) == { 'kw': { 'a': 1 } }
-    assert d(a=1, b=2) == { 'kw': { 'a': 1, 'b': 2 } }
-    assert d() == { 'kw': {} }
-    assert d(1) == { 'kw': {} }
+    assert d(a=1) == {'kw': {'a': 1}}
+    assert d(a=1, b=2) == {'kw': {'a': 1, 'b': 2}}
+    assert d() == {'kw': {}}
+    assert d(1) == {'kw': {}}
 
 
 def test_argextractor_func_kw_other_name():
@@ -185,10 +185,10 @@ def test_argextractor_func_kw_other_name():
         pass
 
     d = ArgExtractor(foo, ['k'])
-    assert d(a=1) == { 'k': { 'a': 1 } }
-    assert d(a=1, b=2) == { 'k': { 'a': 1, 'b': 2 } }
-    assert d() == { 'k': {} }
-    assert d(1) == { 'k': {} }
+    assert d(a=1) == {'k': {'a': 1}}
+    assert d(a=1, b=2) == {'k': {'a': 1, 'b': 2}}
+    assert d() == {'k': {}}
+    assert d(1) == {'k': {}}
 
 
 def test_argextractor_func_takes_normal_and_kw():
@@ -196,10 +196,10 @@ def test_argextractor_func_takes_normal_and_kw():
         pass
 
     d = ArgExtractor(foo, ['a', 'kw'])
-    assert d(1, b=2) == { 'a': 1, 'kw': { 'b': 2 } }
-    assert d(a=1, b=2) == { 'a': 1, 'kw': { 'b': 2 } }
-    assert d() == { 'a': NOT_FOUND, 'kw': {} }
-    assert d(1) == { 'a': 1, 'kw': {} }
+    assert d(1, b=2) == {'a': 1, 'kw': {'b': 2}}
+    assert d(a=1, b=2) == {'a': 1, 'kw': {'b': 2}}
+    assert d() == {'a': NOT_FOUND, 'kw': {}}
+    assert d(1) == {'a': 1, 'kw': {}}
 
 
 def test_argextractor_func_takes_args_and_kw():
@@ -207,9 +207,9 @@ def test_argextractor_func_takes_args_and_kw():
         pass
 
     d = ArgExtractor(foo, ['args', 'kw'])
-    assert d(1, 2, b=3) == { 'args': (1, 2), 'kw': { 'b': 3 } }
-    assert d(args=3) == { 'args': (), 'kw': { 'args': 3 } }
-    assert d(1, 2) == { 'args': (1, 2), 'kw': {} }
+    assert d(1, 2, b=3) == {'args': (1, 2), 'kw': {'b': 3}}
+    assert d(args=3) == {'args': (), 'kw': {'args': 3}}
+    assert d(1, 2) == {'args': (1, 2), 'kw': {}}
 
 
 def test_argextractor_illegal_names():

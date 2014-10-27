@@ -3,8 +3,7 @@ import pytest
 
 from reg.implicit import NoImplicitLookupError
 from reg.registry import KeyRegistry as Registry
-from reg.predicate import (class_predicate, key_predicate,
-                           match_instance, match_key)
+from reg.predicate import match_instance, match_key
 from reg.dispatch import dispatch
 from reg.error import RegError, KeyExtractorError
 
@@ -120,8 +119,10 @@ def test_all():
 
     registry = Registry()
     registry.register_dispatch(target)
-    registry.register_value(target.wrapped_func, (Sub,), 'registered for sub')
-    registry.register_value(target.wrapped_func, (Base,), 'registered for base')
+    registry.register_value(target.wrapped_func, (Sub,),
+                            'registered for sub')
+    registry.register_value(target.wrapped_func, (Base,),
+                            'registered for base')
 
     base = Base()
     sub = Sub()
@@ -401,7 +402,6 @@ def test_non_callable_registered():
     reg.register_dispatch(target)
     with pytest.raises(RegError):
         reg.register_dispatch_value(target, (Alpha,), non_callable)
-
 
 
 def test_call_with_no_args_while_arg_expected():

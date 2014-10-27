@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 from .arginfo import arginfo
 
+
 def mapply(func, *args, **kw):
     """Apply keyword arguments to function only if it defines them.
 

@@ -1,8 +1,7 @@
 from repoze.lru import LRUCache
 from .predicate import PredicateRegistry, MultiPredicate, SingleValueRegistry
 from .sentinel import NOT_FOUND
-from .argextract import ArgExtractor, KeyExtractor
-from .sentinel import Sentinel
+from .argextract import ArgExtractor
 from .arginfo import arginfo
 from .error import RegError, KeyExtractorError
 from .mapply import lookup_mapply
