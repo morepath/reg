@@ -4,6 +4,8 @@ CHANGES
 0.9 (unreleased)
 ================
 
+- Total rewrite of Reg!
+
 - BREAKING CHANGES:
 
   * pep443 support is gone. Reg is focused on something else.
@@ -12,6 +14,9 @@ CHANGES
     lookup composition to support App inheritance. The cached lookup
     functionality has moved into ``lookup.py`` and now also supports
     caching of predicate-based lookups.
+
+- Dependency on the future module is gone in favor of a small amount
+  of compatibility code.
 
 - Introduce a new ``ClassIndex`` index for predicates. This uses
   ``reg.Map`` to key on classes. This way the index is

@@ -33,7 +33,6 @@ setup(name='reg',
       install_requires=[
         'setuptools',
         'repoze.lru',
-        'future',
         ],
       tests_require=tests_require,
       extras_require = dict(
