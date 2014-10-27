@@ -8,31 +8,12 @@ from .error import RegError, KeyExtractorError
 from .mapply import lookup_mapply
 
 
-class SingleValueRegistry(object):
-    def __init__(self):
-        self.value = None
-
-    def register(self, key, value):
-        self.value = value
-
-    def key(self, d):
-        return ()
-
-    def argnames(self):
-        return set()
-
-    def component(self, key):
-        return self.value
-
-    def all(self, key):
-        yield self.value
-
-
-class Registry(object):
+class KeyRegistry(object):
     def __init__(self):
         self.clear()
 
     def clear(self):
+        self.known_keys = set()
         self.arg_extractors = {}
         self.predicate_registries = {}
 
@@ -57,9 +38,14 @@ class Registry(object):
                                           callable.predicates)
 
     def register_value(self, key, predicate_key, value):
+        if isinstance(predicate_key, list):
+            predicate_key = tuple(predicate_key)
         # if we have a 1 tuple, we register the single value inside
         if isinstance(predicate_key, tuple) and len(predicate_key) == 1:
             predicate_key = predicate_key[0]
+        if self.predicate_registries[key].knows_key(predicate_key):
+            raise RegError("Already have registration for key: %s" % (
+                predicate_key,))
         self.predicate_registries[key].register(predicate_key, value)
 
     def register_dispatch_value(self, callable, predicate_key, value):
@@ -85,21 +71,6 @@ class Registry(object):
 
     def lookup(self):
         return Lookup(self)
-
-
-def same_signature(a, b):
-    """Check whether a arginfo and b arginfo are the same signature.
-
-    Signature may have an extra 'lookup' argument. Default arguments may
-    be different.
-    """
-    a_args = set(a.args)
-    b_args = set(b.args)
-    a_args.discard('lookup')
-    b_args.discard('lookup')
-    return (a_args == b_args and
-            a.varargs == b.varargs and
-            a.keywords == b.keywords)
 
 
 class CachingKeyLookup(object):
@@ -157,3 +128,41 @@ class Lookup(object):
     def all(self, callable, *args, **kw):
         key = self.key_lookup.predicate_key(callable, *args, **kw)
         return self.key_lookup.all(callable, key)
+
+
+class SingleValueRegistry(object):
+    def __init__(self):
+        self.value = None
+
+    def register(self, key, value):
+        self.value = value
+
+    def knows_key(self, key):
+        return self.value is not None
+
+    def key(self, d):
+        return ()
+
+    def argnames(self):
+        return set()
+
+    def component(self, key):
+        return self.value
+
+    def all(self, key):
+        yield self.value
+
+
+def same_signature(a, b):
+    """Check whether a arginfo and b arginfo are the same signature.
+
+    Signature may have an extra 'lookup' argument. Default arguments may
+    be different.
+    """
+    a_args = set(a.args)
+    b_args = set(b.args)
+    a_args.discard('lookup')
+    b_args.discard('lookup')
+    return (a_args == b_args and
+            a.varargs == b.varargs and
+            a.keywords == b.keywords)

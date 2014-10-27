@@ -2,12 +2,12 @@ from __future__ import unicode_literals
 from future import standard_library  # noqa
 import threading
 from reg.implicit import implicit
-from reg.neoregistry import Registry
+from reg.neoregistry import KeyRegistry
 from reg.dispatch import dispatch
 
 
 def setup_function(f):
-    implicit.initialize(Registry())
+    implicit.initialize(KeyRegistry().lookup())
 
 
 def teardown_function(f):
@@ -123,7 +123,7 @@ def test_implicit_component_lookup():
     def foo():
         pass
 
-    reg = Registry()
+    reg = KeyRegistry()
 
     reg.register_dispatch(func)
     reg.register_dispatch_value(func, (), foo)

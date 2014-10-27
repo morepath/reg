@@ -1,7 +1,6 @@
 from .sentinel import NOT_FOUND
 import inspect
 from .argextract import KeyExtractor, ClassKeyExtractor, NameKeyExtractor
-from reg.lookup import ComponentLookupError
 
 
 class Predicate(object):
@@ -35,6 +34,12 @@ def key_permutations(key):
 
 def class_predicate(get_key=None, fallback=None):
     return Predicate(KeyIndex, class_permutations, get_key, fallback)
+
+
+def instance_predicate(get_key=None, fallback=None):
+    def permutations(obj):
+        return class_permutations(obj.__class_)
+    return Predicate(KeyIndex, permutations, get_key, fallback)
 
 
 def class_permutations(key):
@@ -133,21 +138,16 @@ class MultiIndex(object):
 
 class Registry(object):
     def __init__(self, predicate):
-        self.values = {}
-        self.counter = 0
+        self.known_keys = set()
         self.predicate = predicate
         self.index = self.predicate.create_index()
 
     def register(self, key, value):
-        # XXX not sure that value_id trick is right. instead we could
-        # simply make sure value is hashable. though getting lots of
-        # hashes might slow down the intersections... since we're only
-        # supposed to register a value once per index, we can get away
-        # with the value_id trick
-        value_id = self.counter
-        self.values[value_id] = value
-        self.counter += 1
-        self.index.add(key, value_id)
+        self.index.add(key, value)
+        self.known_keys.add(key)
+
+    def knows_key(self, key):
+        return key in self.known_keys
 
     def key(self, d):
         return self.predicate.get_key(d)
@@ -169,7 +169,7 @@ class Registry(object):
             result = self.index.get(p, NOT_FOUND)
             if result is not NOT_FOUND:
                 assert len(result) == 1
-                yield self.values[list(result)[0]]
+                yield tuple(result)[0]
 
 
 # XXX transform to non-recursive version

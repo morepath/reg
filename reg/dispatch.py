@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 from functools import update_wrapper
 from reg.implicit import implicit, NoImplicitLookupError
-from reg.lookup import ComponentLookupError
 from reg.mapply import lookup_mapply
 from reg.neopredicate import match_argname
 
@@ -29,10 +28,7 @@ class Dispatch(object):
 
     def __call__(self, *args, **kw):
         lookup = get_lookup(kw)
-        try:
-            return lookup.call(self.wrapped_func, *args, **kw)
-        except ComponentLookupError:
-            return lookup_mapply(self.wrapped_func, lookup, *args, **kw)
+        return lookup.call(self.wrapped_func, *args, **kw)
 
     def component(self, *args, **kw):
         return get_lookup(kw).component(self.wrapped_func, *args, **kw)

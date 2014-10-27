@@ -1,10 +1,7 @@
 from __future__ import unicode_literals
 # flake8: noqa
 from .implicit import implicit, NoImplicitLookupError
-from .registry import ClassRegistry, Registry, IRegistry, IClassLookup
-from .lookup import Lookup, ComponentLookupError, Matcher
-from .predicate import (PredicateRegistry, Predicate, KeyIndex, ClassIndex,
-                        PredicateRegistryError, PredicateMatcher, ANY)
+from .neoregistry import KeyRegistry, CachingKeyLookup, Lookup
 from .dispatch import dispatch
 from .mapply import mapply
 from .arginfo import arginfo
