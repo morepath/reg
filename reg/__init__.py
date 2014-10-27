@@ -4,7 +4,7 @@ from .registry import KeyRegistry, CachingKeyLookup, Lookup
 from .dispatch import dispatch
 from .mapply import mapply
 from .arginfo import arginfo
-from .sentinel import Sentinel
+from .sentinel import Sentinel, NOT_FOUND
 from .error import RegistrationError, KeyExtractorError, NoImplicitLookupError
 from .predicate import (Predicate, PredicateRegistry,
                         key_predicate, key_permutations,
