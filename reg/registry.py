@@ -1,166 +1,141 @@
-"""Registry where you can register components by function and classes
-that you look up the component for."""
-from __future__ import unicode_literals
-
-from .mapping import MultiMap, ClassMultiMapKey
-from .lookup import Lookup
-
-from abc import ABCMeta, abstractmethod
-from future.utils import with_metaclass
+from .predicate import PredicateRegistry, MultiPredicate, SingleValueRegistry
+from .sentinel import NOT_FOUND
+from .argextract import ArgExtractor, KeyExtractor
+from .sentinel import Sentinel
+from .arginfo import arginfo
+from .error import RegError, KeyExtractorError
+from .mapply import lookup_mapply
 
 
-class IRegistry(with_metaclass(ABCMeta, object)):
-    """A registration API for components.
+class KeyRegistry(object):
+    def __init__(self):
+        self.clear()
+
+    def clear(self):
+        self.known_keys = set()
+        self.arg_extractors = {}
+        self.predicate_registries = {}
+
+    def register_predicates(self, key, predicates):
+        if len(predicates) == 0:
+            result = self.predicate_registries[key] = SingleValueRegistry()
+            return result
+        if len(predicates) == 1:
+            # an optimization in case just one predicate in use
+            predicate = predicates[0]
+        else:
+            predicate = MultiPredicate(predicates)
+        self.predicate_registries[key] = result = PredicateRegistry(predicate)
+        return result
+
+    def register_callable_predicates(self, callable, predicates):
+        r = self.register_predicates(callable, predicates)
+        self.arg_extractors[callable] = ArgExtractor(callable, r.argnames())
+
+    def register_dispatch(self, callable):
+        self.register_callable_predicates(callable.wrapped_func,
+                                          callable.predicates)
+
+    def register_value(self, key, predicate_key, value):
+        if isinstance(predicate_key, list):
+            predicate_key = tuple(predicate_key)
+        # if we have a 1 tuple, we register the single value inside
+        if isinstance(predicate_key, tuple) and len(predicate_key) == 1:
+            predicate_key = predicate_key[0]
+        self.predicate_registries[key].register(predicate_key, value)
+
+    def register_dispatch_value(self, callable, predicate_key, value):
+        value_arginfo = arginfo(value)
+        if value_arginfo is None:
+            raise RegError("Cannot register non-callable for dispatch "
+                           "function %r: %r" % (callable, value))
+        if not same_signature(arginfo(callable.wrapped_func), value_arginfo):
+            raise RegError("Signature of callable dispatched to (%r) "
+                           "not that of dispatch function (%r)" % (
+                               value, callable.wrapped_func))
+        self.register_value(callable.wrapped_func, predicate_key, value)
+
+    def predicate_key(self, callable, *args, **kw):
+        return self.predicate_registries[callable].key(
+            self.arg_extractors[callable](*args, **kw))
+
+    def component(self, key, predicate_key):
+        return self.predicate_registries[key].component(predicate_key)
+
+    def all(self, key, predicate_key):
+        return self.predicate_registries[key].all(predicate_key)
+
+    def lookup(self):
+        return Lookup(self)
+
+
+class CachingKeyLookup(object):
+    def __init__(self, key_lookup, component_cache_size, all_cache_size):
+        self.key_lookup = key_lookup
+        self.component_cache = LRUCache(component_cache_size)
+        self.all_cache = LRUCache(all_cache_size)
+
+    def predicate_key(self, callable, *args, **kw):
+        return self.key_lookup.predicate_key(callable, *args, **kw)
+
+    def component(self, key, predicate_key, default=None):
+        result = self.component_cache.get((key, predicate_key), NOT_FOUND)
+        if result is not NOT_FOUND:
+            return result
+        result = self.key_lookup.component(key, predicate_key, NOT_FOUND)
+        if result is NOT_FOUND:
+            return default
+        self.component_cache.put((key, predicate_key), result)
+        return result
+
+    def all(self, key, predicate_key):
+        result = self.all_cache.get((key, predicate_key), NOT_FOUND)
+        if result is not NOT_FOUND:
+            return result
+        result = list(self.key_lookup.all(key, predicate_key))
+        self.component_cache.put((key, predicate_key), result)
+        return result
+
+
+class Lookup(object):
+    def __init__(self, key_lookup):
+        self.key_lookup = key_lookup
+
+    def call(self, callable, *args, **kw):
+        try:
+            key = self.key_lookup.predicate_key(callable, *args, **kw)
+            component = self.key_lookup.component(callable, key)
+        except KeyExtractorError:
+            # if we cannot extract the key we cannot find the component
+            # later on this will result in a TypeError as we try to
+            # call the callable with the wrong arguments, which is what
+            # we want
+            component = None
+        # if we cannot find the component, use the original
+        # callable as a fallback.
+        if component is None:
+            component = callable
+        return lookup_mapply(component, self, *args, **kw)
+
+    def component(self, callable, *args, **kw):
+        key = self.key_lookup.predicate_key(callable, *args, **kw)
+        return self.key_lookup.component(callable, key)
+
+    def all(self, callable, *args, **kw):
+        key = self.key_lookup.predicate_key(callable, *args, **kw)
+        return self.key_lookup.all(callable, key)
+
+
+def same_signature(a, b):
+    """Check whether a arginfo and b arginfo are the same signature.
+
+    Signature may have an extra 'lookup' argument. Default arguments may
+    be different.
     """
-
-    @abstractmethod
-    def register(self, key, classes, component):
-        """Register a component.
-
-        :param key: Register component for this key.
-        :type key: hashable object, normally function.
-        :param classes: List of classes for which to register component.
-        :type classes: list of classes.
-        :param component: Any python object, often a function.
-                          Can be a :class:`reg.Matcher` instance.
-        :type component: object.
-
-        The key is a hashable object, often a function object, by
-        which the component can be looked up.
-
-        classes is a list of 0 to n classes that the component is
-        registered for. If multiple sources are listed, a registration
-        is made for that combination of sources.
-
-        The component is a python object (function, class, instance,
-        etc) that is registered. If you're working with multiple dispatch,
-        you would register a function that expects instances of the classes
-        in ``classes`` as its arguments.
-        """
-
-    @abstractmethod
-    def clear(self):
-        """Clear registry of all registrations.
-        """
-
-    @abstractmethod
-    def exact(self, key, classes):
-        """Get registered component for exactly key and classes.
-
-        :param key: Get component for this key.
-        :type key: hashable object, normally function.
-        :param classes: List of classes for which to get component.
-        :type classes: list of classes.
-        :returns: registered component, or ``None``.
-
-        Does not go to base classes, just returns exact registration.
-
-        Returns ``None`` if no registration exists.
-        """
-
-
-class IClassLookup(with_metaclass(ABCMeta, object)):
-    @abstractmethod
-    def get(self, key, classes):
-        """Look up a component, by key and classes of arguments.
-
-        :param key: Get component for this key.
-        :type key: hashable object, normally function.
-        :param classes: List of classes for which to get component.
-        :type classes: list of classes.
-        :returns: registered component, or ``None``.
-
-        The key is a hashable object, often a function object, by
-        which the component is looked up.
-
-        classes is a list of 0 to n classes that we use to look up the
-        component. If multiple classes are listed, the lookup is made
-        for that combination of classes.
-
-        In order to find the most matching registered component, a
-        Cartesian product is made of all combinations of base classes given,
-        sorted by inheritance, first class to last class, most specific to
-        least specific.
-
-        This calculation is relatively expensive so you can wrap a
-        class lookup in a :class:`reg.CachingClassLookup` proxy to
-        speed up subsequent calls.
-
-        If the component can be found, it will be returned. If the
-        component cannot be found, ``None`` is returned.
-        """
-
-    @abstractmethod
-    def all(self, key, classes):
-        """Look up all components, by key and classes.
-
-        :param key: Get components for this key.
-        :type key: hashable object, normally function.
-        :param classes: List of classes for which to get components.
-        :type classes: list of classes.
-        :returns: iterable of found components.
-
-        The key is a hashable object, often a function object, by
-        which the components are looked up.
-
-        classes is a list of 0 to n classes that we use to look up the
-        components. If multiple classes are listed, the lookup is made
-        for that combination of classes. All registered components for
-        combinations of base classes are also returned.
-
-        A Cartesian product is made of all combinations of base
-        classes to do this, sorted by inheritance, first class to last
-        class, most specific to least specific.
-
-        This calculation is relatively expensive so you can wrap a
-        class lookup in a :class:`reg.CachingClassLookup` proxy to
-        speed up subsequent calls.
-
-        If no components can be found, the iterable returned will be empty.
-        """
-
-
-class ClassRegistry(IRegistry, IClassLookup):
-    def __init__(self):
-        self._d = {}
-
-    def register(self, key, classes, component):
-        m = self._d.get(key)
-        if m is None:
-            m = self._d[key] = MultiMap()
-        m[ClassMultiMapKey(*classes)] = component
-
-    def clear(self):
-        self._d = {}
-
-    def exact(self, key, classes):
-        m = self._d.get(key)
-        if m is None:
-            return None
-        return m.exact_get(ClassMultiMapKey(*classes))
-
-    def get(self, key, classes):
-        return next(self.all(key, classes), None)
-
-    def all(self, key, classes):
-        m = self._d.get(key)
-        if m is None:
-            return
-        for component in m.all(ClassMultiMapKey(*classes)):
-            yield component
-
-
-class Registry(IRegistry, Lookup):
-    def __init__(self):
-        self.registry = ClassRegistry()
-        # the class_lookup is this class itself
-        Lookup.__init__(self, self.registry)
-
-    def register(self, key, classes, component):
-        return self.registry.register(key, classes, component)
-
-    def clear(self):
-        return self.registry.clear()
-
-    def exact(self, key, classes):
-        return self.registry.exact(key, classes)
+    a_args = set(a.args)
+    b_args = set(b.args)
+    a_args.discard('lookup')
+    b_args.discard('lookup')
+    return (a_args == b_args and
+            a.varargs == b.varargs and
+            a.keywords == b.keywords)

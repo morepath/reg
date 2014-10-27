@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 from future import standard_library  # noqa
 import threading
 from reg.implicit import implicit
-from reg.neoregistry import KeyRegistry
+from reg.registry import KeyRegistry
 from reg.dispatch import dispatch
 
 

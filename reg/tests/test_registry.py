@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from reg.neoregistry import KeyRegistry
+from reg.registry import KeyRegistry
 from reg.predicate import (class_predicate,
                            match_instance, match_key, match_class)
 from reg.dispatch import dispatch
