@@ -1,5 +1,6 @@
 from ..predicate import (
-    key_predicate, class_predicate, MultiPredicate, Registry)
+    key_predicate, class_predicate, MultiPredicate,
+    PredicateRegistry as Registry)
 from ..error import RegError
 import pytest
 

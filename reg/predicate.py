@@ -137,7 +137,7 @@ class MultiIndex(object):
         return result
 
 
-class Registry(object):
+class PredicateRegistry(object):
     def __init__(self, predicate):
         self.known_keys = set()
         self.predicate = predicate
