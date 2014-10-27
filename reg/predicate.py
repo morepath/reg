@@ -1,7 +1,7 @@
 from .sentinel import NOT_FOUND
 import inspect
 from .argextract import KeyExtractor, ClassKeyExtractor, NameKeyExtractor
-from .error import RegError
+from .error import RegistrationError
 
 
 class Predicate(object):
@@ -147,8 +147,8 @@ class PredicateRegistry(object):
 
     def register(self, key, value):
         if key in self.known_keys:
-            raise RegError("Already have registration for key: %s" % (
-                key,))
+            raise RegistrationError(
+                "Already have registration for key: %s" % (key,))
         self.index.add(key, value)
         self.known_keys.add(key)
 
@@ -180,7 +180,8 @@ class SingleValueRegistry(object):
 
     def register(self, key, value):
         if self.value is not None:
-            raise RegError("Already have registration for key: %s" % (key,))
+            raise RegistrationError(
+                "Already have registration for key: %s" % (key,))
         self.value = value
 
     def key(self, d):

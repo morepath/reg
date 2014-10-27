@@ -1,7 +1,7 @@
 from ..predicate import (
     key_predicate, class_predicate, MultiPredicate,
     PredicateRegistry as Registry)
-from ..error import RegError
+from ..error import RegistrationError
 import pytest
 
 
@@ -300,7 +300,7 @@ def test_predicate_duplicate_key():
         key_predicate(),
         key_predicate(fallback='registered for all')]))
     m.register(('foo', 'POST'), 'registered for post')
-    with pytest.raises(RegError):
+    with pytest.raises(RegistrationError):
         m.register(('foo', 'POST'), 'registered again')
 
 

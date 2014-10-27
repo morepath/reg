@@ -45,7 +45,9 @@ API
 .. autoclass:: reg.KeyIndex
    :members:
 
-.. autoexception:: PredicateRegistryError
+.. autoexception:: RegError
+
+.. autoexception:: KeyExtractorError
 
 .. autoclass:: reg.implicit.Implicit
    :members:

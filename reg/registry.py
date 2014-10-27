@@ -3,7 +3,7 @@ from .predicate import PredicateRegistry, MultiPredicate, SingleValueRegistry
 from .sentinel import NOT_FOUND
 from .argextract import ArgExtractor
 from .arginfo import arginfo
-from .error import RegError, KeyExtractorError
+from .error import RegistrationError, KeyExtractorError
 from .mapply import lookup_mapply
 
 
@@ -47,12 +47,14 @@ class KeyRegistry(object):
     def register_dispatch_value(self, callable, predicate_key, value):
         value_arginfo = arginfo(value)
         if value_arginfo is None:
-            raise RegError("Cannot register non-callable for dispatch "
-                           "function %r: %r" % (callable, value))
+            raise RegistrationError(
+                "Cannot register non-callable for dispatch "
+                "function %r: %r" % (callable, value))
         if not same_signature(arginfo(callable.wrapped_func), value_arginfo):
-            raise RegError("Signature of callable dispatched to (%r) "
-                           "not that of dispatch function (%r)" % (
-                               value, callable.wrapped_func))
+            raise RegistrationError(
+                "Signature of callable dispatched to (%r) "
+                "not that of dispatch function (%r)" % (
+                    value, callable.wrapped_func))
         self.register_value(callable.wrapped_func, predicate_key, value)
 
     def predicate_key(self, callable, *args, **kw):

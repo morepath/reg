@@ -5,7 +5,7 @@ from reg.implicit import NoImplicitLookupError
 from reg.registry import KeyRegistry as Registry
 from reg.predicate import match_instance, match_key
 from reg.dispatch import dispatch
-from reg.error import RegError, KeyExtractorError
+from reg.error import RegistrationError, KeyExtractorError
 
 
 class IAlpha(object):
@@ -386,7 +386,7 @@ def test_wrong_callable_registered():
         pass
 
     reg.register_dispatch(target)
-    with pytest.raises(RegError):
+    with pytest.raises(RegistrationError):
         reg.register_dispatch_value(target, (Alpha,), callable)
 
 
@@ -400,7 +400,7 @@ def test_non_callable_registered():
     non_callable = None
 
     reg.register_dispatch(target)
-    with pytest.raises(RegError):
+    with pytest.raises(RegistrationError):
         reg.register_dispatch_value(target, (Alpha,), non_callable)
 
 

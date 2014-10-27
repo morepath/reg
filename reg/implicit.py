@@ -3,16 +3,9 @@ explicitly.
 """
 from __future__ import unicode_literals
 
+from .error import NoImplicitLookupError
 import threading
 
-
-class NoImplicitLookupError(Exception):
-    """No implicit lookup was registered.
-
-    Register an implicit lookup by calling
-    `reg.implicit.initialize()`, or pass an explicit ``lookup``
-    argument to generic function calls.
-    """
 
 
 class Implicit(object):

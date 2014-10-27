@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 from reg.registry import KeyRegistry, CachingKeyLookup
 from reg.predicate import class_predicate, match_instance, match_key
-from reg.error import RegError
+from reg.error import RegistrationError
 import pytest
 
 
@@ -167,7 +167,7 @@ def test_register_twice_with_predicate():
 
     reg.register_predicates(linecount, [class_predicate()])
     reg.register_value(linecount, [Document], 'document line count')
-    with pytest.raises(RegError):
+    with pytest.raises(RegistrationError):
         reg.register_value(linecount, [Document], 'another line count')
 
 
@@ -179,7 +179,7 @@ def test_register_twice_without_predicates():
 
     reg.register_predicates(linecount, [])
     reg.register_value(linecount, (), 'once')
-    with pytest.raises(RegError):
+    with pytest.raises(RegistrationError):
         reg.register_value(linecount, (), 'twice')
 
 

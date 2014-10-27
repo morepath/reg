@@ -4,22 +4,22 @@ from .error import KeyExtractorError
 
 
 class ArgExtractor(object):
-    """Extract arguments for a callable and desired args.
+    """Extract arguments for a callable from *args, **kw.
 
-    Given a callable and a sequence of desired argument names the ArgExtractor
-    can extract these from the actual arguments given to a callable. The
-    result is a dictionary mapping from argument name to argument value.
+    Given a callable and a sequence of argument names the ArgExtractor
+    can extract these from the actual arguments given to a
+    callable. The result is a dictionary with as keys the argument
+    names and as values the argument values.
     """
 
     def __init__(self, callable, names):
         self.callable = callable
         self.info = arginfo(callable)
-        # XXX check whether names are valid according to info
-        self.names, self.varargs, self.keywords = self.initialize_names(names)
-        self.defaults = self.initialize_defaults()
-        self.index = self.initialize_index()
+        self.names, self.varargs, self.keywords = self._initialize_names(names)
+        self.defaults = self._initialize_defaults()
+        self.index = self._initialize_index()
 
-    def initialize_names(self, names):
+    def _initialize_names(self, names):
         varargs = None
         keywords = None
         new_names = []
@@ -36,7 +36,7 @@ class ArgExtractor(object):
                 new_names.append(name)
         return new_names, varargs, keywords
 
-    def initialize_defaults(self):
+    def _initialize_defaults(self):
         result = {}
         args = self.info.args
         defaults = self.info.defaults
@@ -51,13 +51,18 @@ class ArgExtractor(object):
             result[arg] = default
         return result
 
-    def initialize_index(self):
+    def _initialize_index(self):
         result = {}
         for i, arg in enumerate(self.info.args):
             result[arg] = i
         return result
 
     def __call__(self, *args, **kw):
+        """Extract interesting arguments.
+
+        Given *args and **kw, returns a dict with arguments we
+        are interested in.
+        """
         result = {}
         last_pos = -1
         for name in self.names:
@@ -88,7 +93,11 @@ class ArgExtractor(object):
 
 
 class KeyExtractor(object):
-    """Extract those arguments from argdict that callable wants and call it.
+    """Call callable with relevant arguments.
+
+    Automatically calls callable with the relevant arguments in argdict,
+    based on the arguments it expects. The callable should transform
+    these arguments into a value that it returns.
     """
     def __init__(self, callable):
         self.callable = callable
@@ -100,6 +109,8 @@ class KeyExtractor(object):
         self.names = self.info.args
 
     def __call__(self, argdict):
+        """Extract relevant arguments from argdict and call callable with it.
+        """
         d = {}
         for name in self.names:
             d[name] = value = argdict[name]
@@ -109,11 +120,15 @@ class KeyExtractor(object):
 
 
 class ClassKeyExtractor(KeyExtractor):
+    """Get class of value returned by callable.
+    """
     def __call__(self, argdict):
         return super(ClassKeyExtractor, self).__call__(argdict).__class__
 
 
 class NameKeyExtractor(object):
+    """Extract name's class from argdict.
+    """
     def __init__(self, name):
         self.name = name
         self.names = set([name])
