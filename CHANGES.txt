@@ -4,23 +4,60 @@ CHANGES
 0.9 (unreleased)
 ================
 
-- Total rewrite of Reg!
+Total rewrite of Reg! This includes a range of changes that can break
+code. The primary motivations for this rewrite:
 
-- BREAKING CHANGES:
+* unify predicate system with class-based lookup system.
 
-  * pep443 support is gone. Reg is focused on something else.
+* extract dispatch information from specific arguments instead of all
+  arguments.
 
-  * compose functionality is gone -- it turns out Morepath doesn't use
-    lookup composition to support App inheritance. The cached lookup
-    functionality has moved into ``lookup.py`` and now also supports
-    caching of predicate-based lookups.
+Some specific changes:
 
-- Dependency on the future module is gone in favor of a small amount
+* Replaced ``@reg.generic`` decorator with ``@reg.dispatch()``
+  decorator. This decorator can be configured with predicates that
+  extract information from the arguments.
+
+* In particular, rewrite this::
+
+    @reg.generic
+    def foo(obj):
+       pass
+
+  to this::
+
+    @reg.dispatch('obj')
+    def foo(obj):
+       pass
+
+  And this::
+
+    @reg.generic
+    def bar(a, b):
+        pass
+
+  To this::
+
+    @reg.dispatch('a', 'b')
+    def bar(a, b):
+        pass
+
+  This is to get dispatch on the classes of these instance
+  arguments. You can also use ``match_class`` to have direct dispatch
+  on class arguments (useful for replicating classmethods), and
+  ``match_key`` to have dispatch on the (immutable) value of the
+  argument. You supply functions to these match functions that extract
+  the exact information to dispatch on from the argument.
+
+* pep443 support is gone. Reg is focused on its own dispatch system.
+
+* Compose functionality is gone -- it turns out Morepath doesn't use
+  lookup composition to support App inheritance. The cached lookup
+  functionality has moved into ``registry.py`` and now also supports
+  caching of predicate-based lookups.
+
+* Dependency on the future module is gone in favor of a small amount
   of compatibility code.
-
-- Introduce a new ``ClassIndex`` index for predicates. This uses
-  ``reg.Map`` to key on classes. This way the index is
-  inheritance-aware.
 
 0.8 (2014-08-28)
 ================
