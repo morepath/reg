@@ -1,16 +1,16 @@
-from ..predicate import (
+from ..predicate import (KeyIndex, ClassIndex, MultiIndex,
     key_predicate, class_predicate, MultiPredicate,
     PredicateRegistry as Registry)
 from ..error import RegistrationError
 import pytest
 
 
-def test_key_predicate_permutations():
-    p = key_predicate()
-    assert list(p.permutations('GET')) == ['GET']
+def test_key_index_permutations():
+    i = KeyIndex()
+    assert list(i.permutations('GET')) == ['GET']
 
 
-def test_class_predicate_permutations():
+def test_class_index_permutations():
     class Foo(object):
         pass
 
@@ -20,11 +20,11 @@ def test_class_predicate_permutations():
     class Qux:
         pass
 
-    p = class_predicate()
+    i = ClassIndex()
 
-    assert list(p.permutations(Foo)) == [Foo, object]
-    assert list(p.permutations(Bar)) == [Bar, Foo, object]
-    assert list(p.permutations(Qux)) == [Qux, object]
+    assert list(i.permutations(Foo)) == [Foo, object]
+    assert list(i.permutations(Bar)) == [Bar, Foo, object]
+    assert list(i.permutations(Qux)) == [Qux, object]
 
 
 def test_multi_class_predicate_permutations():
@@ -40,9 +40,9 @@ def test_multi_class_predicate_permutations():
     class BSub(BBase):
         pass
 
-    p = MultiPredicate([class_predicate(), class_predicate()])
+    i = MultiIndex([class_predicate(), class_predicate()])
 
-    assert list(p.permutations([ASub, BSub])) == [
+    assert list(i.permutations([ASub, BSub])) == [
         (ASub, BSub),
         (ASub, BBase),
         (ASub, object),
@@ -56,13 +56,13 @@ def test_multi_class_predicate_permutations():
 
 
 def test_multi_key_predicate_permutations():
-    p = MultiPredicate([
+    i = MultiIndex([
         key_predicate(),
         key_predicate(),
         key_predicate(),
     ])
 
-    assert list(p.permutations(['A', 'B', 'C'])) == [
+    assert list(i.permutations(['A', 'B', 'C'])) == [
         ('A', 'B', 'C')]
 
 

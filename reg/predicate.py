@@ -7,25 +7,22 @@ from .error import RegistrationError
 class Predicate(object):
     """A dispatch predicate.
     """
-    def __init__(self, create_index, permutations,
-                 get_key=None,
-                 fallback=None):
+    def __init__(self, index, get_key=None, fallback=None):
         """
-        :param create_index: a function that constructs an index;
-          typically you supply either a :class:`KeyIndex` or
-          :class:`ClassIndex`.
-        :param permutations: a function that can construct an iterable of
-           permutations for a predicate_key, from most specific to least
-           specific.
+        :param index: a function that constructs an index given
+          a fallback argument; typically you supply either a :class:`KeyIndex`
+          or :class:`ClassIndex`.
         :param get_key: optional :class:`KeyExtractor`.
         :param fallback: optional fallback value. This value is returned
           if this is the most generic index for which no values could be
           found.
         """
-        self.create_index = create_index
-        self.permutations = permutations
+        self.index = index
+        self.fallback = fallback
         self.get_key = get_key
-        self._fallback = fallback
+
+    def create_index(self):
+        return self.index(self.fallback)
 
     def argnames(self):
         """argnames that this predicate needs to dispatch on.
@@ -33,17 +30,6 @@ class Predicate(object):
         if self.get_key is None:
             return set()
         return set(self.get_key.names)
-
-    def fallback(self, index, key):
-        """Return fallback if this index does not contain key.
-
-        If index contains no permutations of key, then ``NOT_FOUND``
-        is returned.
-        """
-        for k in self.permutations(key):
-            if index.get(k, NOT_FOUND) is not NOT_FOUND:
-                return NOT_FOUND
-        return self._fallback
 
 
 def key_predicate(get_key=None, fallback=None):
@@ -53,15 +39,7 @@ def key_predicate(get_key=None, fallback=None):
     :fallback: a fallback value. By default is ``None``.
     :returns: a :class:`Predicate`.
     """
-    return Predicate(KeyIndex, key_permutations, get_key, fallback)
-
-
-def key_permutations(key):
-    """Permutations for a simple immutable key.
-
-    There is only a single permutation: the key itself.
-    """
-    yield key
+    return Predicate(KeyIndex, get_key, fallback)
 
 
 def class_predicate(get_key=None, fallback=None):
@@ -71,20 +49,7 @@ def class_predicate(get_key=None, fallback=None):
     :fallback: a fallback value. By default is ``None``.
     :returns: a :class:`Predicate`.
     """
-    return Predicate(KeyIndex, class_permutations, get_key, fallback)
-
-
-def class_permutations(key):
-    """Permutations for class key.
-
-    Returns class and its based in mro order. If a classic class in
-    Python 2, smuggle in ``object`` as the base class anyway to make
-    lookups consistent.
-    """
-    for class_ in inspect.getmro(key):
-        yield class_
-    if class_ is not object:
-        yield object
+    return Predicate(ClassIndex, get_key, fallback)
 
 
 def match_key(func, fallback=None):
@@ -143,9 +108,6 @@ class MultiPredicate(object):
     def create_index(self):
         return MultiIndex(self.predicates)
 
-    def permutations(self, key):
-        return multipredicate_permutations(self.predicates, key)
-
     def get_key(self, d):
         return tuple([predicate.get_key(d) for predicate in self.predicates])
 
@@ -155,24 +117,63 @@ class MultiPredicate(object):
             result.update(predicate.argnames())
         return result
 
-    def fallback(self, multi_index, key):
-        for index, k, predicate in zip(multi_index.indexes,
-                                       key, self.predicates):
-            result = predicate.fallback(index, k)
-            if result is not NOT_FOUND:
-                return result
-        return NOT_FOUND
+
+class Index(object):
+    def add(self, key, value):
+        raise NotImplementedError
+
+    def get(self, key, default=None):
+        raise NotImplementedError
+
+    def permutations(self, key):
+        raise NotImplementedError
+
+    def fallback(self, key):
+        raise NotImplementedError
 
 
 class KeyIndex(object):
-    def __init__(self):
+    def __init__(self, fallback=None):
         self.d = {}
+        self._fallback = fallback
 
     def add(self, key, value):
         self.d.setdefault(key, set()).add(value)
 
     def get(self, key, default=None):
         return self.d.get(key, default)
+
+    def permutations(self, key):
+        """Permutations for a simple immutable key.
+
+        There is only a single permutation: the key itself.
+        """
+        yield key
+
+    def fallback(self, key):
+        """Return fallback if this index does not contain key.
+
+        If index contains no permutations of key, then ``NOT_FOUND``
+        is returned.
+        """
+        for k in self.permutations(key):
+            if self.get(k, NOT_FOUND) is not NOT_FOUND:
+                return NOT_FOUND
+        return self._fallback
+
+
+class ClassIndex(KeyIndex):
+    def permutations(self, key):
+        """Permutations for class key.
+
+        Returns class and its based in mro order. If a classic class in
+        Python 2, smuggle in ``object`` as the base class anyway to make
+        lookups consistent.
+        """
+        for class_ in inspect.getmro(key):
+            yield class_
+        if class_ is not object:
+            yield object
 
 
 class MultiIndex(object):
@@ -208,6 +209,16 @@ class MultiIndex(object):
                 return default
         return result
 
+    def permutations(self, key):
+        return multipredicate_permutations(self.indexes, key)
+
+    def fallback(self, key):
+        for index, k in zip(self.indexes, key):
+            result = index.fallback(k)
+            if result is not NOT_FOUND:
+                return result
+        return NOT_FOUND
+
 
 class PredicateRegistry(object):
     def __init__(self, predicate):
@@ -231,14 +242,11 @@ class PredicateRegistry(object):
     def component(self, key):
         result = next(self.all(key), NOT_FOUND)
         if result is NOT_FOUND:
-            return self.fallback(key)
+            return self.index.fallback(key)
         return result
 
-    def fallback(self, key):
-        return self.predicate.fallback(self.index, key)
-
     def all(self, key):
-        for p in self.predicate.permutations(key):
+        for p in self.index.permutations(key):
             result = self.index.get(p, NOT_FOUND)
             if result is not NOT_FOUND:
                 yield tuple(result)[0]
@@ -269,16 +277,16 @@ class SingleValueRegistry(object):
 
 # XXX transform to non-recursive version
 # use # http://blog.moertel.com/posts/2013-05-14-recursive-to-iterative-2.html
-def multipredicate_permutations(predicates, keys):
+def multipredicate_permutations(indexes, keys):
     first = keys[0]
     rest = keys[1:]
-    first_predicate = predicates[0]
-    rest_predicates = predicates[1:]
+    first_index = indexes[0]
+    rest_indexes = indexes[1:]
     if not rest:
-        for permutation in first_predicate.permutations(first):
+        for permutation in first_index.permutations(first):
             yield (permutation,)
         return
-    for permutation in first_predicate.permutations(first):
+    for permutation in first_index.permutations(first):
         for rest_permutation in multipredicate_permutations(
-                rest_predicates, rest):
+                rest_indexes, rest):
             yield (permutation,) + rest_permutation
