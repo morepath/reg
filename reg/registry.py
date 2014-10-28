@@ -171,7 +171,7 @@ class Registry(object):
 
         Uses ``name`` and ``default`` to predicate to construct the
         predicate key. If ``name`` is ``None`` then the predicate
-        key cannot be constructed and a ``RegError`` is raised.
+        key cannot be constructed and a ``RegistrationError`` is raised.
 
         :param callable: the callable for which to extract the predicate_key
         :param d: dictionary with as keys predicate names and as values
@@ -182,8 +182,9 @@ class Registry(object):
         """
         r = self.predicate_registries.get(callable)
         if r is None:
-            raise RegError("No predicate_key information known for: %s"
-                           % callable)
+            raise RegistrationError(
+                "No predicate_key information known for: %s"
+                % callable)
         return r.key_by_predicate_name(d)
 
     def component(self, key, predicate_key):
