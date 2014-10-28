@@ -31,7 +31,7 @@ def test_dispatch_basic():
 
     r = Registry()
     r.register_dispatch(something)
-    r.register_dispatch_value(something, (object,), something_for_object)
+    r.register_function(something, (object,), something_for_object)
 
     l = r.lookup()
     assert something(DemoClass, lookup=l) == (
@@ -54,12 +54,12 @@ def test_classdispatch_multidispatch():
 
     r = Registry()
     r.register_dispatch(something)
-    r.register_dispatch_value(
+    r.register_function(
         something,
         (object, object,),
         something_for_object_and_object)
 
-    r.register_dispatch_value(
+    r.register_function(
         something,
         (object, Foo),
         something_for_object_and_foo)
@@ -81,7 +81,7 @@ def test_classdispatch_extra_arguments():
 
     r = Registry()
     r.register_dispatch(something)
-    r.register_dispatch_value(something, (object,), something_for_object)
+    r.register_function(something, (object,), something_for_object)
 
     assert something(DemoClass, 'foo', lookup=r.lookup()) == "Extra: foo"
 
@@ -96,7 +96,7 @@ def test_classdispatch_no_arguments():
 
     r = Registry()
     r.register_dispatch(something)
-    r.register_dispatch_value(something, (), something_impl)
+    r.register_function(something, (), something_impl)
 
     assert something(lookup=r.lookup()) == 'Something!'
 
@@ -114,10 +114,10 @@ def test_classdispatch_override():
 
     r = Registry()
     r.register_dispatch(something)
-    r.register_dispatch_value(something, (object,),
-                              something_for_object)
-    r.register_dispatch_value(something, (SpecialClass,),
-                              something_for_special)
+    r.register_function(something, (object,),
+                        something_for_object)
+    r.register_function(something, (SpecialClass,),
+                        something_for_special)
 
     assert something(SpecialClass, lookup=r.lookup()) == (
         "Special for <class 'reg.tests.test_classdispatch.SpecialClass'>")

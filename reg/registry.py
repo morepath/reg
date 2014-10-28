@@ -98,13 +98,15 @@ class Registry(object):
             predicate_key = predicate_key[0]
         self.predicate_registries[key].register(predicate_key, value)
 
-    def register_dispatch_value(self, callable, predicate_key, value):
+    def register_function(self, callable, predicate_key, value):
         """Register a callable for a dispatch function.
 
         Like :meth:`register_value`, but makes sure that the value is
         a callable with the same signature as the original dispatch callable.
         If not, a :exc:`reg.RegistrationError` is raised.
         """
+        # if not callable.initialized:
+        #     self.register_dispatch(callable)
         value_arginfo = arginfo(value)
         if value_arginfo is None:
             raise RegistrationError(

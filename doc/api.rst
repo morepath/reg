@@ -22,13 +22,15 @@ API
 .. autoclass:: Predicate
    :members:
 
+.. autoclass:: ClassIndex
+   :members:
+
+.. autoclass:: KeyIndex
+   :members:
+
 .. autofunction:: key_predicate
 
 .. autofunction:: class_predicate
-
-.. autofunction:: key_permutations
-
-.. autofunction:: class_permutations
 
 .. autoclass:: Registry
    :members:

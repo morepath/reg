@@ -90,9 +90,9 @@ automatically using :meth:`reg.implicit.Implicit.initialize`:
 
   registry = reg.Registry()
   registry.register_dispatch(title)
-  registry.register_dispatch_value(
+  registry.register_function(
       title, [TitledReport], titled_report_title)
-  registry.register_dispatch_value(
+  registry.register_function(
       title, [LabeledReport], labeled_report_title)
   from reg import implicit
   implicit.initialize(registry.lookup())
@@ -476,10 +476,10 @@ items in this registry:
 
 .. testcode::
 
-  r.register_dispatch_value(size, [Document], document_size)
-  r.register_dispatch_value(size, [Folder], folder_size)
-  r.register_dispatch_value(size, [Image], image_size)
-  r.register_dispatch_value(size, [File], file_size)
+  r.register_function(size, [Document], document_size)
+  r.register_function(size, [Folder], folder_size)
+  r.register_function(size, [Image], image_size)
+  r.register_function(size, [File], file_size)
 
 We can now use our ``size`` function:
 
@@ -645,7 +645,7 @@ function and ``Document``:
 
 .. testcode::
 
-  r.register_dispatch_value(icon, [Document], DocumentIcon)
+  r.register_function(icon, [Document], DocumentIcon)
 
 We can now use the generic ``icon`` to get ``Icon`` API for a
 document:
@@ -674,7 +674,7 @@ brevity let's just define one for ``Image`` here:
       def large(self):
           return load_icon('image_large.png')
 
-  r.register_dispatch_value(icon, [Image], ImageIcon)
+  r.register_function(icon, [Image], ImageIcon)
 
 Now we can use ``icon`` to retrieve the ``Icon`` API for any item in
 the system for which an adapter was registered:
@@ -733,7 +733,7 @@ Let's register the view in the registry:
 .. testcode::
 
   r.register_dispatch(view)
-  r.register_dispatch_value(view, [Request, Document], document_view)
+  r.register_function(view, [Request, Document], document_view)
 
 We now see why the second argument to ``register()`` is a list; so far
 we only supplied a single entry in it, but here we supply two, as we
@@ -781,7 +781,7 @@ in its actual implementation elsewhere, into the registry:
       return send_email
 
   r.register_dispatch(emailer)
-  r.register_dispatch_value(emailer, [], actual_emailer)
+  r.register_function(emailer, [], actual_emailer)
 
 Now when we call emailer, we'll get the specific service we want:
 
@@ -829,7 +829,7 @@ Let's use it:
   def something_for_object(cls):
       return "Something for %s" % cls
 
-  r.register_dispatch_value(something, [object], something_for_object)
+  r.register_function(something, [object], something_for_object)
 
   class DemoClass(object):
       pass
@@ -853,7 +853,7 @@ implementations for particular classes:
   def something_particular(cls):
       return "Particular for %s" % cls
 
-  r.register_dispatch_value(something, [ParticularClass], something_particular)
+  r.register_function(something, [ParticularClass], something_particular)
 
 When we call ``something`` now with ``ParticularClass`` as the argument,
 then ``something_particular`` is called:
@@ -912,7 +912,7 @@ We can make this more interesting by registering a special
   def htmldocument_size(doc):
      return len(doc.text) + 1 # 1 so we can see a difference
 
-  r.register_dispatch_value(size, [HtmlDocument], htmldocument_size)
+  r.register_function(size, [HtmlDocument], htmldocument_size)
 
 ``size.all()`` for ``htmldoc`` now also gives back the more specific
 ``htmldocument_size``::

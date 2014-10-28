@@ -125,7 +125,7 @@ def test_implicit_component_lookup():
     reg = Registry()
 
     reg.register_dispatch(func)
-    reg.register_dispatch_value(func, (), foo)
+    reg.register_function(func, (), foo)
 
     implicit.initialize(reg.lookup())
     assert func.component() is foo

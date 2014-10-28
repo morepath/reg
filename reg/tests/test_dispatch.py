@@ -47,8 +47,8 @@ def test_dispatch_argname():
 
     registry.register_dispatch(foo)
 
-    registry.register_dispatch_value(foo, (Bar,), for_bar)
-    registry.register_dispatch_value(foo, (Qux,), for_qux)
+    registry.register_function(foo, (Bar,), for_bar)
+    registry.register_function(foo, (Qux,), for_qux)
 
     lookup = registry.lookup()
     assert foo(Bar(), lookup=lookup) == "bar's method"
@@ -78,8 +78,8 @@ def test_dispatch_match_instance():
 
     registry.register_dispatch(foo)
 
-    registry.register_dispatch_value(foo, (Bar,), for_bar)
-    registry.register_dispatch_value(foo, (Qux,), for_qux)
+    registry.register_function(foo, (Bar,), for_bar)
+    registry.register_function(foo, (Qux,), for_qux)
 
     lookup = registry.lookup()
     assert foo(Bar(), lookup=lookup) == "bar's method"
@@ -98,7 +98,7 @@ def test_dispatch_no_arguments():
     def special_foo():
         return "special"
 
-    registry.register_dispatch_value(foo, (), special_foo)
+    registry.register_function(foo, (), special_foo)
 
     lookup = registry.lookup()
     assert foo.component(lookup=lookup) is special_foo
@@ -260,8 +260,8 @@ def test_call_one_source():
         return "bar"
 
     reg.register_dispatch(target)
-    reg.register_dispatch_value(target, (IAlpha,), foo)
-    reg.register_dispatch_value(target, (IBeta,), bar)
+    reg.register_function(target, (IAlpha,), foo)
+    reg.register_function(target, (IBeta,), bar)
 
     lookup = reg.lookup()
     assert target(Alpha(), lookup=lookup) == 'foo'
@@ -282,8 +282,8 @@ def test_call_two_sources():
         return "bar"
 
     reg.register_dispatch(target)
-    reg.register_dispatch_value(target, (IAlpha, IBeta), foo)
-    reg.register_dispatch_value(target, (IBeta, IAlpha), bar)
+    reg.register_function(target, (IAlpha, IBeta), foo)
+    reg.register_function(target, (IBeta, IAlpha), bar)
     alpha = Alpha()
     beta = Beta()
 
@@ -387,7 +387,7 @@ def test_wrong_callable_registered():
 
     reg.register_dispatch(target)
     with pytest.raises(RegistrationError):
-        reg.register_dispatch_value(target, (Alpha,), callable)
+        reg.register_function(target, (Alpha,), callable)
 
 
 def test_non_callable_registered():
@@ -401,7 +401,7 @@ def test_non_callable_registered():
 
     reg.register_dispatch(target)
     with pytest.raises(RegistrationError):
-        reg.register_dispatch_value(target, (Alpha,), non_callable)
+        reg.register_function(target, (Alpha,), non_callable)
 
 
 def test_call_with_no_args_while_arg_expected():
@@ -414,7 +414,7 @@ def test_call_with_no_args_while_arg_expected():
 
     reg = Registry()
     reg.register_dispatch(target)
-    reg.register_dispatch_value(target, (Alpha,), specific)
+    reg.register_function(target, (Alpha,), specific)
 
     lookup = reg.lookup()
 
@@ -436,7 +436,7 @@ def test_call_with_wrong_args():
 
     reg = Registry()
     reg.register_dispatch(target)
-    reg.register_dispatch_value(target, (Alpha,), specific)
+    reg.register_function(target, (Alpha,), specific)
 
     lookup = reg.lookup()
 
@@ -459,7 +459,7 @@ def test_extra_arg_for_call():
         return "Specific: %s" % extra
 
     reg.register_dispatch(target)
-    reg.register_dispatch_value(target, (Alpha,), specific)
+    reg.register_function(target, (Alpha,), specific)
 
     alpha = Alpha()
     beta = Beta()
@@ -493,7 +493,7 @@ def test_fallback():
         return 'specific'
 
     reg.register_dispatch(target)
-    reg.register_dispatch_value(target, (Alpha,), specific_target)
+    reg.register_function(target, (Alpha,), specific_target)
 
     beta = Beta()
     assert target(beta, lookup=reg.lookup()) == 'fallback'
@@ -514,8 +514,8 @@ def test_calling_twice():
 
     reg.register_dispatch(target)
 
-    reg.register_dispatch_value(target, (Alpha,), a)
-    reg.register_dispatch_value(target, (Beta,), b)
+    reg.register_function(target, (Alpha,), a)
+    reg.register_function(target, (Beta,), b)
 
     lookup = reg.lookup()
 
@@ -543,8 +543,8 @@ def test_lookup_passed_along():
     reg.register_dispatch(g1)
     reg.register_dispatch(g2)
 
-    reg.register_dispatch_value(g1, (Alpha,), g1_impl)
-    reg.register_dispatch_value(g2, (Alpha,), g2_impl)
+    reg.register_function(g1, (Alpha,), g1_impl)
+    reg.register_function(g2, (Alpha,), g2_impl)
 
     assert g1(Alpha(), lookup=reg.lookup()) == 'g2'
 
@@ -560,7 +560,7 @@ def test_different_defaults_in_specific_non_dispatch_arg():
         return 'a: %s' % blah
 
     reg.register_dispatch(target)
-    reg.register_dispatch_value(target, (Alpha,), a)
+    reg.register_function(target, (Alpha,), a)
 
     lookup = reg.lookup()
 
@@ -578,7 +578,7 @@ def test_different_defaults_in_specific_dispatch_arg():
         return 'a: %s' % key
 
     reg.register_dispatch(target)
-    reg.register_dispatch_value(target, ('foo',), a)
+    reg.register_function(target, ('foo',), a)
 
     lookup = reg.lookup()
 
@@ -598,7 +598,7 @@ def test_different_defaults_in_specific_dispatch_arg_causes_dispatch():
         return 'a: %s' % key
 
     reg.register_dispatch(target)
-    reg.register_dispatch_value(target, ('foo',), a)
+    reg.register_function(target, ('foo',), a)
 
     lookup = reg.lookup()
 
