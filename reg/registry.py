@@ -66,21 +66,34 @@ class Registry(object):
         self.arg_extractors[callable] = ArgExtractor(callable, r.argnames())
         return r
 
-    def register_dispatch(self, callable):
+    def register_dispatch_predicates(self, callable, predicates):
         """Register a dispatch function.
 
-        Works as :meth:`register_callable_predicates`, but extracts
-        predicate information from information registered using the
-        :func:`reg.dispatch` decorator.
+        Works as :meth:`register_callable_predicates`, but works
+        with a dispatch and makes sure predicates can't be registered
+        twice.
 
         :param callable: a dispatch callable.
+        :param predicates: a sequence of :class:`reg.Predicate` objects.
         :returns: a :class:`reg.PredicateRegistry`.
         """
         if callable.initialized:
             return
         callable.initialized = True
         return self.register_callable_predicates(callable.wrapped_func,
-                                                 callable.predicates)
+                                                 predicates)
+
+    def register_dispatch(self, callable):
+        """Register a dispatch function.
+
+        Works as :meth:`register_dispatch_predicates`, but extracts
+        predicate information from information registered using the
+        :func:`reg.dispatch` decorator.
+
+        :param callable: a dispatch callable.
+        :returns: a :class:`reg.PredicateRegistry`.
+        """
+        return self.register_dispatch_predicates(callable, callable.predicates)
 
     def register_value(self, key, predicate_key, value):
         """Register a value for a predicate_key.
