@@ -170,8 +170,8 @@ class Registry(object):
         """Construct predicate key from dictionary.
 
         Uses ``name`` and ``default`` to predicate to construct the
-        predicate key. If ``name`` is ``None`` then the predicate
-        key cannot be constructed and a ``RegistrationError`` is raised.
+        predicate key. If the key cannot be constructed then
+        a ``RegistrationError`` is raised.
 
         :param callable: the callable for which to extract the predicate_key
         :param d: dictionary with as keys predicate names and as values
