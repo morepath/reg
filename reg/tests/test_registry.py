@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 from reg.registry import Registry, CachingKeyLookup
-from reg.predicate import class_predicate, match_instance, match_key
+from reg.predicate import (class_predicate, key_predicate,
+                           match_instance, match_key)
 from reg.error import RegistrationError
 import pytest
 
@@ -271,7 +272,6 @@ def test_caching_registry():
 
     class Bar(object):
         pass
-
     assert l.call(view, Bar(), Request('', 'GET')) == 'Model fallback'
     assert l.call(view, Foo(), Request('dummy', 'GET')) == 'Name fallback'
     assert l.call(view, Foo(), Request('', 'PUT')) == 'Request method fallback'
@@ -280,3 +280,20 @@ def test_caching_registry():
     # fallbacks get cached too
     assert l.key_lookup.component_cache.get(
         (view, (Bar, '', 'GET'))) is model_fallback
+
+
+def test_predicate_key_by_predicate_name():
+    r = Registry()
+
+    def view(self, request):
+        raise NotImplementedError()
+
+    r.register_callable_predicates(view, [
+        key_predicate(name='foo', default='default foo'),
+        key_predicate(name='bar', default='default bar')])
+
+    assert r.predicate_key_by_predicate_name(view, {
+        'foo': 'FOO',
+        'bar': 'BAR'}) == ('FOO', 'BAR')
+    assert r.predicate_key_by_predicate_name(view, {}) == ('default foo',
+                                                           'default bar')

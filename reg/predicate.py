@@ -7,7 +7,8 @@ from .error import RegistrationError
 class Predicate(object):
     """A dispatch predicate.
     """
-    def __init__(self, index, get_key=None, fallback=None):
+    def __init__(self, index, get_key=None, fallback=None,
+                 name=None, default=None):
         """
         :param index: a function that constructs an index given
           a fallback argument; typically you supply either a :class:`KeyIndex`
@@ -16,10 +17,17 @@ class Predicate(object):
         :param fallback: optional fallback value. This value is returned
           if this is the most generic index for which no values could be
           found.
+        :param name: optional predicate name. This is used by
+          :meth:`reg.Registry.register_function_by_name`.
+        :param default: optional predicate default. This is used by
+          :meth:`.reg.Registry.register_function_by_name`, and supplies
+          the value if it is not given explicitly.
         """
         self.index = index
         self.fallback = fallback
         self.get_key = get_key
+        self.name = name
+        self.default = default
 
     def create_index(self):
         return self.index(self.fallback)
@@ -31,40 +39,51 @@ class Predicate(object):
             return set()
         return set(self.get_key.names)
 
+    def key_by_predicate_name(self, d):
+        if self.name is None:
+            return self.default
+        return d.get(self.name, self.default)
 
-def key_predicate(get_key=None, fallback=None):
+
+def key_predicate(get_key=None, fallback=None, name=None, default=None):
     """Construct predicate indexed on any immutable value.
 
     :get_key: a :class:`KeyExtractor`. Should return key to dispatch on.
     :fallback: a fallback value. By default is ``None``.
+    :name: optional predicate name.
+    :default: optional default value.
     :returns: a :class:`Predicate`.
     """
-    return Predicate(KeyIndex, get_key, fallback)
+    return Predicate(KeyIndex, get_key, fallback, name, default)
 
 
-def class_predicate(get_key=None, fallback=None):
+def class_predicate(get_key=None, fallback=None, name=None, default=None):
     """Construct predicate indexed on class.
 
     :get_key: a :class:`KeyExtractor`. Should return class to dispatch on.
     :fallback: a fallback value. By default is ``None``.
+    :name: optional predicate name.
+    :default: optional default value.
     :returns: a :class:`Predicate`.
     """
-    return Predicate(ClassIndex, get_key, fallback)
+    return Predicate(ClassIndex, get_key, fallback, name, default)
 
 
-def match_key(func, fallback=None):
+def match_key(func, fallback=None, name=None, default=None):
     """Predicate that extracts immutable key according to func.
 
     :func: argument that takes arguments. These arguments are
       extracted from the arguments given to the dispatch function.
       This function should return what to dispatch on.
     :fallback: the fallback value. By default it is ``None``.
+    :name: optional predicate name.
+    :default: optional default value.
     :returns: a :class:`Predicate`.
     """
-    return key_predicate(KeyExtractor(func), fallback)
+    return key_predicate(KeyExtractor(func), fallback, name, default)
 
 
-def match_instance(func, fallback=None):
+def match_instance(func, fallback=None, name=None, default=None):
     """Predicate that extracts class of instance returned by func.
 
     :func: argument that takes arguments. These arguments are
@@ -72,23 +91,27 @@ def match_instance(func, fallback=None):
       This function should return an instance; dispatching is done
       on the class of that instance.
     :fallback: the fallback value. By default it is ``None``.
+    :name: optional predicate name.
+    :default: optional default value.
     :returns: a :class:`Predicate`.
     """
-    return class_predicate(ClassKeyExtractor(func), fallback)
+    return class_predicate(ClassKeyExtractor(func), fallback, name, default)
 
 
-def match_argname(name, fallback=None):
+def match_argname(argname, fallback=None, name=None, default=None):
     """Predicate that extracts class of specified argument.
 
-    :name: name of the argument to dispatch on - its class will
+    :argname: name of the argument to dispatch on - its class will
       be used for the dispatch.
     :fallback: the fallback value. By default it is ``None``.
+    :name: optional predicate name.
+    :default: optional default value.
     :returns: a :class:`Predicate`.
     """
-    return class_predicate(NameKeyExtractor(name), fallback)
+    return class_predicate(NameKeyExtractor(argname), fallback, name, default)
 
 
-def match_class(func, fallback=None):
+def match_class(func, fallback=None, name=None, default=None):
     """Predicate that extracts class returned by func.
 
     :func: argument that takes arguments. These arguments are
@@ -96,9 +119,11 @@ def match_class(func, fallback=None):
       This function should return a class; dispatching is done
       on this class.
     :fallback: the fallback value. By default it is ``None``.
+    :name: optional predicate name.
+    :default: optional default value.
     :returns: a :class:`Predicate`.
     """
-    return class_predicate(KeyExtractor(func), fallback)
+    return class_predicate(KeyExtractor(func), fallback, name, default)
 
 
 class MultiPredicate(object):
@@ -117,6 +142,11 @@ class MultiPredicate(object):
             result.update(predicate.argnames())
         return result
 
+    def key_by_predicate_name(self, d):
+        result = []
+        for predicate in self.predicates:
+            result.append(predicate.key_by_predicate_name(d))
+        return tuple(result)
 
 class Index(object):
     def add(self, key, value):
@@ -236,6 +266,9 @@ class PredicateRegistry(object):
     def key(self, d):
         return self.predicate.get_key(d)
 
+    def key_by_predicate_name(self, d):
+        return self.predicate.key_by_predicate_name(d)
+
     def argnames(self):
         return self.predicate.argnames()
 
@@ -263,6 +296,9 @@ class SingleValueRegistry(object):
         self.value = value
 
     def key(self, d):
+        return ()
+
+    def key_by_predicate_name(self, d):
         return ()
 
     def argnames(self):

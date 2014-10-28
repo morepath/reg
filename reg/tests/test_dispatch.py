@@ -622,7 +622,7 @@ def test_lookup_passed_along_fallback():
     assert a(lookup=reg.lookup()) == 'fallback'
 
 
-def test_dispatch_dict_registration():
+def test_register_dispatch_predicates():
     r = Registry()
 
     class Foo(object):
@@ -670,6 +670,83 @@ def test_dispatch_dict_registration():
     r.register_function(view, (Foo, '', 'GET'), foo_default)
     r.register_function(view, (Foo, '', 'POST'), foo_post)
     r.register_function(view, (Foo, 'edit', 'POST'), foo_edit)
+
+    l = r.lookup()
+
+    class Request(object):
+        def __init__(self, name, request_method):
+            self.name = name
+            self.request_method = request_method
+
+    assert view(Foo(), Request('', 'GET'), lookup=l) == 'foo default'
+    assert view(FooSub(), Request('', 'GET'), lookup=l) == 'foo default'
+    assert view(FooSub(), Request('edit', 'POST'), lookup=l) == 'foo edit'
+
+    class Bar(object):
+        pass
+
+    assert view(Bar(), Request('', 'GET'), lookup=l) == 'Model fallback'
+    assert view(Foo(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
+    assert view(Foo(), Request('', 'PUT'), lookup=l) == 'Request method fallback'
+    assert view(FooSub(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
+
+
+def test_register_dispatch_predicates_register_by_predicate_name():
+    r = Registry()
+
+    class Foo(object):
+        pass
+
+    class FooSub(Foo):
+        pass
+
+    @dispatch()
+    def view(self, request):
+        raise NotImplementedError()
+
+    def get_model(self):
+        return self
+
+    def get_name(request):
+        return request.name
+
+    def get_request_method(request):
+        return request.request_method
+
+    def model_fallback(self, request):
+        return "Model fallback"
+
+    def name_fallback(self, request):
+        return "Name fallback"
+
+    def request_method_fallback(self, request):
+        return "Request method fallback"
+
+    r.register_dispatch_predicates(view, [
+        match_instance(get_model, model_fallback,
+                       name='model', default=None),
+        match_key(get_name, name_fallback,
+                  name='name', default=''),
+        match_key(get_request_method, request_method_fallback,
+                  name='request_method', default='GET')])
+
+    def foo_default(self, request):
+        return "foo default"
+
+    def foo_post(self, request):
+        return "foo default post"
+
+    def foo_edit(self, request):
+        return "foo edit"
+
+    r.register_function_by_predicate_name(
+        view, foo_default, model=Foo)
+    r.register_function_by_predicate_name(
+        view, foo_post,
+        model=Foo, request_method='POST')
+    r.register_function_by_predicate_name(
+        view, foo_edit,
+        model=Foo, name='edit', request_method='POST')
 
     l = r.lookup()
 

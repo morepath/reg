@@ -345,3 +345,24 @@ def test_name_request_method_body_model_registered_for_base_and_sub():
     assert m.component(('foo', 'POST', object)) == 'body_model fallback'
     assert m.component(('foo', 'POST', Foo)) == 'post foo'
     assert m.component(('foo', 'POST', Bar)) == 'post bar'
+
+
+def test_key_by_predicate_name():
+    p = key_predicate(name='foo', default='default')
+
+    assert p.key_by_predicate_name({'foo': 'value'}) == 'value'
+    assert p.key_by_predicate_name({}) == 'default'
+
+
+def test_multi_key_by_predicate_name():
+    p = MultiPredicate([key_predicate(name='foo', default='default foo'),
+                        key_predicate(name='bar', default='default bar')])
+    assert p.key_by_predicate_name({'foo': 'FOO',
+                                    'bar': 'BAR'}) == ('FOO', 'BAR')
+    assert p.key_by_predicate_name({}) == ('default foo', 'default bar')
+
+
+def test_nameless_predicate_key():
+    p = key_predicate()
+
+    assert p.key_by_predicate_name({}) is None
