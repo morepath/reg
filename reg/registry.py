@@ -76,6 +76,9 @@ class Registry(object):
         :param callable: a dispatch callable.
         :returns: a :class:`reg.PredicateRegistry`.
         """
+        if callable.initialized:
+            return
+        callable.initialized = True
         return self.register_callable_predicates(callable.wrapped_func,
                                                  callable.predicates)
 
@@ -105,8 +108,7 @@ class Registry(object):
         a callable with the same signature as the original dispatch callable.
         If not, a :exc:`reg.RegistrationError` is raised.
         """
-        # if not callable.initialized:
-        #     self.register_dispatch(callable)
+        self.register_dispatch(callable)
         value_arginfo = arginfo(value)
         if value_arginfo is None:
             raise RegistrationError(
@@ -135,8 +137,10 @@ class Registry(object):
         :returns: an immutable predicate_key based on the predicates
           the callable was configured with.
         """
-        return self.predicate_registries[callable].key(
-            self.arg_extractors[callable](*args, **kw))
+        r = self.predicate_registries.get(callable)
+        if r is None:
+            raise KeyExtractorError()
+        return r.key(self.arg_extractors[callable](*args, **kw))
 
     def component(self, key, predicate_key):
         """Lookup value in registry based on predicate_key.
@@ -285,10 +289,13 @@ class Lookup(object):
             key = self.key_lookup.predicate_key(callable, *args, **kw)
             component = self.key_lookup.component(callable, key)
         except KeyExtractorError:
-            # if we cannot extract the key we cannot find the component
-            # later on this will result in a TypeError as we try to
-            # call the callable with the wrong arguments, which is what
-            # we want
+            # if we cannot extract the key this could be because the
+            # dispatch was never initialized, as register_function
+            # was not called. In this case we want the fallback.
+            # Alternatively we cannot construct the key because we
+            # were passed the wrong arguments.
+            # In both cases, call the fallback. In case the wrong arguments
+            # were passed, we get the appropriate TypeError then
             component = None
         # if we cannot find the component, use the original
         # callable as a fallback.

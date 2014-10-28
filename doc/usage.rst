@@ -81,19 +81,22 @@ functions:
   def labeled_report_title(obj):
       return obj.label
 
-We now create a Reg :class:`reg.Registry`, make it aware of our
-``title`` function, register our implementations in it using
-:meth:`reg.IRegistry.register`, and then tell Reg to use it
-automatically using :meth:`reg.implicit.Implicit.initialize`:
+We now create a Reg :class:`reg.Registry`, and tell it about a few
+implementations for the ``title`` function:
 
 .. testcode::
 
   registry = reg.Registry()
-  registry.register_dispatch(title)
   registry.register_function(
       title, [TitledReport], titled_report_title)
   registry.register_function(
       title, [LabeledReport], labeled_report_title)
+
+We then tell Reg to use it automatically using
+:meth:`reg.implicit.Implicit.initialize`:
+
+.. testcode::
+
   from reg import implicit
   implicit.initialize(registry.lookup())
 
@@ -463,19 +466,12 @@ We can actually spell these two steps in a single step, as
   def size(item):
       raise NotImplementedError
 
-We now need to tell Reg that ``size`` exists as a generic dispatch
-function:
+We can now register the various size functions for the various content
+items in a registry:
 
 .. testcode::
 
   r = reg.Registry()
-  r.register_dispatch(size)
-
-We can now register the various size functions for the various content
-items in this registry:
-
-.. testcode::
-
   r.register_function(size, [Document], document_size)
   r.register_function(size, [Folder], folder_size)
   r.register_function(size, [Image], image_size)
@@ -638,8 +634,6 @@ any object:
   def icon(obj):
       raise NotImplementedError
 
-  r.register_dispatch(icon)
-
 We can now register the ``DocumentIcon`` adapter class for this
 function and ``Document``:
 
@@ -732,7 +726,6 @@ Let's register the view in the registry:
 
 .. testcode::
 
-  r.register_dispatch(view)
   r.register_function(view, [Request, Document], document_view)
 
 We now see why the second argument to ``register()`` is a list; so far
@@ -780,7 +773,6 @@ in its actual implementation elsewhere, into the registry:
   def actual_emailer():
       return send_email
 
-  r.register_dispatch(emailer)
   r.register_function(emailer, [], actual_emailer)
 
 Now when we call emailer, we'll get the specific service we want:
@@ -814,8 +806,6 @@ Here's what it looks like:
   @reg.dispatch(reg.match_class(lambda cls: cls))
   def something(cls):
       raise NotImplementedError()
-
-  r.register_dispatch(something)
 
 Note the call to :func:`match_class`` here. This lets us specify that
 we want to dispatch on the class, and we supply a lambda function that

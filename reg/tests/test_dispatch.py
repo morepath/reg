@@ -45,8 +45,6 @@ def test_dispatch_argname():
 
     registry = Registry()
 
-    registry.register_dispatch(foo)
-
     registry.register_function(foo, (Bar,), for_bar)
     registry.register_function(foo, (Qux,), for_qux)
 
@@ -76,8 +74,6 @@ def test_dispatch_match_instance():
 
     registry = Registry()
 
-    registry.register_dispatch(foo)
-
     registry.register_function(foo, (Bar,), for_bar)
     registry.register_function(foo, (Qux,), for_qux)
 
@@ -92,8 +88,6 @@ def test_dispatch_no_arguments():
         pass
 
     registry = Registry()
-
-    registry.register_dispatch(foo)
 
     def special_foo():
         return "special"
@@ -117,47 +111,52 @@ def test_all():
     def target(obj):
         pass
 
+    def registered_for_sub(obj):
+        pass
+
+    def registered_for_base(obj):
+        pass
+
     registry = Registry()
-    registry.register_dispatch(target)
-    registry.register_value(target.wrapped_func, (Sub,),
-                            'registered for sub')
-    registry.register_value(target.wrapped_func, (Base,),
-                            'registered for base')
+
+    registry.register_function(target, (Sub,), registered_for_sub)
+    registry.register_function(target, (Base,), registered_for_base)
 
     base = Base()
     sub = Sub()
 
     lookup = registry.lookup()
     assert list(target.all(sub, lookup=lookup)) == [
-        'registered for sub',
-        'registered for base']
+        registered_for_sub, registered_for_base]
     assert list(target.all(base, lookup=lookup)) == [
-        'registered for base']
+        registered_for_base]
 
 
 def test_component_no_source():
     reg = Registry()
-    foo = object()
 
     @dispatch()
     def target():
         pass
 
-    reg.register_dispatch(target)
-    reg.register_value(target.wrapped_func, (), foo)
+    def foo():
+        pass
+
+    reg.register_function(target, (), foo)
     assert target.component(lookup=reg.lookup()) is foo
 
 
 def test_component_one_source():
     reg = Registry()
-    foo = object()
 
     @dispatch('obj')
     def target(obj):
         pass
 
-    reg.register_dispatch(target)
-    reg.register_value(target.wrapped_func, (Alpha,), foo)
+    def foo(obj):
+        pass
+
+    reg.register_function(target, (Alpha,), foo)
 
     alpha = Alpha()
     assert target.component(alpha, lookup=reg.lookup()) is foo
@@ -165,14 +164,16 @@ def test_component_one_source():
 
 def test_component_two_sources():
     reg = Registry()
-    foo = object()
 
     @dispatch('a', 'b')
     def target(a, b):
         pass
 
+    def foo(a, b):
+        pass
+
     reg.register_dispatch(target)
-    reg.register_value(target.wrapped_func, (IAlpha, IBeta), foo)
+    reg.register_function(target, (IAlpha, IBeta), foo)
 
     alpha = Alpha()
     beta = Beta()
@@ -181,7 +182,6 @@ def test_component_two_sources():
 
 def test_component_inheritance():
     reg = Registry()
-    foo = object()
 
     class Gamma(object):
         pass
@@ -193,8 +193,11 @@ def test_component_inheritance():
     def target(obj):
         pass
 
+    def foo(obj):
+        pass
+
     reg.register_dispatch(target)
-    reg.register_value(target.wrapped_func, (Gamma,), foo)
+    reg.register_function(target, (Gamma,), foo)
 
     delta = Delta()
 
@@ -203,7 +206,6 @@ def test_component_inheritance():
 
 def test_component_inheritance_old_style_class():
     reg = Registry()
-    foo = object()
 
     class Gamma:
         pass
@@ -215,8 +217,11 @@ def test_component_inheritance_old_style_class():
     def target(obj):
         pass
 
+    def foo(obj):
+        pass
+
     reg.register_dispatch(target)
-    reg.register_value(target.wrapped_func, (Gamma,), foo)
+    reg.register_function(target, (Gamma,), foo)
 
     gamma = Gamma()
     delta = Delta()
@@ -230,7 +235,6 @@ def test_component_inheritance_old_style_class():
 
 def test_call_no_source():
     reg = Registry()
-
     foo = object()
 
     @dispatch()
@@ -241,7 +245,7 @@ def test_call_no_source():
         return foo
 
     reg.register_dispatch(target)
-    reg.register_value(target.wrapped_func, (), factory)
+    reg.register_function(target, (), factory)
 
     assert target(lookup=reg.lookup()) is foo
 

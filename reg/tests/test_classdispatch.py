@@ -30,7 +30,6 @@ def test_dispatch_basic():
         return "Something for %s" % cls
 
     r = Registry()
-    r.register_dispatch(something)
     r.register_function(something, (object,), something_for_object)
 
     l = r.lookup()
@@ -53,7 +52,6 @@ def test_classdispatch_multidispatch():
         return "Something, other is Foo: %s" % other
 
     r = Registry()
-    r.register_dispatch(something)
     r.register_function(
         something,
         (object, object,),
@@ -80,7 +78,6 @@ def test_classdispatch_extra_arguments():
         return "Extra: %s" % extra
 
     r = Registry()
-    r.register_dispatch(something)
     r.register_function(something, (object,), something_for_object)
 
     assert something(DemoClass, 'foo', lookup=r.lookup()) == "Extra: foo"
@@ -95,7 +92,6 @@ def test_classdispatch_no_arguments():
         return "Something!"
 
     r = Registry()
-    r.register_dispatch(something)
     r.register_function(something, (), something_impl)
 
     assert something(lookup=r.lookup()) == 'Something!'
@@ -113,7 +109,6 @@ def test_classdispatch_override():
         return "Special for %s" % cls
 
     r = Registry()
-    r.register_dispatch(something)
     r.register_function(something, (object,),
                         something_for_object)
     r.register_function(something, (SpecialClass,),
@@ -129,7 +124,5 @@ def test_classdispatch_fallback():
         return "Fallback"
 
     r = Registry()
-
-    r.register_dispatch(something)
 
     assert something(DemoClass, lookup=r.lookup()) == "Fallback"
