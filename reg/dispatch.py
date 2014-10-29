@@ -47,6 +47,9 @@ class Dispatch(object):
         self.wrapped_func = callable
         self.external_predicates = external_predicates
 
+    def __repr__(self):
+        return repr(self.wrapped_func)
+
     def __call__(self, *args, **kw):
         lookup = get_lookup(kw)
         return lookup.call(self.wrapped_func, *args, **kw)
