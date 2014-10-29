@@ -31,6 +31,7 @@ class Registry(object):
         self.initialized = set()
         self.arg_extractors = {}
         self.predicate_registries = {}
+        self.external_predicates = {}
 
     def register_predicates(self, key, predicates):
         """Register the predicates to use for a lookup key.
@@ -84,17 +85,49 @@ class Registry(object):
         return self.register_callable_predicates(callable.wrapped_func,
                                                  predicates)
 
+    def register_external_predicates(self, callable, predicates):
+        """Register external predicates for dispatch_external_predicates.
+
+        dispatch_external_predicates looks for predicates registered for
+        the dispatch here. You can define them here.
+
+        :param callable: a dispatch_external_predicates callable.
+        :param predicates: a sequence of :class:`reg.Predicate` objects.
+        """
+        if not callable.external_predicates:
+            raise RegistrationError(
+                "Cannot register external predicates for non-external "
+                "dispatch: %s" % callable)
+        self.external_predicates[callable] = predicates
+
     def register_dispatch(self, callable):
         """Register a dispatch function.
 
         Works as :meth:`register_dispatch_predicates`, but extracts
-        predicate information from information registered using the
-        :func:`reg.dispatch` decorator.
+        predicate information from information registered.
+
+        For :func:`dispatch` these are the predicates supplied to it
+        in its arguments.
+
+        For :func:`dispatch_external_predicates` these are the predicates
+        supplied using :meth:`register_external_predicates`.
 
         :param callable: a dispatch callable.
         :returns: a :class:`reg.PredicateRegistry`.
+
         """
-        return self.register_dispatch_predicates(callable, callable.predicates)
+        # shortcut
+        if callable in self.initialized:
+            return
+        if callable.external_predicates:
+            predicates = self.external_predicates.get(callable)
+            if predicates is None:
+                raise RegistrationError(
+                    "No external predicates were registered for: %s" %
+                    callable)
+        else:
+            predicates = callable.predicates
+        return self.register_dispatch_predicates(callable, predicates)
 
     def register_value(self, key, predicate_key, value):
         """Register a value for a predicate_key.
@@ -142,9 +175,30 @@ class Registry(object):
         based on the values in the ``kw`` argument, using the ``name``
         and ``default`` arguments to :class:`Predicate`.
         """
-        predicate_key = self.predicate_key_by_predicate_name(
-            callable.wrapped_func, kw)
+        predicate_key = self.predicate_key_by_predicate_name(callable, kw)
         self.register_function(callable, predicate_key, value)
+
+    def predicate_key_by_predicate_name(self, callable, d):
+        """Construct predicate key from dictionary.
+
+        Uses ``name`` and ``default`` to predicate to construct the
+        predicate key. If the key cannot be constructed then
+        a ``RegistrationError`` is raised.
+
+        :param callable: the callable for which to extract the predicate_key
+        :param d: dictionary with as keys predicate names and as values
+          parts of the key.
+        :returns: an immutable predicate_key based on the dictionary
+          and the names and defaults of the predicates the callable
+          was configured with.
+        """
+        self.register_dispatch(callable)
+        r = self.predicate_registries.get(callable.wrapped_func)
+        if r is None:
+            raise RegistrationError(
+                "No predicate_key information known for: %s"
+                % callable)
+        return r.key_by_predicate_name(d)
 
     def predicate_key(self, callable, *args, **kw):
         """Construct predicate_key for function arguments.
@@ -166,27 +220,6 @@ class Registry(object):
         if r is None:
             raise KeyExtractorError()
         return r.key(self.arg_extractors[callable](*args, **kw))
-
-    def predicate_key_by_predicate_name(self, callable, d):
-        """Construct predicate key from dictionary.
-
-        Uses ``name`` and ``default`` to predicate to construct the
-        predicate key. If the key cannot be constructed then
-        a ``RegistrationError`` is raised.
-
-        :param callable: the callable for which to extract the predicate_key
-        :param d: dictionary with as keys predicate names and as values
-          parts of the key.
-        :returns: an immutable predicate_key based on the dictionary
-          and the names and defaults of the predicates the callable
-          was configured with.
-        """
-        r = self.predicate_registries.get(callable)
-        if r is None:
-            raise RegistrationError(
-                "No predicate_key information known for: %s"
-                % callable)
-        return r.key_by_predicate_name(d)
 
     def component(self, key, predicate_key):
         """Lookup value in registry based on predicate_key.

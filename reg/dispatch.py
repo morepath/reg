@@ -8,6 +8,8 @@ from .compat import string_types
 class dispatch(object):
     """Decorator to make a function dispatch based on its arguments.
 
+    This takes the predicates to dispatch on as zero or more parameters.
+
     :param predicates: sequence of :class:`Predicate` instances
       to do the dispatch on.
     """
@@ -26,10 +28,24 @@ class dispatch(object):
         return result
 
 
+class dispatch_external_predicates(object):
+    """Decorator to make function dispatch based on external predicates.
+
+    The predicates to dispatch on are defined in the :class:`Registry`
+    object using :class:`register_external_predicates`. If no
+    external predicates were registered then this is an error.
+    """
+    def __call__(self, callable):
+        result = Dispatch([], callable, external_predicates=True)
+        update_wrapper(result, callable)
+        return result
+
+
 class Dispatch(object):
-    def __init__(self, predicates, callable):
+    def __init__(self, predicates, callable, external_predicates=False):
         self.predicates = predicates
         self.wrapped_func = callable
+        self.external_predicates = external_predicates
 
     def __call__(self, *args, **kw):
         lookup = get_lookup(kw)

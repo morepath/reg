@@ -3,8 +3,8 @@ import pytest
 
 from reg.implicit import NoImplicitLookupError
 from reg.registry import Registry
-from reg.predicate import match_instance, match_key
-from reg.dispatch import dispatch
+from reg.predicate import match_instance, match_key, key_predicate
+from reg.dispatch import dispatch, dispatch_external_predicates
 from reg.error import RegistrationError, KeyExtractorError
 
 
@@ -691,6 +691,75 @@ def test_register_dispatch_predicates():
     assert view(FooSub(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
 
 
+def test_dispatch_external_predicates():
+    r = Registry()
+
+    class Foo(object):
+        pass
+
+    class FooSub(Foo):
+        pass
+
+    @dispatch_external_predicates()
+    def view(self, request):
+        raise NotImplementedError()
+
+    def get_model(self):
+        return self
+
+    def get_name(request):
+        return request.name
+
+    def get_request_method(request):
+        return request.request_method
+
+    def model_fallback(self, request):
+        return "Model fallback"
+
+    def name_fallback(self, request):
+        return "Name fallback"
+
+    def request_method_fallback(self, request):
+        return "Request method fallback"
+
+    r.register_external_predicates(view, [
+        match_instance(get_model, model_fallback),
+        match_key(get_name, name_fallback),
+        match_key(get_request_method, request_method_fallback)])
+
+    def foo_default(self, request):
+        return "foo default"
+
+    def foo_post(self, request):
+        return "foo default post"
+
+    def foo_edit(self, request):
+        return "foo edit"
+
+    r.register_function(view, (Foo, '', 'GET'), foo_default)
+    r.register_function(view, (Foo, '', 'POST'), foo_post)
+    r.register_function(view, (Foo, 'edit', 'POST'), foo_edit)
+
+    l = r.lookup()
+
+    class Request(object):
+        def __init__(self, name, request_method):
+            self.name = name
+            self.request_method = request_method
+
+    assert view(Foo(), Request('', 'GET'), lookup=l) == 'foo default'
+    assert view(FooSub(), Request('', 'GET'), lookup=l) == 'foo default'
+    assert view(FooSub(), Request('edit', 'POST'), lookup=l) == 'foo edit'
+
+    class Bar(object):
+        pass
+
+    assert view(Bar(), Request('', 'GET'), lookup=l) == 'Model fallback'
+    assert view(Foo(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
+    assert view(Foo(), Request('', 'PUT'), lookup=l) == 'Request method fallback'
+    assert view(FooSub(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
+
+
 def test_register_dispatch_predicates_register_by_predicate_name():
     r = Registry()
 
@@ -766,3 +835,62 @@ def test_register_dispatch_predicates_register_by_predicate_name():
     assert view(Foo(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
     assert view(Foo(), Request('', 'PUT'), lookup=l) == 'Request method fallback'
     assert view(FooSub(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
+
+
+def test_predicate_key_by_predicate_name():
+    r = Registry()
+
+    @dispatch(
+        key_predicate(name='foo', default='default foo'),
+        key_predicate(name='bar', default='default bar'))
+    def view(self, request):
+        raise NotImplementedError()
+
+    assert r.predicate_key_by_predicate_name(view, {
+        'foo': 'FOO',
+        'bar': 'BAR'}) == ('FOO', 'BAR')
+    assert r.predicate_key_by_predicate_name(view, {}) == ('default foo',
+                                                           'default bar')
+
+
+def test_register_dispatch_predicate_key_by_predicate_name():
+    r = Registry()
+
+    class Foo(object):
+        pass
+
+    class FooSub(Foo):
+        pass
+
+    @dispatch_external_predicates()
+    def view(self, request):
+        raise NotImplementedError()
+
+    def get_model(self):
+        return self
+
+    def get_name(request):
+        return request.name
+
+    def get_request_method(request):
+        return request.request_method
+
+    def model_fallback(self, request):
+        return "Model fallback"
+
+    def name_fallback(self, request):
+        return "Name fallback"
+
+    def request_method_fallback(self, request):
+        return "Request method fallback"
+
+    r.register_external_predicates(view, [
+        match_instance(get_model, model_fallback,
+                       name='model', default=None),
+        match_key(get_name, name_fallback,
+                  name='name', default=''),
+        match_key(get_request_method, request_method_fallback,
+                  name='request_method', default='GET')])
+
+    assert r.predicate_key_by_predicate_name(
+        view, {}) == (None, '', 'GET')
