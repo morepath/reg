@@ -28,6 +28,7 @@ class Registry(object):
         """Clear the registry.
         """
         self.known_keys = set()
+        self.initialized = set()
         self.arg_extractors = {}
         self.predicate_registries = {}
 
@@ -77,9 +78,9 @@ class Registry(object):
         :param predicates: a sequence of :class:`reg.Predicate` objects.
         :returns: a :class:`reg.PredicateRegistry`.
         """
-        if callable.initialized:
+        if callable in self.initialized:
             return
-        callable.initialized = True
+        self.initialized.add(callable)
         return self.register_callable_predicates(callable.wrapped_func,
                                                  predicates)
 

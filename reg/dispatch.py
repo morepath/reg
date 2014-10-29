@@ -30,7 +30,6 @@ class Dispatch(object):
     def __init__(self, predicates, callable):
         self.predicates = predicates
         self.wrapped_func = callable
-        self.initialized = False
 
     def __call__(self, *args, **kw):
         lookup = get_lookup(kw)
