@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 import pytest
-from reg.predicate import (PredicateRegistry, Predicate,
-                           ClassIndex, KeyIndex, ANY,
+from reg.predicate import (PredicateRegistry, Predicate, KeyIndex, ANY,
                            key_permutations, PredicateRegistryError,
                            PredicateMatcher)
 from reg.registry import Registry
@@ -127,90 +126,3 @@ def test_predicate_matcher():
     # be used
     assert reg.component(foo, [Document(a='C', b='C')],
                          predicates={'a': 'C'}) == 'b = B'
-
-
-def test_class_index():
-    m = PredicateRegistry([Predicate('name', KeyIndex),
-                           Predicate('request_method', KeyIndex),
-                           Predicate('body_model', ClassIndex)])
-    class Foo(object):
-        pass
-
-    class Bar(Foo):
-        pass
-
-    m.register(dict(name='foo'), 'registered for all')
-    m.register(dict(name='foo', request_method='POST'), 'registered for post')
-    m.register(dict(name='foo', request_method='POST', body_model=Foo),
-               'registered for post foo')
-    assert (m.get(dict(name='foo', request_method='GET', body_model=object)) ==
-            'registered for all')
-    assert (m.get(dict(name='foo', request_method='POST', body_model=object)) ==
-            'registered for post')
-    assert (m.get(dict(name='foo', request_method='POST', body_model=Foo)) ==
-            'registered for post foo')
-    assert (m.get(dict(name='foo', request_method='POST', body_model=Bar)) ==
-            'registered for post foo')
-
-
-def test_class_index_registered_for_base_and_sub():
-    m = PredicateRegistry([Predicate('name', KeyIndex),
-                           Predicate('request_method', KeyIndex),
-                           Predicate('body_model', ClassIndex)])
-    class Foo(object):
-        pass
-
-    class Bar(Foo):
-        pass
-
-    m.register(dict(name='foo'), 'registered for all')
-    m.register(dict(name='foo', request_method='POST'), 'registered for post')
-    m.register(dict(name='foo', request_method='POST', body_model=Foo),
-               'registered for post foo')
-    m.register(dict(name='foo', request_method='POST', body_model=Bar),
-               'registered for post bar')
-
-    assert (m.get(dict(name='foo', request_method='GET', body_model=object)) ==
-            'registered for all')
-    assert (m.get(dict(name='foo', request_method='POST', body_model=object)) ==
-            'registered for post')
-    assert (m.get(dict(name='foo', request_method='POST', body_model=Foo)) ==
-            'registered for post foo')
-    assert (m.get(dict(name='foo', request_method='POST', body_model=Bar)) ==
-            'registered for post bar')
-
-
-def test_class_index_any():
-    m = PredicateRegistry([Predicate('name', KeyIndex),
-                           Predicate('request_method', KeyIndex),
-                           Predicate('body_model', ClassIndex)])
-    class Foo(object):
-        pass
-
-    m.register(dict(name='foo', request_method='GET',
-                    body_model=object), 'registered for object')
-    m.register(dict(name='foo', request_method=ANY), 'request method fallback')
-    m.register(dict(name='foo', request_method='GET',
-                    body_model=ANY), 'body_model fallback')
-
-    assert (m.get(dict(name='foo', request_method='GET',
-                       body_model=Foo)) ==
-            'registered for object')
-    assert (m.get(dict(name='foo', request_method='GET',
-                       body_model=object)) ==
-            'registered for object')
-
-    assert (m.get(dict(name='foo', request_method='POST',
-                       body_model=Foo)) ==
-            'request method fallback')
-    assert (m.get(dict(name='foo', request_method='POST',
-                       body_model=object)) ==
-            'request method fallback')
-
-    assert (m.get(dict(name='foo', request_method='GET',
-                       body_model=Foo)) ==
-            'registered for object')
-    assert (m.get(dict(name='foo', request_method='GET',
-                       body_model=ANY)) ==
-            'body_model fallback')
-

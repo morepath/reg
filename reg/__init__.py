@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from .implicit import implicit, NoImplicitLookupError
 from .registry import ClassRegistry, Registry, IRegistry, IClassLookup
 from .lookup import Lookup, ComponentLookupError, Matcher
-from .predicate import (PredicateRegistry, Predicate, KeyIndex, ClassIndex,
+from .predicate import (PredicateRegistry, Predicate, KeyIndex,
                         PredicateRegistryError, PredicateMatcher, ANY)
 from .compose import ListClassLookup, ChainClassLookup, CachingClassLookup
 from .generic import generic, classgeneric

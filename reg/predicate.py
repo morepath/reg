@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 from .sentinel import Sentinel
 from .lookup import Matcher
-from .mapping import Map, ClassMapKey
 from repoze.lru import lru_cache
 
 # XXX needs a lot more documentation
@@ -39,30 +38,6 @@ class KeyIndex(object):
 
     def get(self, key):
         return self.d.get(key, set())
-
-
-class _AnyModel(object):
-    """A special helper model for ClassIndex.
-
-    This so that ANY can be matched uniquely.
-    """
-
-
-class ClassIndex(object):
-    """An index for matching predicates by class.
-    """
-    def __init__(self):
-        self.map = Map()
-
-    def add(self, key, value):
-        if key is ANY:
-            key = _AnyModel
-        self.map.setdefault(ClassMapKey(key), set()).add(value)
-
-    def get(self, key):
-        if key is ANY:
-            key = _AnyModel
-        return self.map.get(ClassMapKey(key), set())
 
 
 class PredicateRegistry(object):
