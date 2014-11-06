@@ -45,8 +45,8 @@ def test_dispatch_argname():
 
     registry = Registry()
 
-    registry.register_function(foo, (Bar,), for_bar)
-    registry.register_function(foo, (Qux,), for_qux)
+    registry.register_function(foo, for_bar, obj=Bar)
+    registry.register_function(foo, for_qux, obj=Qux)
 
     lookup = registry.lookup()
     assert foo(Bar(), lookup=lookup) == "bar's method"
@@ -74,8 +74,8 @@ def test_dispatch_match_instance():
 
     registry = Registry()
 
-    registry.register_function(foo, (Bar,), for_bar)
-    registry.register_function(foo, (Qux,), for_qux)
+    registry.register_function(foo, for_bar, obj=Bar)
+    registry.register_function(foo, for_qux, obj=Qux)
 
     lookup = registry.lookup()
     assert foo(Bar(), lookup=lookup) == "bar's method"
@@ -92,7 +92,7 @@ def test_dispatch_no_arguments():
     def special_foo():
         return "special"
 
-    registry.register_function(foo, (), special_foo)
+    registry.register_function(foo, special_foo)
 
     lookup = registry.lookup()
     assert foo.component(lookup=lookup) is special_foo
@@ -119,8 +119,8 @@ def test_all():
 
     registry = Registry()
 
-    registry.register_function(target, (Sub,), registered_for_sub)
-    registry.register_function(target, (Base,), registered_for_base)
+    registry.register_function(target, registered_for_sub, obj=Sub)
+    registry.register_function(target, registered_for_base, obj=Base)
 
     base = Base()
     sub = Sub()
@@ -142,7 +142,7 @@ def test_component_no_source():
     def foo():
         pass
 
-    reg.register_function(target, (), foo)
+    reg.register_function(target, foo)
     assert target.component(lookup=reg.lookup()) is foo
 
 
@@ -156,7 +156,7 @@ def test_component_one_source():
     def foo(obj):
         pass
 
-    reg.register_function(target, (Alpha,), foo)
+    reg.register_function(target, foo, obj=Alpha)
 
     alpha = Alpha()
     assert target.component(alpha, lookup=reg.lookup()) is foo
@@ -173,7 +173,7 @@ def test_component_two_sources():
         pass
 
     reg.register_dispatch(target)
-    reg.register_function(target, (IAlpha, IBeta), foo)
+    reg.register_function(target, foo, a=IAlpha, b=IBeta)
 
     alpha = Alpha()
     beta = Beta()
@@ -197,7 +197,7 @@ def test_component_inheritance():
         pass
 
     reg.register_dispatch(target)
-    reg.register_function(target, (Gamma,), foo)
+    reg.register_function(target, foo, obj=Gamma)
 
     delta = Delta()
 
@@ -221,7 +221,7 @@ def test_component_inheritance_old_style_class():
         pass
 
     reg.register_dispatch(target)
-    reg.register_function(target, (Gamma,), foo)
+    reg.register_function(target, foo, obj=Gamma)
 
     gamma = Gamma()
     delta = Delta()
@@ -245,7 +245,7 @@ def test_call_no_source():
         return foo
 
     reg.register_dispatch(target)
-    reg.register_function(target, (), factory)
+    reg.register_function(target, factory)
 
     assert target(lookup=reg.lookup()) is foo
 
@@ -264,8 +264,8 @@ def test_call_one_source():
         return "bar"
 
     reg.register_dispatch(target)
-    reg.register_function(target, (IAlpha,), foo)
-    reg.register_function(target, (IBeta,), bar)
+    reg.register_function(target, foo, obj=IAlpha)
+    reg.register_function(target, bar, obj=IBeta)
 
     lookup = reg.lookup()
     assert target(Alpha(), lookup=lookup) == 'foo'
@@ -286,8 +286,8 @@ def test_call_two_sources():
         return "bar"
 
     reg.register_dispatch(target)
-    reg.register_function(target, (IAlpha, IBeta), foo)
-    reg.register_function(target, (IBeta, IAlpha), bar)
+    reg.register_function(target, foo, a=IAlpha, b=IBeta)
+    reg.register_function(target, bar, a=IBeta, b=IAlpha)
     alpha = Alpha()
     beta = Beta()
 
@@ -391,7 +391,7 @@ def test_wrong_callable_registered():
 
     reg.register_dispatch(target)
     with pytest.raises(RegistrationError):
-        reg.register_function(target, (Alpha,), callable)
+        reg.register_function(target, callable, a=Alpha)
 
 
 def test_non_callable_registered():
@@ -405,7 +405,7 @@ def test_non_callable_registered():
 
     reg.register_dispatch(target)
     with pytest.raises(RegistrationError):
-        reg.register_function(target, (Alpha,), non_callable)
+        reg.register_function(target, non_callable, a=Alpha)
 
 
 def test_call_with_no_args_while_arg_expected():
@@ -418,7 +418,7 @@ def test_call_with_no_args_while_arg_expected():
 
     reg = Registry()
     reg.register_dispatch(target)
-    reg.register_function(target, (Alpha,), specific)
+    reg.register_function(target, specific, obj=Alpha)
 
     lookup = reg.lookup()
 
@@ -440,7 +440,7 @@ def test_call_with_wrong_args():
 
     reg = Registry()
     reg.register_dispatch(target)
-    reg.register_function(target, (Alpha,), specific)
+    reg.register_function(target, specific, obj=Alpha)
 
     lookup = reg.lookup()
 
@@ -463,7 +463,7 @@ def test_extra_arg_for_call():
         return "Specific: %s" % extra
 
     reg.register_dispatch(target)
-    reg.register_function(target, (Alpha,), specific)
+    reg.register_function(target, specific, obj=Alpha)
 
     alpha = Alpha()
     beta = Beta()
@@ -497,7 +497,7 @@ def test_fallback():
         return 'specific'
 
     reg.register_dispatch(target)
-    reg.register_function(target, (Alpha,), specific_target)
+    reg.register_function(target, specific_target, obj=Alpha)
 
     beta = Beta()
     assert target(beta, lookup=reg.lookup()) == 'fallback'
@@ -518,8 +518,8 @@ def test_calling_twice():
 
     reg.register_dispatch(target)
 
-    reg.register_function(target, (Alpha,), a)
-    reg.register_function(target, (Beta,), b)
+    reg.register_function(target, a, obj=Alpha)
+    reg.register_function(target, b, obj=Beta)
 
     lookup = reg.lookup()
 
@@ -547,8 +547,8 @@ def test_lookup_passed_along():
     reg.register_dispatch(g1)
     reg.register_dispatch(g2)
 
-    reg.register_function(g1, (Alpha,), g1_impl)
-    reg.register_function(g2, (Alpha,), g2_impl)
+    reg.register_function(g1, g1_impl, obj=Alpha)
+    reg.register_function(g2, g2_impl, obj=Alpha)
 
     assert g1(Alpha(), lookup=reg.lookup()) == 'g2'
 
@@ -564,7 +564,7 @@ def test_different_defaults_in_specific_non_dispatch_arg():
         return 'a: %s' % blah
 
     reg.register_dispatch(target)
-    reg.register_function(target, (Alpha,), a)
+    reg.register_function(target, a, obj=Alpha)
 
     lookup = reg.lookup()
 
@@ -582,7 +582,7 @@ def test_different_defaults_in_specific_dispatch_arg():
         return 'a: %s' % key
 
     reg.register_dispatch(target)
-    reg.register_function(target, ('foo',), a)
+    reg.register_function(target, a, key='foo')
 
     lookup = reg.lookup()
 
@@ -602,7 +602,7 @@ def test_different_defaults_in_specific_dispatch_arg_causes_dispatch():
         return 'a: %s' % key
 
     reg.register_dispatch(target)
-    reg.register_function(target, ('foo',), a)
+    reg.register_function(target, a, key='foo')
 
     lookup = reg.lookup()
 
@@ -667,9 +667,12 @@ def test_register_dispatch_predicates():
     def foo_edit(self, request):
         return "foo edit"
 
-    r.register_function(view, (Foo, '', 'GET'), foo_default)
-    r.register_function(view, (Foo, '', 'POST'), foo_post)
-    r.register_function(view, (Foo, 'edit', 'POST'), foo_edit)
+    r.register_function(view, foo_default,
+                        model=Foo, name='', request_method='GET')
+    r.register_function(view, foo_post,
+                        model=Foo, name='', request_method='POST')
+    r.register_function(view, foo_edit,
+                        model=Foo, name='edit', request_method='POST')
 
     l = r.lookup()
 
@@ -736,9 +739,12 @@ def test_dispatch_external_predicates():
     def foo_edit(self, request):
         return "foo edit"
 
-    r.register_function(view, (Foo, '', 'GET'), foo_default)
-    r.register_function(view, (Foo, '', 'POST'), foo_post)
-    r.register_function(view, (Foo, 'edit', 'POST'), foo_edit)
+    r.register_function(view, foo_default,
+                        model=Foo, name='', request_method='GET')
+    r.register_function(view, foo_post,
+                        model=Foo, name='', request_method='POST')
+    r.register_function(view, foo_edit,
+                        model=Foo, name='edit', request_method='POST')
 
     l = r.lookup()
 
@@ -760,7 +766,7 @@ def test_dispatch_external_predicates():
     assert view(FooSub(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
 
 
-def test_register_dispatch_predicates_register_by_predicate_name():
+def test_register_dispatch_predicates_register_defaults():
     r = Registry()
 
     class Foo(object):
@@ -808,12 +814,12 @@ def test_register_dispatch_predicates_register_by_predicate_name():
     def foo_edit(self, request):
         return "foo edit"
 
-    r.register_function_by_predicate_name(
+    r.register_function(
         view, foo_default, model=Foo)
-    r.register_function_by_predicate_name(
+    r.register_function(
         view, foo_post,
         model=Foo, request_method='POST')
-    r.register_function_by_predicate_name(
+    r.register_function(
         view, foo_edit,
         model=Foo, name='edit', request_method='POST')
 
@@ -837,7 +843,7 @@ def test_register_dispatch_predicates_register_by_predicate_name():
     assert view(FooSub(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
 
 
-def test_predicate_key_by_predicate_name():
+def test_key_dict_to_predicate_key():
     r = Registry()
 
     @dispatch(
@@ -846,14 +852,32 @@ def test_predicate_key_by_predicate_name():
     def view(self, request):
         raise NotImplementedError()
 
-    assert r.predicate_key_by_predicate_name(view, {
+    r.register_dispatch(view)
+
+    assert r.key_dict_to_predicate_key(view, {
         'foo': 'FOO',
         'bar': 'BAR'}) == ('FOO', 'BAR')
-    assert r.predicate_key_by_predicate_name(view, {}) == ('default foo',
-                                                           'default bar')
+    assert r.key_dict_to_predicate_key(view, {}) == ('default foo',
+                                                     'default bar')
 
 
-def test_register_dispatch_predicate_key_by_predicate_name():
+def test_key_dict_to_predicate_key_unknown_keys():
+    r = Registry()
+
+    @dispatch(
+        key_predicate('foo', default='default foo'),
+        key_predicate('bar', default='default bar'))
+    def view(self, request):
+        raise NotImplementedError()
+
+    r.register_dispatch(view)
+
+    with pytest.raises(KeyError):
+        r.key_dict_to_predicate_key(view, {
+            'unknown': 'blah'})
+
+
+def test_register_dispatch_key_dict():
     r = Registry()
 
     class Foo(object):
@@ -893,5 +917,7 @@ def test_register_dispatch_predicate_key_by_predicate_name():
                   request_method_fallback,
                   default='GET')])
 
-    assert r.predicate_key_by_predicate_name(
+    r.register_dispatch(view)
+
+    assert r.key_dict_to_predicate_key(
         view, {}) == (None, '', 'GET')

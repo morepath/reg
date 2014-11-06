@@ -148,14 +148,14 @@ class Registry(object):
             predicate_key = predicate_key[0]
         self.predicate_registries[key].register(predicate_key, value)
 
-    def register_function(self, callable, predicate_key, value):
+    def register_function_by_predicate_key(self, callable,
+                                           predicate_key, value):
         """Register a callable for a dispatch function.
 
         Like :meth:`register_value`, but makes sure that the value is
         a callable with the same signature as the original dispatch callable.
         If not, a :exc:`reg.RegistrationError` is raised.
         """
-        self.register_dispatch(callable)
         value_arginfo = arginfo(value)
         if value_arginfo is None:
             raise RegistrationError(
@@ -168,37 +168,38 @@ class Registry(object):
                     value, callable.wrapped_func))
         self.register_value(callable.wrapped_func, predicate_key, value)
 
-    def register_function_by_predicate_name(self, callable, value, **kw):
+    def register_function(self, callable, value, **key_dict):
         """Register a callable for a dispatch function.
 
-        Like :meth:`register_function`, but constructs the predicate_key
-        based on the values in the ``kw`` argument, using the ``name``
-        and ``default`` arguments to :class:`Predicate`.
+        Like :meth:`register_function_by_predicate_key`, but
+        constructs the predicate_key based on the ``key_dict``
+        argument, using the ``name`` and ``default`` arguments to
+        :class:`Predicate`.
         """
-        predicate_key = self.predicate_key_by_predicate_name(callable, kw)
-        self.register_function(callable, predicate_key, value)
+        self.register_dispatch(callable)
+        predicate_key = self.key_dict_to_predicate_key(callable, key_dict)
+        self.register_function_by_predicate_key(callable, predicate_key, value)
 
-    def predicate_key_by_predicate_name(self, callable, d):
-        """Construct predicate key from dictionary.
+    def key_dict_to_predicate_key(self, callable, key_dict):
+        """Construct predicate key from key dictionary.
 
         Uses ``name`` and ``default`` to predicate to construct the
         predicate key. If the key cannot be constructed then
         a ``RegistrationError`` is raised.
 
         :param callable: the callable for which to extract the predicate_key
-        :param d: dictionary with as keys predicate names and as values
+        :param key_dict: dictionary with as keys predicate names and as values
           parts of the key.
         :returns: an immutable predicate_key based on the dictionary
           and the names and defaults of the predicates the callable
           was configured with.
         """
-        self.register_dispatch(callable)
         r = self.predicate_registries.get(callable.wrapped_func)
         if r is None:
             raise RegistrationError(
                 "No predicate_key information known for: %s"
                 % callable)
-        return r.key_by_predicate_name(d)
+        return r.key_by_predicate_name(key_dict)
 
     def predicate_key(self, callable, *args, **kw):
         """Construct predicate_key for function arguments.

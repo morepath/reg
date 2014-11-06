@@ -128,6 +128,8 @@ def match_class(name, func, fallback=None, default=None):
 class MultiPredicate(object):
     def __init__(self, predicates):
         self.predicates = predicates
+        self.predicate_names = set(
+            [predicate.name for predicate in predicates])
 
     def create_index(self):
         return MultiIndex(self.predicates)
@@ -142,6 +144,11 @@ class MultiPredicate(object):
         return result
 
     def key_by_predicate_name(self, d):
+        input_names = set(d.keys())
+        if not self.predicate_names.issuperset(input_names):
+            unknown_keys = input_names.difference(self.predicate_names)
+            raise KeyError("Unknown names in key dict: %s" %
+                           ', '.join(unknown_keys))
         result = []
         for predicate in self.predicates:
             result.append(predicate.key_by_predicate_name(d))

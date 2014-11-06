@@ -31,7 +31,7 @@ def test_dispatch_basic():
         return "Something for %s" % cls
 
     r = Registry()
-    r.register_function(something, (object,), something_for_object)
+    r.register_function(something, something_for_object, cls=object)
 
     l = r.lookup()
     assert something(DemoClass, lookup=l) == (
@@ -55,13 +55,13 @@ def test_classdispatch_multidispatch():
     r = Registry()
     r.register_function(
         something,
-        (object, object,),
-        something_for_object_and_object)
+        something_for_object_and_object,
+        cls=object, other=object)
 
     r.register_function(
         something,
-        (object, Foo),
-        something_for_object_and_foo)
+        something_for_object_and_foo,
+        cls=object, other=Foo)
 
     l = r.lookup()
     assert something(DemoClass, Bar(), lookup=l) == (
@@ -79,7 +79,8 @@ def test_classdispatch_extra_arguments():
         return "Extra: %s" % extra
 
     r = Registry()
-    r.register_function(something, (object,), something_for_object)
+    r.register_function(something, something_for_object,
+                        cls=object)
 
     assert something(DemoClass, 'foo', lookup=r.lookup()) == "Extra: foo"
 
@@ -93,7 +94,7 @@ def test_classdispatch_no_arguments():
         return "Something!"
 
     r = Registry()
-    r.register_function(something, (), something_impl)
+    r.register_function(something, something_impl)
 
     assert something(lookup=r.lookup()) == 'Something!'
 
@@ -110,10 +111,12 @@ def test_classdispatch_override():
         return "Special for %s" % cls
 
     r = Registry()
-    r.register_function(something, (object,),
-                        something_for_object)
-    r.register_function(something, (SpecialClass,),
-                        something_for_special)
+    r.register_function(something,
+                        something_for_object,
+                        cls=object)
+    r.register_function(something,
+                        something_for_special,
+                        cls=SpecialClass)
 
     assert something(SpecialClass, lookup=r.lookup()) == (
         "Special for <class 'reg.tests.test_classdispatch.SpecialClass'>")
