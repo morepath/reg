@@ -9,7 +9,7 @@ class ArgExtractor(object):
     Given a callable and a sequence of argument names the ArgExtractor
     can extract these from the actual arguments given to a
     callable. The result is a dictionary with as keys the argument
-    names and as values the argument values.
+    names and as values the argument values: a key dict.
     """
 
     def __init__(self, callable, names):
@@ -60,7 +60,7 @@ class ArgExtractor(object):
     def __call__(self, *args, **kw):
         """Extract interesting arguments.
 
-        Given *args and **kw, returns a dict with arguments we
+        Given *args and **kw, returns a key dict with arguments we
         are interested in.
         """
         result = {}

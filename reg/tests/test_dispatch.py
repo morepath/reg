@@ -132,6 +132,38 @@ def test_all():
         registered_for_base]
 
 
+def test_all_key_dict():
+    class Base(object):
+        pass
+
+    class Sub(Base):
+        pass
+
+    @dispatch('obj')
+    def target(obj):
+        pass
+
+    def registered_for_sub(obj):
+        pass
+
+    def registered_for_base(obj):
+        pass
+
+    registry = Registry()
+
+    registry.register_function(target, registered_for_sub, obj=Sub)
+    registry.register_function(target, registered_for_base, obj=Base)
+
+    base = Base()
+    sub = Sub()
+
+    lookup = registry.lookup()
+    assert list(target.all_key_dict(obj=Sub, lookup=lookup)) == [
+        registered_for_sub, registered_for_base]
+    assert list(target.all_key_dict(obj=Base, lookup=lookup)) == [
+        registered_for_base]
+
+
 def test_component_no_source():
     reg = Registry()
 
@@ -144,6 +176,20 @@ def test_component_no_source():
 
     reg.register_function(target, foo)
     assert target.component(lookup=reg.lookup()) is foo
+
+
+def test_component_no_source_key_dict():
+    reg = Registry()
+
+    @dispatch()
+    def target():
+        pass
+
+    def foo():
+        pass
+
+    reg.register_function(target, foo)
+    assert target.component_key_dict(lookup=reg.lookup()) is foo
 
 
 def test_component_one_source():
@@ -160,6 +206,22 @@ def test_component_one_source():
 
     alpha = Alpha()
     assert target.component(alpha, lookup=reg.lookup()) is foo
+
+
+def test_component_one_source_key_dict():
+    reg = Registry()
+
+    @dispatch('obj')
+    def target(obj):
+        pass
+
+    def foo(obj):
+        pass
+
+    reg.register_function(target, foo, obj=Alpha)
+
+    alpha = Alpha()
+    assert target.component_key_dict(obj=Alpha, lookup=reg.lookup()) is foo
 
 
 def test_component_two_sources():
@@ -854,11 +916,12 @@ def test_key_dict_to_predicate_key():
 
     r.register_dispatch(view)
 
-    assert r.key_dict_to_predicate_key(view, {
+    assert r.key_dict_to_predicate_key(view.wrapped_func, {
         'foo': 'FOO',
         'bar': 'BAR'}) == ('FOO', 'BAR')
-    assert r.key_dict_to_predicate_key(view, {}) == ('default foo',
-                                                     'default bar')
+    assert r.key_dict_to_predicate_key(view.wrapped_func, {}) == (
+        'default foo',
+        'default bar')
 
 
 def test_key_dict_to_predicate_key_unknown_keys():
@@ -920,4 +983,4 @@ def test_register_dispatch_key_dict():
     r.register_dispatch(view)
 
     assert r.key_dict_to_predicate_key(
-        view, {}) == (None, '', 'GET')
+        view.wrapped_func, {}) == (None, '', 'GET')

@@ -177,26 +177,27 @@ class Registry(object):
         :class:`Predicate`.
         """
         self.register_dispatch(callable)
-        predicate_key = self.key_dict_to_predicate_key(callable, key_dict)
+        predicate_key = self.key_dict_to_predicate_key(
+            callable.wrapped_func, key_dict)
         self.register_function_by_predicate_key(callable, predicate_key, value)
 
     def key_dict_to_predicate_key(self, callable, key_dict):
         """Construct predicate key from key dictionary.
 
-        Uses ``name`` and ``default`` to predicate to construct the
-        predicate key. If the key cannot be constructed then
-        a ``RegistrationError`` is raised.
+        Uses ``name`` and ``default`` attributes of predicate to
+        construct the predicate key. If the key cannot be constructed
+        then a ``KeyError`` is raised.
 
         :param callable: the callable for which to extract the predicate_key
-        :param key_dict: dictionary with as keys predicate names and as values
-          parts of the key.
+        :param key_dict: dictionary with predicate name keys and predicate
+          values. For omitted keys, the predicate default is used.
         :returns: an immutable predicate_key based on the dictionary
           and the names and defaults of the predicates the callable
           was configured with.
         """
-        r = self.predicate_registries.get(callable.wrapped_func)
+        r = self.predicate_registries.get(callable)
         if r is None:
-            raise RegistrationError(
+            raise KeyError(
                 "No predicate_key information known for: %s"
                 % callable)
         return r.key_by_predicate_name(key_dict)
@@ -275,26 +276,10 @@ class CachingKeyLookup(object):
           the :all:`all` method.
         """
         self.key_lookup = key_lookup
+        self.predicate_key = key_lookup.predicate_key
+        self.key_dict_to_predicate_key = key_lookup.key_dict_to_predicate_key
         self.component_cache = LRUCache(component_cache_size)
         self.all_cache = LRUCache(all_cache_size)
-
-    def predicate_key(self, callable, *args, **kw):
-        """Construct predicate_key for function arguments.
-
-        For a callable and its function arguments, construct the
-        appropriate predicate_key. This is used by the dispatch
-        mechanism to dispatch to the right function.
-
-        If the predicate_key cannot be constructed from args and kw,
-        this raises a :exc:`KeyExtractorError`.
-
-        :param callable: the callable for which to extract the predicate_key
-        :param args: the varargs given to the callable.
-        :param kw: the keyword arguments given to the callable.
-        :returns: an immutable predicate_key based on the predicates
-          the callable was configured with.
-        """
-        return self.key_lookup.predicate_key(callable, *args, **kw)
 
     def component(self, key, predicate_key):
         """Lookup value in registry based on predicate_key.
@@ -392,12 +377,27 @@ class Lookup(object):
 
         :param callable: the dispatch function.
         :args: varargs. Used to extract dispatch information to
-           construct predicate_key.
+           construct ``predicate_key``.
         :kw: keyword arguments. Used to extract
-           dispatch information to construct predicate_key.
+           dispatch information to construct ``predicate_key``.
         :returns: the function being dispatched to, or fallback.
         """
         key = self.key_lookup.predicate_key(callable, *args, **kw)
+        return self.key_lookup.component(callable, key)
+
+    def component_key_dict(self, callable, key_dict):
+        """Look up function based on key_dict.
+
+        Looks up the function to dispatch to using a key_dict,
+        mapping predicate name to predicate value. Returns the fallback
+        value (default: ``None``) if nothing could be found.
+
+        :param callable: the dispatch function
+        :key_dict: a dictionary. key is predicate name, value is
+          predicate value. If omitted, predicate default is used.
+        :returns: the function being dispatched to, or fallback.
+        """
+        key = self.key_lookup.key_dict_to_predicate_key(callable, key_dict)
         return self.key_lookup.component(callable, key)
 
     def all(self, callable, *args, **kw):
@@ -414,6 +414,21 @@ class Lookup(object):
         :returns: an iterable of functions.
         """
         key = self.key_lookup.predicate_key(callable, *args, **kw)
+        return self.key_lookup.all(callable, key)
+
+    def all_key_dict(self, callable, key_dict):
+        """Look up all functions dispatched to using on key_dict.
+
+        Looks up the function to dispatch to using a ``key_dict``,
+        mapping predicate name to predicate value. Returns the fallback
+        value (default: ``None``) if nothing could be found.
+
+        :param callable: the dispatch function
+        :key_dict: a dictionary. key is predicate name, value is
+          predicate value. If omitted, predicate default is used.
+        :returns: iterable of functions being dispatched to.
+        """
+        key = self.key_lookup.key_dict_to_predicate_key(callable, key_dict)
         return self.key_lookup.all(callable, key)
 
 

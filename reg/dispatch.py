@@ -57,8 +57,14 @@ class Dispatch(object):
     def component(self, *args, **kw):
         return get_lookup(kw).component(self.wrapped_func, *args, **kw)
 
+    def component_key_dict(self, **kw):
+        return get_lookup(kw).component_key_dict(self.wrapped_func, kw)
+
     def all(self, *args, **kw):
         return get_lookup(kw).all(self.wrapped_func, *args, **kw)
+
+    def all_key_dict(self, **kw):
+        return get_lookup(kw).all_key_dict(self.wrapped_func, kw)
 
 
 def get_lookup(kw):
