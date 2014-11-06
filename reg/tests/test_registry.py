@@ -37,9 +37,9 @@ def test_registry():
         return "Request method fallback"
 
     r.register_callable_predicates(view, [
-        match_instance(get_model, model_fallback),
-        match_key(get_name, name_fallback),
-        match_key(get_request_method, request_method_fallback)])
+        match_instance('model', get_model, model_fallback),
+        match_key('name', get_name, name_fallback),
+        match_key('request_method', get_request_method, request_method_fallback)])
 
     def foo_default(self, request):
         return "foo default"
@@ -91,7 +91,7 @@ def test_registry_class_lookup():
 
     linecount = 'linecount'
 
-    reg.register_predicates(linecount, [class_predicate()])
+    reg.register_predicates(linecount, [class_predicate('obj')])
     reg.register_value(linecount, [Document], 'document line count')
     reg.register_value(linecount, [SpecialDocument],
                        'special document line count')
@@ -129,9 +129,9 @@ def test_registry_target_find_specific():
     def special_linecount(obj):
         pass
 
-    reg.register_predicates(linecount, [class_predicate()])
+    reg.register_predicates(linecount, [class_predicate('obj')])
     reg.register_value(linecount, [Document], 'line count')
-    reg.register_predicates(special_linecount, [class_predicate()])
+    reg.register_predicates(special_linecount, [class_predicate('obj')])
     reg.register_value(special_linecount, [Document], 'special line count')
 
     assert reg.component(linecount, Document) == 'line count'
@@ -166,7 +166,7 @@ def test_register_twice_with_predicate():
     def linecount(obj):
         pass
 
-    reg.register_predicates(linecount, [class_predicate()])
+    reg.register_predicates(linecount, [class_predicate('obj')])
     reg.register_value(linecount, [Document], 'document line count')
     with pytest.raises(RegistrationError):
         reg.register_value(linecount, [Document], 'another line count')
@@ -229,9 +229,10 @@ def test_caching_registry():
         return "Request method fallback"
 
     r.register_callable_predicates(view, [
-        match_instance(get_model, model_fallback),
-        match_key(get_name, name_fallback),
-        match_key(get_request_method, request_method_fallback)])
+        match_instance('model', get_model, model_fallback),
+        match_key('name', get_name, name_fallback),
+        match_key('request_method', get_request_method,
+                  request_method_fallback)])
 
     def foo_default(self, request):
         return "foo default"

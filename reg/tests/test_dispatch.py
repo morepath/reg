@@ -54,7 +54,7 @@ def test_dispatch_argname():
 
 
 def test_dispatch_match_instance():
-    @dispatch(match_instance(lambda obj: obj))
+    @dispatch(match_instance('obj', lambda obj: obj))
     def foo(obj):
         pass
 
@@ -572,7 +572,7 @@ def test_different_defaults_in_specific_non_dispatch_arg():
 
 
 def test_different_defaults_in_specific_dispatch_arg():
-    @dispatch(match_key(lambda key: key))
+    @dispatch(match_key('key', lambda key: key))
     def target(key='default'):
         return 'fallback: %s' % key
 
@@ -592,7 +592,7 @@ def test_different_defaults_in_specific_dispatch_arg():
 
 
 def test_different_defaults_in_specific_dispatch_arg_causes_dispatch():
-    @dispatch(match_key(lambda key: key))
+    @dispatch(match_key('key', lambda key: key))
     def target(key='foo'):
         return 'fallback: %s' % key
 
@@ -654,9 +654,9 @@ def test_register_dispatch_predicates():
         return "Request method fallback"
 
     r.register_dispatch_predicates(view, [
-        match_instance(get_model, model_fallback),
-        match_key(get_name, name_fallback),
-        match_key(get_request_method, request_method_fallback)])
+        match_instance('model', get_model, model_fallback),
+        match_key('name', get_name, name_fallback),
+        match_key('request_method', get_request_method, request_method_fallback)])
 
     def foo_default(self, request):
         return "foo default"
@@ -723,9 +723,9 @@ def test_dispatch_external_predicates():
         return "Request method fallback"
 
     r.register_external_predicates(view, [
-        match_instance(get_model, model_fallback),
-        match_key(get_name, name_fallback),
-        match_key(get_request_method, request_method_fallback)])
+        match_instance('model', get_model, model_fallback),
+        match_key('name', get_name, name_fallback),
+        match_key('request_method', get_request_method, request_method_fallback)])
 
     def foo_default(self, request):
         return "foo default"
@@ -792,12 +792,12 @@ def test_register_dispatch_predicates_register_by_predicate_name():
         return "Request method fallback"
 
     r.register_dispatch_predicates(view, [
-        match_instance(get_model, model_fallback,
-                       name='model', default=None),
-        match_key(get_name, name_fallback,
-                  name='name', default=''),
-        match_key(get_request_method, request_method_fallback,
-                  name='request_method', default='GET')])
+        match_instance('model', get_model, model_fallback,
+                       default=None),
+        match_key('name', get_name, name_fallback,
+                  default=''),
+        match_key('request_method', get_request_method, request_method_fallback,
+                  default='GET')])
 
     def foo_default(self, request):
         return "foo default"
@@ -841,8 +841,8 @@ def test_predicate_key_by_predicate_name():
     r = Registry()
 
     @dispatch(
-        key_predicate(name='foo', default='default foo'),
-        key_predicate(name='bar', default='default bar'))
+        key_predicate('foo', default='default foo'),
+        key_predicate('bar', default='default bar'))
     def view(self, request):
         raise NotImplementedError()
 
@@ -885,12 +885,13 @@ def test_register_dispatch_predicate_key_by_predicate_name():
         return "Request method fallback"
 
     r.register_external_predicates(view, [
-        match_instance(get_model, model_fallback,
-                       name='model', default=None),
-        match_key(get_name, name_fallback,
-                  name='name', default=''),
-        match_key(get_request_method, request_method_fallback,
-                  name='request_method', default='GET')])
+        match_instance('model', get_model, model_fallback,
+                       default=None),
+        match_key('name', get_name, name_fallback,
+                  default=''),
+        match_key('request_method', get_request_method,
+                  request_method_fallback,
+                  default='GET')])
 
     assert r.predicate_key_by_predicate_name(
         view, {}) == (None, '', 'GET')
