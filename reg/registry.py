@@ -250,7 +250,7 @@ class Registry(object):
           the failed to match.
         """
         return self.predicate_registries[key].fallback(predicate_key)
-        
+
     def all(self, key, predicate_key):
         """Lookup iterable of values registered for predicate_key.
 
