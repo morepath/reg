@@ -98,7 +98,7 @@ def test_dispatch_no_arguments():
     assert foo.component(lookup=lookup) is special_foo
     assert list(foo.all(lookup=lookup)) == [special_foo]
     assert foo(lookup=lookup) == 'special'
-
+    assert foo.fallback(lookup=lookup) is None
 
 def test_all():
     class Base(object):
@@ -548,7 +548,7 @@ def test_no_implicit():
         target.component(alpha)
 
 
-def test_fallback():
+def test_fallback_to_dispatch():
     @dispatch('obj')
     def target(obj):
         return 'fallback'
@@ -563,6 +563,8 @@ def test_fallback():
 
     beta = Beta()
     assert target(beta, lookup=reg.lookup()) == 'fallback'
+    # this is *not* a registered fallback so won't be returned here
+    assert target.fallback(beta, lookup=reg.lookup()) is None
 
 
 def test_calling_twice():
@@ -827,7 +829,7 @@ def test_dispatch_external_predicates():
     assert view(Foo(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
     assert view(Foo(), Request('', 'PUT'), lookup=l) == 'Request method fallback'
     assert view(FooSub(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
-
+    assert view.fallback(Bar(), Request('', 'GET'), lookup=l) is model_fallback
 
 def test_register_dispatch_predicates_register_defaults():
     r = Registry()

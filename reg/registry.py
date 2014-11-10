@@ -250,7 +250,7 @@ class Registry(object):
           the failed to match.
         """
         return self.predicate_registries[key].fallback(predicate_key)
-
+        
     def all(self, key, predicate_key):
         """Lookup iterable of values registered for predicate_key.
 
@@ -414,10 +414,23 @@ class Lookup(object):
            construct ``predicate_key``.
         :kw: keyword arguments. Used to extract
            dispatch information to construct ``predicate_key``.
-        :returns: the function being dispatched to, or fallback.
+        :returns: the function being dispatched to, or None.
         """
         key = self.key_lookup.predicate_key(callable, *args, **kw)
         return self.key_lookup.component(callable, key)
+
+    def fallback(self, callable, *args, **kw):
+        """Lookup fallback for args and kw.
+
+        :param callable: the dispatch function.
+        :args: varargs. Used to extract dispatch information to
+           construct ``predicate_key``.
+        :kw: keyword arguments. Used to extract
+           dispatch information to construct ``predicate_key``.
+        :returns: the function being dispatched to, or fallback.
+        """
+        key = self.key_lookup.predicate_key(callable, *args, **kw)
+        return self.key_lookup.fallback(callable, key)
 
     def component_key_dict(self, callable, key_dict):
         """Look up function based on key_dict.
