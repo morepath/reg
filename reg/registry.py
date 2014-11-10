@@ -233,11 +233,23 @@ class Registry(object):
         :param key: an immutable for which to look up the predicate_key.
         :param predicate_key: an immutable predicate key, constructed
           for predicates given for this key.
-        :returns: a registered value, or fallback for predicate if
-          nothing could be found. The default fallback for a predicate
-          is ``None``.
+        :returns: a registered value, or ``None`` if nothing was found.
         """
         return self.predicate_registries[key].component(predicate_key)
+
+    def fallback(self, key, predicate_key):
+        """Lookup fallback based on predicate_key.
+
+        This finds the fallback for the most specific predicate
+        that fails to match.
+
+        :param key: an immutable for which to look up the predicate_key.
+        :param predicate_key: an immutable predicate key, constructed
+          for predicates given for this key.
+        :returns: the fallback value for the most specific predicate
+          the failed to match.
+        """
+        return self.predicate_registries[key].fallback(predicate_key)
 
     def all(self, key, predicate_key):
         """Lookup iterable of values registered for predicate_key.
@@ -266,7 +278,8 @@ class CachingKeyLookup(object):
 
     The cache is LRU.
     """
-    def __init__(self, key_lookup, component_cache_size, all_cache_size):
+    def __init__(self, key_lookup, component_cache_size, all_cache_size,
+                 fallback_cache_size):
         """
         :param: key_lookup - the :class:`Registry` to cache.
         :component_cache_size: how many cache entries to store for
@@ -280,6 +293,7 @@ class CachingKeyLookup(object):
         self.key_dict_to_predicate_key = key_lookup.key_dict_to_predicate_key
         self.component_cache = LRUCache(component_cache_size)
         self.all_cache = LRUCache(all_cache_size)
+        self.fallback_cache = LRUCache(fallback_cache_size)
 
     def component(self, key, predicate_key):
         """Lookup value in registry based on predicate_key.
@@ -291,15 +305,32 @@ class CachingKeyLookup(object):
         :param key: an immutable for which to look up the predicate_key.
         :param predicate_key: an immutable predicate key, constructed
           for predicates given for this key.
-        :returns: a registered value, or fallback for predicate if
-          nothing could be found. The default fallback for a predicate
-          is ``None``.
+        :returns: a registered value, or ``None``.
         """
         result = self.component_cache.get((key, predicate_key), NOT_FOUND)
         if result is not NOT_FOUND:
             return result
         result = self.key_lookup.component(key, predicate_key)
         self.component_cache.put((key, predicate_key), result)
+        return result
+
+    def fallback(self, key, predicate_key):
+        """Lookup fallback based on predicate_key.
+
+        This finds the fallback for the most specific predicate
+        that fails to match.
+
+        :param key: an immutable for which to look up the predicate_key.
+        :param predicate_key: an immutable predicate key, constructed
+          for predicates given for this key.
+        :returns: the fallback value for the most specific predicate
+          the failed to match.
+        """
+        result = self.fallback_cache.get((key, predicate_key), NOT_FOUND)
+        if result is not NOT_FOUND:
+            return result
+        result = self.key_lookup.fallback(key, predicate_key)
+        self.fallback_cache.put((key, predicate_key), result)
         return result
 
     def all(self, key, predicate_key):
@@ -361,11 +392,14 @@ class Lookup(object):
             # were passed the wrong arguments.
             # In both cases, call the fallback. In case the wrong arguments
             # were passed, we get the appropriate TypeError then
-            component = None
-        # if we cannot find the component, use the original
-        # callable as a fallback.
-        if component is None:
             component = callable
+
+        if component is None:
+            # try to use the fallback
+            component = self.key_lookup.fallback(callable, key)
+            if component is None:
+                # if fallback is None use the original callable as fallback
+                component = callable
         return lookup_mapply(component, self, *args, **kw)
 
     def component(self, callable, *args, **kw):

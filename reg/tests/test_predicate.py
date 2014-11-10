@@ -1,6 +1,6 @@
 from ..predicate import (KeyIndex, ClassIndex, MultiIndex,
-    key_predicate, class_predicate, MultiPredicate,
-    PredicateRegistry as Registry)
+                         key_predicate, class_predicate, MultiPredicate,
+                         PredicateRegistry as Registry, NOT_FOUND)
 from ..error import RegistrationError
 import pytest
 
@@ -265,7 +265,8 @@ def test_single_predicate_fallback():
     r.register('A', 'A value')
 
     assert r.component('A') == 'A value'
-    assert r.component('B') is 'fallback'
+    assert r.component('B') is None
+    assert r.fallback('B') == 'fallback'
 
 
 def test_multi_predicate_fallback():
@@ -275,8 +276,10 @@ def test_multi_predicate_fallback():
     r.register(('A', 'B'), 'value')
 
     assert r.component(('A', 'B')) == 'value'
-    assert r.component(('A', 'C')) == 'fallback2'
-    assert r.component(('C', 'B')) == 'fallback1'
+    assert r.component(('A', 'C')) is None
+    assert r.fallback(('A', 'C')) == 'fallback2'
+    assert r.component(('C', 'B')) is None
+    assert r.fallback(('C', 'B')) == 'fallback1'
 
     assert list(r.all(('A', 'B'))) == ['value']
     assert list(r.all(('A', 'C'))) == []
@@ -289,8 +292,10 @@ def test_predicate_self_request():
         key_predicate('b', fallback='registered for all')]))
     m.register(('foo', 'POST'), 'registered for post')
 
-    assert m.component(('foo', 'GET')) == 'registered for all'
+    assert m.component(('foo', 'GET')) is None
+    assert m.fallback(('foo', 'GET')) == 'registered for all'
     assert m.component(('foo', 'POST')) == 'registered for post'
+    assert m.fallback(('foo', 'POST')) is NOT_FOUND
     assert m.component(('bar', 'GET')) is None
 
 
@@ -319,9 +324,12 @@ def test_name_request_method_body_model_registered_for_base():
 
     m.register(('foo', 'POST', Foo), 'post foo')
 
-    assert m.component(('bar', 'GET', object)) == 'name fallback'
-    assert m.component(('foo', 'GET', object)) == 'request_method fallback'
-    assert m.component(('foo', 'POST', object)) == 'body_model fallback'
+    assert m.component(('bar', 'GET', object)) is None
+    assert m.fallback(('bar', 'GET', object)) == 'name fallback'
+    assert m.component(('foo', 'GET', object)) is None
+    assert m.fallback(('foo', 'GET', object)) == 'request_method fallback'
+    assert m.component(('foo', 'POST', object)) is None
+    assert m.fallback(('foo', 'POST', object)) == 'body_model fallback'
     assert m.component(('foo', 'POST', Foo)) == 'post foo'
     assert m.component(('foo', 'POST', Bar)) == 'post foo'
 
@@ -341,9 +349,15 @@ def test_name_request_method_body_model_registered_for_base_and_sub():
     m.register(('foo', 'POST', Foo), 'post foo')
     m.register(('foo', 'POST', Bar), 'post bar')
 
-    assert m.component(('bar', 'GET', object)) == 'name fallback'
-    assert m.component(('foo', 'GET', object)) == 'request_method fallback'
-    assert m.component(('foo', 'POST', object)) == 'body_model fallback'
+    assert m.component(('bar', 'GET', object)) is None
+    assert m.fallback(('bar', 'GET', object)) == 'name fallback'
+
+    assert m.component(('foo', 'GET', object)) is None
+    assert m.fallback(('foo', 'GET', object)) == 'request_method fallback'
+
+    assert m.component(('foo', 'POST', object)) is None
+    assert m.fallback(('foo', 'POST', object)) == 'body_model fallback'
+
     assert m.component(('foo', 'POST', Foo)) == 'post foo'
     assert m.component(('foo', 'POST', Bar)) == 'post bar'
 

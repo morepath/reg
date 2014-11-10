@@ -247,7 +247,7 @@ def test_caching_registry():
     r.register_value(view, (Foo, '', 'POST'), foo_post)
     r.register_value(view, (Foo, 'edit', 'POST'), foo_edit)
 
-    l = CachingKeyLookup(r, 100, 100).lookup()
+    l = CachingKeyLookup(r, 100, 100, 100).lookup()
 
     class Request(object):
         def __init__(self, name, request_method):
@@ -279,5 +279,5 @@ def test_caching_registry():
     assert l.call(view, FooSub(), Request('dummy', 'GET')) == 'Name fallback'
 
     # fallbacks get cached too
-    assert l.key_lookup.component_cache.get(
+    assert l.key_lookup.fallback_cache.get(
         (view, (Bar, '', 'GET'))) is model_fallback

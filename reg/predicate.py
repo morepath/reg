@@ -280,10 +280,10 @@ class PredicateRegistry(object):
         return self.predicate.argnames()
 
     def component(self, key):
-        result = next(self.all(key), NOT_FOUND)
-        if result is NOT_FOUND:
-            return self.index.fallback(key)
-        return result
+        return next(self.all(key), None)
+
+    def fallback(self, key):
+        return self.index.fallback(key)
 
     def all(self, key):
         for p in self.index.permutations(key):
@@ -313,6 +313,9 @@ class SingleValueRegistry(object):
 
     def component(self, key):
         return self.value
+
+    def fallback(self, key):
+        return None
 
     def all(self, key):
         yield self.value
