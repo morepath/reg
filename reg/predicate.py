@@ -16,9 +16,9 @@ class Predicate(object):
           a fallback argument; typically you supply either a :class:`KeyIndex`
           or :class:`ClassIndex`.
         :param get_key: optional :class:`KeyExtractor`.
-        :param fallback: optional fallback value. This value is returned
-          if this is the most generic index for which no values could be
-          found.
+        :param fallback: optional fallback value. The fallback of the
+          the most generic index for which no values could be
+          found is used.
         :param default: optional predicate default. This is used by
           :meth:`.reg.Registry.register_function_by_name`, and supplies
           the value if it is not given explicitly.
@@ -190,11 +190,11 @@ class KeyIndex(object):
     def fallback(self, key):
         """Return fallback if this index does not contain key.
 
-        If index contains no permutations of key, then ``NOT_FOUND``
+        If index contains permutations of key, then ``NOT_FOUND``
         is returned.
         """
         for k in self.permutations(key):
-            if self.get(k, NOT_FOUND) is not NOT_FOUND:
+            if k in self.d:
                 return NOT_FOUND
         return self._fallback
 
