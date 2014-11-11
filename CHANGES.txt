@@ -1,11 +1,13 @@
 CHANGES
 *******
 
-0.10 (unreleased)
-=================
+0.9.1 (unreleased)
+==================
 
-- Nothing changed yet.
-
+- A bugfix in the behavior of the fallback logic. In situations with
+  multiple predicates of which one is a class predicate it was
+  possible for a fallback not to be found even though a fallback was
+  available.
 
 0.9 (2014-11-11)
 ================

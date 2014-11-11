@@ -686,7 +686,7 @@ def test_lookup_passed_along_fallback():
     assert a(lookup=reg.lookup()) == 'fallback'
 
 
-def test_register_dispatch_predicates():
+def test_register_dispatch_predicates_no_defaults():
     r = Registry()
 
     class Foo(object):
@@ -1055,5 +1055,8 @@ def test_fallback_should_already_use_subset():
 
     assert view.fallback(Collection(),
                          Request('', 'POST', Item2()),
-                         lookup=r.lookup()) == 'body model fallback'
+                         lookup=r.lookup()) is body_model_fallback
+    assert view(Collection(), Request('', 'POST', Item2()),
+                lookup=r.lookup()) == 'Body model fallback'
+
 

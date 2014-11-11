@@ -250,31 +250,25 @@ class MultiIndex(object):
         return multipredicate_permutations(self.indexes, key)
 
     def fallback(self, keys):
-        matches = []
-        # get all matching indexes first
-        for index, key in zip(self.indexes, keys):
-            match = index.get(key)
-            # # bail out early if None or any match has 0 items
-            # if not match:
-            #     return index._fallback
-            matches.append(match)
-
         result = None
-        for index, match in zip(self.indexes, matches):
+        for index, key in zip(self.indexes, keys):
+            for k in index.permutations(key):
+                match = index.get(k)
+                if match:
+                    break
+            else:
+                # no matching permutation for this key, so this is the fallback
+                return index._fallback
             if result is None:
                 result = match
             else:
                 result = result.intersection(match)
-            # bail out early if there is nothing left
+            # as soon as the intersection becomes empty, we have a failed
+            # match
             if not result:
                 return index._fallback
+        # if all predicates match, then we don't find a fallback
         return NOT_FOUND
-
-        # for index, k in zip(self.indexes, key):
-        #     result = index.fallback(k)
-        #     if result is not NOT_FOUND:
-        #         return result
-        # return NOT_FOUND
 
 
 class PredicateRegistry(object):
