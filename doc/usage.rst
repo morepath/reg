@@ -949,7 +949,7 @@ lookup using :class:`reg.CachingKeyLookup`:
 
 .. doctest::
 
-  >>> caching = reg.CachingKeyLookup(r, 100, 100)
+  >>> caching = reg.CachingKeyLookup(r, 100, 100, 100)
 
 Turning it back into a lookup gives us a caching version of what we had
 before:
