@@ -3,7 +3,7 @@ import pytest
 
 from reg.implicit import NoImplicitLookupError
 from reg.registry import Registry
-from reg.predicate import match_instance, match_key, key_predicate
+from reg.predicate import match_instance, match_key, match_class, key_predicate
 from reg.dispatch import dispatch, dispatch_external_predicates
 from reg.error import RegistrationError, KeyExtractorError
 
@@ -987,3 +987,73 @@ def test_register_dispatch_key_dict():
 
     assert r.key_dict_to_predicate_key(
         view.wrapped_func, {}) == (None, '', 'GET')
+
+
+def test_fallback_should_already_use_subset():
+    class Request(object):
+        def __init__(self, name, request_method, body_obj):
+            self.name = name
+            self.request_method = request_method
+            self.body_obj = body_obj
+
+    def get_model(self):
+        return self
+
+    def get_name(request):
+        return request.name
+
+    def get_request_method(request):
+        return request.request_method
+
+    def get_body_model(request):
+        return request.body_obj.__class__
+
+    def model_fallback(self, request):
+        return "Model fallback"
+
+    def name_fallback(self, request):
+        return "Name fallback"
+
+    def request_method_fallback(self, request):
+        return "Request method fallback"
+
+    def body_model_fallback(self, request):
+        return "Body model fallback"
+
+    @dispatch(
+        match_instance('model', get_model, model_fallback, default=None),
+        match_key('name', get_name, name_fallback, default=''),
+        match_key('request_method', get_request_method,
+                  request_method_fallback, default='GET'),
+        match_class('body_model', get_body_model,
+                    body_model_fallback, default=object))
+    def view(self, request):
+        return "view fallback"
+
+    r = Registry()
+
+    def exception_view(self, request):
+        return "exception view"
+
+    r.register_function(view, exception_view, model=Exception)
+
+    class Collection(object):
+        pass
+
+    class Item(object):
+        pass
+
+    class Item2(object):
+        pass
+
+    def collection_add(self, request):
+        return "collection add"
+
+    r.register_function(view, collection_add,
+                        model=Collection, request_method='POST',
+                        body_model=Item)
+
+    assert view.fallback(Collection(),
+                         Request('', 'POST', Item2()),
+                         lookup=r.lookup()) == 'body model fallback'
+
