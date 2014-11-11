@@ -41,11 +41,21 @@ Some specific changes:
         pass
 
   This is to get dispatch on the classes of these instance
-  arguments. You can also use ``match_class`` to have direct dispatch
-  on class arguments (useful for replicating classmethods), and
-  ``match_key`` to have dispatch on the (immutable) value of the
-  argument. You supply functions to these match functions that extract
-  the exact information to dispatch on from the argument.
+  arguments. If you want to match on the class of an attribute of
+  an argument (for instance) you can use ``match_instance``
+  with a function::
+
+    @reg.dispatch(match_instance('a', lambda a: a.attr))
+
+  The first argument to ``match_instance`` is the name of the
+  predicate by which you refer to it in ``register_function``.
+
+  You can also use ``match_class`` to have direct dispatch on classes
+  (useful for replicating classmethods), and ``match_key`` to have
+  dispatch on the (immutable) value of the argument (useful for a view
+  predicate system). Like for ``match_instance``, you supply functions
+  to these match functions that extract the exact information to
+  dispatch on from the argument.
 
 * The ``register_function`` API replaces the ``register`` API to
   register a function. Replace this::
@@ -62,7 +72,7 @@ Some specific changes:
   anymore when you register a function for it.
 
 * The new ``classgeneric`` functionality is part of the predicate
-  system now; you can use ``reg.match_class`` instead. Replace
+  system now; you can use ``reg.match_class`` instead. Replace::
 
     @reg.classgeneric
     def foo(cls):
