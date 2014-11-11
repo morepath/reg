@@ -12,6 +12,7 @@ for your application, library or framework.
    api
    developing
    history
+   changes
 
 Indices and tables
 ==================

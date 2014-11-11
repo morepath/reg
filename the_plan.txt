@@ -1,0 +1,170 @@
+
+We now have a neopredicates system.
+
+when we do a call, we want to use *some* arguments for the lookup as
+predicates, and others not. some arguments we want to process before
+lookup, i.e.  get a __class__ from an instance.
+
+we have positional and keyword arguments that could play a part in this.
+
+for keyword arguments things are relatively simple:
+
+* take those keyword arguments from caller that we know have
+  a predicate associate with it. use those for lookup. pass everything
+  into the function, including ones not relevant to lookup.
+
+for positional arguments it's trickier. we basically only
+want to use those positional arguments that we know we need, and pass
+the others through unchanged.
+
+
+def foo(a, b):
+    pass
+
+register(foo, value, a=ClassMatch(Bar))
+
+def foo(self, **kw):
+   pass
+
+register(foo, value,
+         self=InstanceMatch(Bar),
+         name=KeyMatch('edit'),
+         request_method=KeyMatch('GET'))
+
+match factory could be determined from first argument too, i.e. if it's
+a class, use InstanceMatch, otherwise KeyMatch. This would let us do:
+
+register(foo, value,
+         self=Bar, name='edit', request_method='GET')
+
+The first argument can be treated as a class (to support classmethod
+style behavior) by changing the introspection strategy:
+
+register(foo, cls=ClassMatch(Bar))
+
+
+
+we need to figure out how to support fallback registration. this seems
+requires the use of ANY. ANY means "if nothing more specific exists,
+this matches". but FALLBACK also means "if nothing more specific
+exists, this matches". FALLBACK binds more tightly than ANY, though,
+and should be used only once.
+
+register(foo, method_not_allowed
+         self=ANY, name=ANY, request_method=FALLBACK)
+
+register(foo, not_found,
+         self=ANY, name=FALLBACK, request_method=ANY)
+
+this system relies on foo being introspectable as a function. The
+priority order will depend on the order of the arguments in the
+function, which works for positional args but not keyword args. Perhaps
+therefore for keyword args you're forced to use an explicit matcher
+with order information baked in.
+
+
+If foo isn't, we still want to be able to do component lookups, but
+the API would be different. Sometimes we want to find what is
+registered but not immediately call it, but do treat it as a function
+otherwise: i.e. the view permission check scenario. Introspection
+determines what position we need to introspect for positional args.
+
+flaw: sometimes the signature is not known in what is registered. BUT
+the signature *is* available from the generic function, so we'll use
+that, so we're fine.
+
+for non-function registration, we'd use the same registration method,
+but the system detects that the key cannot be introspected. Trying
+to call it is therefore an error. Instead, you need to do a lookup
+with a dictionary of arguments (or keyword args) so that things
+can be matched.
+
+so we have:
+
+call thing immediately, key is function.
+
+lookup.call(func, *args, **kw)
+
+this is used in the implementation of the generic function. We could
+replace the implementation of the generic function with a bound
+version of this.
+
+look up thing, key is function or anything.
+
+lookup.component(func, *args, **kw)
+
+it's an error to call component with positional arguments if key
+doesn't have information about its positional arguments.
+
+we also have:
+
+lookup.all(func, *args, **kw)
+
+which will give all matches.
+
+the caching system caches all() with those values extracted by the
+match, which are always hashable. the cache is a local lru cache per
+lookup.
+
+this implies there is a lower-level lookup API that does this:
+
+lookup.all(key, d)
+
+where d is a list of those values to match on. This is cachable. this
+replaces the class lookup concept.
+
+
+a permission predicate is interesting. the value given is the class of
+the permission the user has and that was being checked for (or a
+subclass). this way we can do a permission match. if no permission
+matches, we return forbidden. this allows to have multiple
+implementations of a view, and different behavior depending on user
+permission.
+
+
+plan:
+
+* change the lookup API to one using *args, **kw.
+
+* implementation is using neopredicates.
+
+* modify generic.py to use the new lookup API.
+
+* create a registration API that lets you register lookup arguments or
+  explicit matchers (predicate, i.e. ClassPredicate, InstancePredicate,
+  KeyPredicate). hm, we need something to store the order of the predicates
+  and some way to state this order in the case of predicates applying to
+  **kw.
+
+* provide a new "predicate lookup" (equivalent of class lookup) that
+  lookup is based on. also introduce a caching version.
+
+* InverseMap should go.
+
+* Map and MultiMap perhaps should be reimplemented in terms of
+  predicates, as they're used directly from Morepath in a few places.
+  Consider replacing them entirely though.
+
+
+The predicate key extraction process:
+
+given *args and *kw transform this into a dictionary.
+
+def get_request_method(request):
+    pass
+
+register(func, [Matcher(get_model, Foo),
+                Matcher(get_name, 'edit'),
+                Matcher(get_request_method, 'GET')], value)
+
+
+this is not right: we want to register the extraction logic and predicates
+for the function first, and then register the keys.
+
+so:
+
+register_predicates(func, [(ClassPredicate(get_model)),
+                           (KeyPredicate(get_name)),
+                           (KeyPredicate(get_request_method))])
+
+register_value(func, (Foo, 'edit', 'POST'), real_func)

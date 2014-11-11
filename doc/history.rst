@@ -1,13 +1,18 @@
 History of Reg
 ==============
 
-Reg was written by me, Martijn Faassen; the core mapping code was
-originally co-authored by Thomas Lotze.
+Reg was written by me, Martijn Faassen. The core mapping code was
+originally co-authored by Thomas Lotze, though this has since been
+subsumed into the generalized predicate architecture.
 
-Reg is heavily inspired by the Zope Component Architecture (ZCA),
-namely the ``zope.interface`` and ``zope.component`` packages. Reg is
-however a completely different codebase with an entirely different
-API. At the end I've included a brief history of the ZCA.
+Reg is a generic dispatch implementation for Python, with support for
+multiple dispatch registries in the same runtime. It was originally
+heavily inspired by the Zope Component Architecture (ZCA) consisting
+of the ``zope.interface`` and ``zope.component`` packages. Reg has
+strongly evolved since its inception into a general function dispatch
+library. Reg's codebase is completely separate from the ZCA and it has
+an entirely different API. At the end I've included a brief history of
+the ZCA.
 
 Reg History
 -----------
@@ -58,17 +63,44 @@ For a while during internal development this codebase was called
 call it ``Reg``, short for registry, as it's really about clever
 registries more than anything else.
 
-After my first announcement_ of Reg to the world in september 2013 I
+After my first announcement_ of Reg to the world in September 2013 I
 got the question why I shouldn't just use PEP 443, which has a generic
 function implementation (single dispatch). I started thinking I should
 convert Reg to a generic function implementation, as it was already
 very close. After talking to some people about this at PyCon DE in
 october, I did the refactoring_ to use generic functions throughout
-and no interfaces for lookup, and this is the current Reg you see.
+and no interfaces for lookup. I used this version of Reg in Morepath
+for about a year.
 
 .. _announcement: http://blog.startifact.com/posts/reg-component-architecture-reimagined.html
 
 .. _refactoring: http://blog.startifact.com/posts/reg-now-with-more-generic.html
+
+In October 2014 I had some experience with using Reg and found some of
+its limitations:
+
+* Reg would try to dispatch on *all* non-keyword arguments of a function.
+  This is not what is desired in many cases. We need a way to dispatch only
+  on specified arguments and leave others alone.
+
+* Reg had an undocumented predicate subsystem used to implement view
+  lookup in Morepath. I realized that it could not be properly used to
+  dispatch on the class of an instance without reorganizing Reg in a
+  major way.
+
+* I realized that such a reorganized predicate system could actually
+  be used to generalize the way Reg worked based on how predicates worked.
+
+* This would allow predicates to play along in Reg's caching
+  infrastructure, which could then speed up Morepath's view lookups.
+
+* A specific use case to replace class methods caused me to introduce
+  ``reg.classgeneric``. This could be subsumed in a generalized
+  predicate infrastructure as well.
+
+So in October 2014, I refactored Reg once again in the light of
+this. This results in a smaller, more unified codebase that has more
+features and is hopefully also faster.
 
 Brief history of Zope Component Architecture
 --------------------------------------------

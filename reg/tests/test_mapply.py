@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 import pytest
-from reg.mapply import mapply, arginfo
+from reg.mapply import mapply
+from reg.arginfo import arginfo
 
 
 def test_mapply():
@@ -67,7 +68,7 @@ def test_mapply_callable_object():
 def test_mapply_non_function():
     a = 1
 
-    with pytest.raises(TypeError):
+    with pytest.raises(Exception):
         assert mapply(a, a=1)
 
 

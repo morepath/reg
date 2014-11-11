@@ -4,8 +4,97 @@ CHANGES
 0.9 (unreleased)
 ================
 
-- Nothing changed yet.
+Total rewrite of Reg! This includes a range of changes that can break
+code. The primary motivations for this rewrite:
 
+* unify predicate system with class-based lookup system.
+
+* extract dispatch information from specific arguments instead of all
+  arguments.
+
+Some specific changes:
+
+* Replaced ``@reg.generic`` decorator with ``@reg.dispatch()``
+  decorator. This decorator can be configured with predicates that
+  extract information from the arguments. Rewrite this::
+
+    @reg.generic
+    def foo(obj):
+       pass
+
+  to this::
+
+    @reg.dispatch('obj')
+    def foo(obj):
+       pass
+
+  And this::
+
+    @reg.generic
+    def bar(a, b):
+        pass
+
+  To this::
+
+    @reg.dispatch('a', 'b')
+    def bar(a, b):
+        pass
+
+  This is to get dispatch on the classes of these instance
+  arguments. If you want to match on the class of an attribute of
+  an argument (for instance) you can use ``match_instance``
+  with a function::
+
+    @reg.dispatch(match_instance('a', lambda a: a.attr))
+
+  The first argument to ``match_instance`` is the name of the
+  predicate by which you refer to it in ``register_function``.
+
+  You can also use ``match_class`` to have direct dispatch on classes
+  (useful for replicating classmethods), and ``match_key`` to have
+  dispatch on the (immutable) value of the argument (useful for a view
+  predicate system). Like for ``match_instance``, you supply functions
+  to these match functions that extract the exact information to
+  dispatch on from the argument.
+
+* The ``register_function`` API replaces the ``register`` API to
+  register a function. Replace this::
+
+    r.register(foo, (SomeClass,), dispatched_to)
+
+  with::
+
+    r.register_function(foo, dispatched_to, obj=SomeClass)
+
+  You now use keyword parameters to indicate exactly those arguments
+  specified by ``reg.dispatch()`` are actually predicate
+  arguments. You don't need to worry about the order of predicates
+  anymore when you register a function for it.
+
+* The new ``classgeneric`` functionality is part of the predicate
+  system now; you can use ``reg.match_class`` instead. Replace::
+
+    @reg.classgeneric
+    def foo(cls):
+       pass
+
+  with::
+
+    @reg.dispatch(reg.match_class('cls', lambda cls: cls))
+    def foo(cls):
+        pass
+
+  You can do this with any argument now, not just the first one.
+
+* pep443 support is gone. Reg is focused on its own dispatch system.
+
+* Compose functionality is gone -- it turns out Morepath doesn't use
+  lookup composition to support App inheritance. The cached lookup
+  functionality has moved into ``registry.py`` and now also supports
+  caching of predicate-based lookups.
+
+* Dependency on the future module is gone in favor of a small amount
+  of compatibility code.
 
 0.8 (2014-08-28)
 ================

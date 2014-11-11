@@ -3,55 +3,53 @@ API
 
 .. py:module:: reg
 
-.. autoclass:: reg.IRegistry
+.. autofunction:: dispatch
+
+.. autofunction:: match_key
+
+.. autofunction:: match_instance
+
+.. autofunction:: match_argname
+
+.. autofunction:: match_class
+
+.. autoclass:: Lookup
    :members:
 
-.. autoclass:: reg.IClassLookup
+.. autoclass:: PredicateRegistry
    :members:
 
-.. autoclass:: reg.ClassRegistry
-   :show-inheritance:
-
-.. autoclass:: reg.Registry
-   :show-inheritance:
-
-.. autoclass:: reg.Lookup
+.. autoclass:: Predicate
    :members:
 
-.. autoclass:: reg.Matcher
+.. autoclass:: ClassIndex
    :members:
 
-.. autoexception:: reg.ComponentLookupError
-
-.. autoclass:: reg.ListClassLookup
-   :show-inheritance:
-
-.. autoclass:: reg.ChainClassLookup
-   :show-inheritance:
-
-.. autoclass:: reg.CachingClassLookup
-   :show-inheritance:
-
-.. autofunction:: reg.generic
-
-.. autofunction:: reg.classgeneric
-
-.. autoclass:: reg.PredicateRegistry
+.. autoclass:: KeyIndex
    :members:
 
-.. autoclass:: reg.Predicate
+.. autofunction:: key_predicate
+
+.. autofunction:: class_predicate
+
+.. autoclass:: Registry
    :members:
 
-.. autoclass:: reg.KeyIndex
+.. autoclass:: CachingKeyLookup
    :members:
 
-.. autoexception:: PredicateRegistryError
+.. autoclass:: Lookup
+   :members:
+
+.. autoexception:: RegistrationError
+
+.. autoexception:: KeyExtractorError
 
 .. autoclass:: reg.implicit.Implicit
    :members:
 
-.. autoexception:: reg.NoImplicitLookupError
+.. autoexception:: NoImplicitLookupError
 
-.. autofunction:: reg.mapply
+.. autofunction:: mapply
 
-.. autofunction:: reg.arginfo
+.. autofunction:: arginfo

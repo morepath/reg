@@ -1,11 +1,13 @@
-from __future__ import unicode_literals
 # flake8: noqa
-from .implicit import implicit, NoImplicitLookupError
-from .registry import ClassRegistry, Registry, IRegistry, IClassLookup
-from .lookup import Lookup, ComponentLookupError, Matcher
-from .predicate import (PredicateRegistry, Predicate, KeyIndex,
-                        PredicateRegistryError, PredicateMatcher, ANY)
-from .compose import ListClassLookup, ChainClassLookup, CachingClassLookup
-from .generic import generic, classgeneric
-from .mapply import mapply, arginfo
-from .sentinel import Sentinel
+from .implicit import implicit
+from .registry import Registry, CachingKeyLookup, Lookup
+from .dispatch import dispatch, dispatch_external_predicates
+from .mapply import mapply
+from .arginfo import arginfo
+from .argextract import KeyExtractor
+from .sentinel import Sentinel, NOT_FOUND
+from .error import RegistrationError, KeyExtractorError, NoImplicitLookupError
+from .predicate import (Predicate, PredicateRegistry, KeyIndex, ClassIndex,
+                        key_predicate, class_predicate,
+                        match_key, match_instance, match_argname,
+                        match_class)
