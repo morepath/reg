@@ -271,23 +271,25 @@ class Registry(object):
 
 
 class CachingKeyLookup(object):
-    """A key lookup that caches.
+    """
+    A key lookup that caches.
 
     Implements the read-only API of :class:`Registry`, using
     a cache to speed up access.
 
     The cache is LRU.
+
+    :param: key_lookup - the :class:`Registry` to cache.
+    :param component_cache_size: how many cache entries to store for
+      the :meth:`component` method. This is also used by dispatch
+      calls.
+    :param all_cache_size: how many cache entries to store for the
+      the :meth:`all` method.
+    :param fallback_cache_size: how many cache entries to store for
+      the :meth:`fallback` method.
     """
     def __init__(self, key_lookup, component_cache_size, all_cache_size,
                  fallback_cache_size):
-        """
-        :param: key_lookup - the :class:`Registry` to cache.
-        :component_cache_size: how many cache entries to store for
-          the :meth:`component` method. This is also used by dispatch
-          calls.
-        :all_cache_size: how many cache entries to store for the
-          the :all:`all` method.
-        """
         self.key_lookup = key_lookup
         self.predicate_key = key_lookup.predicate_key
         self.key_dict_to_predicate_key = key_lookup.key_dict_to_predicate_key
@@ -364,6 +366,9 @@ class Lookup(object):
     function being called. The lookup extract the predicate_key from
     these arguments and then looks up the actual function to call. This
     function is then called with the original arguments.
+
+    :param key_lookup: the key lookup, either a :class:`Registry` or
+      :class:`CachingKeyLookup`.
     """
     def __init__(self, key_lookup):
         self.key_lookup = key_lookup
