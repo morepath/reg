@@ -1,7 +1,7 @@
 CHANGES
 *******
 
-0.9.1 (unreleased)
+0.9.1 (2014-11-11)
 ==================
 
 - A bugfix in the behavior of the fallback logic. In situations with
