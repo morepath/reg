@@ -16,9 +16,7 @@ Some specific changes:
 
 * Replaced ``@reg.generic`` decorator with ``@reg.dispatch()``
   decorator. This decorator can be configured with predicates that
-  extract information from the arguments.
-
-* In particular, rewrite this::
+  extract information from the arguments. Rewrite this::
 
     @reg.generic
     def foo(obj):
@@ -48,6 +46,35 @@ Some specific changes:
   ``match_key`` to have dispatch on the (immutable) value of the
   argument. You supply functions to these match functions that extract
   the exact information to dispatch on from the argument.
+
+* The ``register_function`` API replaces the ``register`` API to
+  register a function. Replace this::
+
+    r.register(foo, (SomeClass,), dispatched_to)
+
+  with::
+
+    r.register_function(foo, dispatched_to, obj=SomeClass)
+
+  You now use keyword parameters to indicate exactly those arguments
+  specified by ``reg.dispatch()`` are actually predicate
+  arguments. You don't need to worry about the order of predicates
+  anymore when you register a function for it.
+
+* The new ``classgeneric`` functionality is part of the predicate
+  system now; you can use ``reg.match_class`` instead. Replace
+
+    @reg.classgeneric
+    def foo(cls):
+       pass
+
+  with::
+
+    @reg.dispatch(reg.match_class('cls', lambda cls: cls))
+    def foo(cls):
+        pass
+
+  You can do this with any argument now, not just the first one.
 
 * pep443 support is gone. Reg is focused on its own dispatch system.
 
