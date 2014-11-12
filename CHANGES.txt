@@ -11,6 +11,8 @@ CHANGES
 
 - Eliminated a check in ArgExtractor that could never take place.
 
+- Bring test coverage back up to 100%.
+
 0.9.1 (2014-11-11)
 ==================
 

@@ -1107,3 +1107,64 @@ def test_dispatch_missing_argument():
 
     with pytest.raises(TypeError):
         assert foo(lookup=lookup)
+
+
+def test_register_dispatch_predicates_twice():
+    @dispatch_external_predicates()
+    def foo(obj):
+        pass
+
+    def for_bar(obj):
+        return "for bar"
+
+    def for_qux(obj):
+        return "for qux"
+
+    class Bar(object):
+        pass
+
+    class Qux(object):
+        pass
+
+    registry = Registry()
+
+    registry.register_dispatch_predicates(
+        foo, [match_instance('obj',
+                             lambda obj: obj)])
+    assert foo in registry.initialized
+    # second time has no effect
+    registry.register_dispatch_predicates(
+        foo, [match_instance('obj',
+                             lambda obj: obj)])
+
+
+def test_register_external_predicates_for_non_external():
+    @dispatch()
+    def foo():
+        pass
+
+    r = Registry()
+
+    with pytest.raises(RegistrationError):
+        r.register_external_predicates(foo, [])
+
+
+def test_register_no_external_predicates_for_external():
+    @dispatch_external_predicates()
+    def foo():
+        pass
+
+    r = Registry()
+    with pytest.raises(RegistrationError):
+        r.register_dispatch(foo)
+
+
+def test_dict_to_predicate_key_for_unknown_dispatch():
+    @dispatch()
+    def foo():
+        pass
+
+    r = Registry()
+
+    with pytest.raises(KeyError):
+        r.key_dict_to_predicate_key(foo, {})

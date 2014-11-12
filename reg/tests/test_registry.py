@@ -266,10 +266,17 @@ def test_caching_registry():
     assert l.key_lookup.component_cache.get(
         (view, (FooSub, 'edit', 'POST'))) is not None
 
+    # now let's do this again. this time things come from the component cache
+    assert l.call(view, Foo(), Request('', 'GET')) == 'foo default'
+    assert l.call(view, FooSub(), Request('', 'GET')) == 'foo default'
+    assert l.call(view, FooSub(), Request('edit', 'POST')) == 'foo edit'
+
     # prime and check the all cache
     assert list(l.all(view, Foo(), Request('', 'GET'))) == [foo_default]
     assert l.key_lookup.all_cache.get(
         (view, (Foo, '', 'GET'))) is not None
+    # should be coming from cache now
+    assert list(l.all(view, Foo(), Request('', 'GET'))) == [foo_default]
 
     class Bar(object):
         pass
@@ -281,3 +288,9 @@ def test_caching_registry():
     # fallbacks get cached too
     assert l.key_lookup.fallback_cache.get(
         (view, (Bar, '', 'GET'))) is model_fallback
+
+    # these come from the fallback cache now
+    assert l.call(view, Bar(), Request('', 'GET')) == 'Model fallback'
+    assert l.call(view, Foo(), Request('dummy', 'GET')) == 'Name fallback'
+    assert l.call(view, Foo(), Request('', 'PUT')) == 'Request method fallback'
+    assert l.call(view, FooSub(), Request('dummy', 'GET')) == 'Name fallback'
