@@ -3,7 +3,8 @@ import pytest
 
 from reg.implicit import NoImplicitLookupError
 from reg.registry import Registry
-from reg.predicate import match_instance, match_key, match_class, key_predicate
+from reg.predicate import (
+    match_instance, match_key, match_class, key_predicate, NOT_FOUND)
 from reg.dispatch import dispatch, dispatch_external_predicates
 from reg.error import RegistrationError, KeyExtractorError
 
@@ -547,6 +548,32 @@ def test_no_implicit():
     with pytest.raises(NoImplicitLookupError):
         target.component(alpha)
 
+
+def test_fallback_to_fallback():
+
+    def fallback(obj):
+        return 'fallback!'
+
+    @dispatch(match_instance('obj', lambda obj: obj,
+                             fallback=fallback))
+    def target(obj):
+        return 'not the fallback we want'
+
+    reg = Registry()
+
+    def specific_target(obj):
+        return 'specific'
+
+    reg.register_dispatch(target)
+    reg.register_function(target, specific_target, obj=Alpha)
+
+    beta = Beta()
+    assert target(beta, lookup=reg.lookup()) == 'fallback!'
+    # this is *not* a registered fallback so won't be returned here
+    assert target.fallback(beta, lookup=reg.lookup()) is fallback
+    # we cannot find a fallback for alpha, as it doesn't hit the fallback
+    assert target(Alpha(), lookup=reg.lookup()) == 'specific'
+    assert target.fallback(Alpha(), lookup=reg.lookup()) is NOT_FOUND
 
 def test_fallback_to_dispatch():
     @dispatch('obj')
