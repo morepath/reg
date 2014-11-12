@@ -152,16 +152,16 @@ class MultiPredicate(object):
 
 class Index(object):
     def add(self, key, value):
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: nocoverage
 
     def get(self, key, default=None):
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: nocoverage
 
     def permutations(self, key):
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: nocoverage
 
     def fallback(self, key):
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: nocoverage
 
 
 class KeyIndex(object):
