@@ -575,6 +575,7 @@ def test_fallback_to_fallback():
     assert target(Alpha(), lookup=reg.lookup()) == 'specific'
     assert target.fallback(Alpha(), lookup=reg.lookup()) is NOT_FOUND
 
+
 def test_fallback_to_dispatch():
     @dispatch('obj')
     def target(obj):
