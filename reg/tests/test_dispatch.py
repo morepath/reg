@@ -1060,3 +1060,22 @@ def test_fallback_should_already_use_subset():
                 lookup=r.lookup()) == 'Body model fallback'
 
 
+def test_dispatch_missing_argument():
+    @dispatch('obj')
+    def foo(obj):
+        pass
+
+    def for_bar(obj):
+        return "for bar"
+
+    class Bar(object):
+        pass
+
+    registry = Registry()
+
+    registry.register_function(foo, for_bar, obj=Bar)
+
+    lookup = registry.lookup()
+
+    with pytest.raises(TypeError):
+        assert foo(lookup=lookup)

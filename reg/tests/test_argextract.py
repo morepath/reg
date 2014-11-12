@@ -1,5 +1,6 @@
 import pytest
 from ..argextract import KeyExtractor, ArgExtractor, NOT_FOUND
+from ..error import KeyExtractorError
 
 
 def test_keyextractor():
@@ -28,7 +29,7 @@ def test_keyextractor_error():
     def illegal_function(*arg):
         pass
 
-    def illegal_function2(*kw):
+    def illegal_function2(**kw):
         pass
 
     with pytest.raises(TypeError):
@@ -36,6 +37,29 @@ def test_keyextractor_error():
 
     with pytest.raises(TypeError):
         KeyExtractor(illegal_function2)
+
+
+def test_keyextractor_not_found():
+    class Model(object):
+        pass
+
+    class Request(object):
+        def __init__(self, request_method):
+            self.request_method = request_method
+
+    def get_request_method(request):
+        return request.request_method
+
+    def foo(self, request):
+        pass
+
+    k = KeyExtractor(get_request_method)
+
+    d = ArgExtractor(foo, ['self', 'request'])
+
+    with pytest.raises(KeyExtractorError):
+        # do not pass in request, so cannot extract the key
+        k(d(Model())) == 'GET'
 
 
 def test_argextractor_no_args():

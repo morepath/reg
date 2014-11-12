@@ -9,6 +9,8 @@ CHANGES
   key. Now they're just being silently ignored, as they don't do any
   harm.
 
+- Eliminated a check in ArgExtractor that could never take place.
+
 0.9.1 (2014-11-11)
 ==================
 
