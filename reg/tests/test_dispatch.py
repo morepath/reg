@@ -938,9 +938,9 @@ def test_key_dict_to_predicate_key_unknown_keys():
 
     r.register_dispatch(view)
 
-    with pytest.raises(KeyError):
-        r.key_dict_to_predicate_key(view, {
-            'unknown': 'blah'})
+    # unknown keys are just ignored
+    r.key_dict_to_predicate_key(view.wrapped_func, {
+        'unknown': 'blah'})
 
 
 def test_register_dispatch_key_dict():
