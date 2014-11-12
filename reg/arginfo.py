@@ -82,7 +82,7 @@ def get_callable_info(callable):
 
 
 def fake_empty_init():
-    pass
+    pass  # pragma: nocoverage
 
 
 class Dummy(object):
@@ -106,12 +106,12 @@ def get_class_init(class_):
     # as the default __init__ in this case falsely reports varargs
     # and keywords.
     if is_pypy_default_init(func):
-        return fake_empty_init
+        return fake_empty_init  # pragma: nocoverage
     return func
 
 
 def is_pypy_default_init(func):
     try:
         return func.func_code.co_name == 'descr__init__'
-    except AttributeError:
+    except AttributeError:  # pragma: nocoverage
         return False
