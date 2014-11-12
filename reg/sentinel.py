@@ -3,7 +3,7 @@ class Sentinel(object):
         self.name = name
 
     def __repr__(self):
-        return u'<%s>' % self.name
+        return u'<%s>' % self.name  # pragma: nocoverage
 
 
 NOT_FOUND = Sentinel('NOT_FOUND')
