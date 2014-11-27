@@ -8,7 +8,8 @@ long_description = (
 
 tests_require = [
     'pytest >= 2.0',
-    'pytest-cov'
+    'pytest-cov',
+    'pytest-remove-stale-bytecode',
     ]
 
 setup(name='reg',
