@@ -458,7 +458,7 @@ need to transform the ``size`` function to a generic one:
   size = reg.dispatch('obj')(size)
 
 We can actually spell these two steps in a single step, as
-:func:`reg.generic` can be used as decorator:
+:func:`reg.dispatch` can be used as decorator:
 
 .. testcode::
 
