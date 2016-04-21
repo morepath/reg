@@ -6,5 +6,7 @@ develop-eggs
 htmlcov
 doc/build
 .tox
-
-
+.cache
+eggs/
+*.pyc
+*.egg-info

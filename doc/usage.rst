@@ -455,7 +455,7 @@ need to transform the ``size`` function to a generic one:
 .. testcode::
 
   import reg
-  size = reg.dispatch('obj')(size)
+  size = reg.dispatch('item')(size)
 
 We can actually spell these two steps in a single step, as
 :func:`reg.dispatch` can be used as decorator:
@@ -733,7 +733,7 @@ We now see why the second argument to ``register()`` is a list; so far
 we only supplied a single entry in it, but here we supply two, as we
 have two parameters on which to do dynamic dispatch.
 
-Given a request and a document, we can now call ``view``::
+Given a request and a document, we can now call ``view``:
 
 .. doctest::
 

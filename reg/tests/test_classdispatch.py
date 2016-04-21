@@ -1,6 +1,5 @@
 import reg
 from reg.registry import Registry
-from reg.predicate import Predicate, ClassIndex
 from reg.predicate import match_class
 
 

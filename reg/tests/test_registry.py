@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 from reg.registry import Registry, CachingKeyLookup
-from reg.predicate import (class_predicate, key_predicate,
+from reg.predicate import (class_predicate,
                            match_instance, match_key)
 from reg.error import RegistrationError
 import pytest
