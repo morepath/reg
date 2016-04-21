@@ -1,13 +1,29 @@
 CREDITS
 -------
 
-Reg was written by Martijn Faassen; the core mapping code was
-originally co-authored by Thomas Lotze.
+Development
+-----------
+
+* Martijn Faassen
+
+With contributions by
+---------------------
+
+* Thomas Lotze (co-authored original core mapping code)
+
+* Stefano Taschini
+
+Special contributions
+---------------------
+
+* Special thanks to CONTACT software (http://contact.de)
+
+Special inspiration
+-------------------
 
 Reg is heavily inspired by ``zope.interface`` and ``zope.component``,
-by Jim Fulton and a lot of Zope developers.
-
-Reg development was partially funded by Contact Software (http://contact.de).
+by Jim Fulton and a lot of Zope developers. It is also inspired by
+Pyramid's view predicate system.
 
 Thanks also to Chris McDonough who showed the way, reimplementing code
 to make it better.
