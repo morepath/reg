@@ -1,6 +1,104 @@
 #include <Python.h>
 
 static PyObject*
+mapply(PyObject *self, PyObject *args, PyObject* kwargs)
+{
+  PyObject* callable_obj;
+  PyObject* remaining_args;
+  PyObject* func_obj;
+  PyObject* result;
+  PyCodeObject* co;
+  PyObject* method_obj = NULL;
+  PyObject* new_kwargs = NULL;
+  int i;
+
+  if (PyTuple_GET_SIZE(args) < 1) {
+    PyErr_SetString(PyExc_TypeError,
+                    "mapply() takes at one parameter");
+    return NULL;
+  }
+
+  callable_obj = PyTuple_GET_ITEM(args, 0);
+  remaining_args = PyTuple_GetSlice(args, 1, PyTuple_GET_SIZE(args));
+
+  if (!PyCallable_Check(callable_obj)) {
+    PyErr_SetString(PyExc_TypeError,
+                    "first parameter must be callable");
+    return NULL;
+  }
+
+  if (PyFunction_Check(callable_obj)) {
+    /* function */
+    func_obj = callable_obj;
+  } else if (PyMethod_Check(callable_obj)) {
+    /* method */
+    func_obj = PyMethod_Function(callable_obj);
+  } else if (PyType_Check(callable_obj)) {
+    /* new style class */
+    method_obj = PyObject_GetAttrString(callable_obj, "__init__");
+    if (PyMethod_Check(method_obj)) {
+      func_obj = PyMethod_Function(method_obj);
+    } else {
+      /* descriptor found, not method, so no __init__ */
+      method_obj = NULL;
+      /* we are done immediately, just call type */
+      goto final;
+    }
+  } else if (PyClass_Check(callable_obj)) {
+    /* old style class */
+    method_obj = PyObject_GetAttrString(callable_obj, "__init__");
+    if (method_obj != NULL) {
+      func_obj = PyMethod_Function(method_obj);
+    } else {
+      PyErr_SetString(PyExc_TypeError,
+                      "Old-style class without __init__ not supported");
+      return NULL;
+    }
+  } else if (PyCFunction_Check(callable_obj)) {
+    /* function implemented in C extension */
+    PyErr_SetString(PyExc_TypeError,
+                    "functions implemented in C are not supported");
+    return NULL;
+  } else {
+    /* new or old style class instance */
+    method_obj = PyObject_GetAttrString(callable_obj, "__call__");
+    if (method_obj != NULL) {
+      func_obj = PyMethod_Function(method_obj);
+    } else {
+      PyErr_SetString(PyExc_TypeError,
+                      "Instance is not callable");
+      return NULL;
+    }
+  }
+
+  /* we can determine the arguments now */
+  co = (PyCodeObject*)PyFunction_GetCode(func_obj);
+
+  if (kwargs == NULL || co->co_flags & CO_VARKEYWORDS) {
+    new_kwargs = kwargs;
+    Py_XINCREF(new_kwargs);
+    goto final;
+  }
+
+  new_kwargs = PyDict_New();
+
+  for (i = 0; i < co->co_argcount; i++) {
+    PyObject* name = PyTuple_GET_ITEM(co->co_varnames, i);
+    PyObject* value = PyDict_GetItem(kwargs, name);
+    if (value != NULL) {
+      PyDict_SetItem(new_kwargs, name, value);
+    }
+  }
+
+ final:
+  result = PyObject_Call(callable_obj, remaining_args, new_kwargs);
+  Py_DECREF(remaining_args);
+  Py_XDECREF(new_kwargs);
+  Py_XDECREF(method_obj);
+  return result;
+}
+
+static PyObject*
 lookup_mapply(PyObject *self, PyObject *args, PyObject* kwargs)
 {
   PyObject* callable_obj;
@@ -104,6 +202,9 @@ lookup_mapply(PyObject *self, PyObject *args, PyObject* kwargs)
 static PyMethodDef FastMapplyMethods[] = {
   {"lookup_mapply", (PyCFunction)lookup_mapply, METH_VARARGS | METH_KEYWORDS,
    "apply with optional lookup parameter"},
+  {"mapply", (PyCFunction)mapply, METH_VARARGS | METH_KEYWORDS,
+   "mapply"},
+
   {NULL, NULL, 0, NULL}
 };
 

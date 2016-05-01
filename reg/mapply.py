@@ -1,9 +1,9 @@
 from __future__ import unicode_literals
 from .arginfo import arginfo
-from .fastmapply import lookup_mapply
+from .fastmapply import lookup_mapply, mapply
 
 
-def mapply(func, *args, **kw):
+def py_mapply(func, *args, **kw):
     """Apply keyword arguments to function only if it defines them.
 
     So this works without error as ``b`` is ignored::
