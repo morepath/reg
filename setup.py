@@ -1,5 +1,6 @@
-import os
 from setuptools import setup, find_packages
+from distutils.core import Extension
+
 
 long_description = (
     open('README.rst').read()
@@ -23,6 +24,7 @@ setup(name='reg',
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
+      ext_modules=[Extension('reg.fastmapply', ['reg/fastmapply.c'])],
       classifiers=[
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',

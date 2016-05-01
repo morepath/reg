@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 from .arginfo import arginfo
+from .fastmapply import lookup_mapply
 
 
 def mapply(func, *args, **kw):
@@ -24,7 +25,7 @@ def mapply(func, *args, **kw):
     return func(*args, **new_kw)
 
 
-def lookup_mapply(func, lookup, *args, **kw):
+def py_lookup_mapply(func, lookup, *args, **kw):
     """Apply lookup argument to function only if it defines it.
     """
     info = arginfo(func)
