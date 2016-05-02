@@ -136,7 +136,8 @@ def test_mapply_class_no_init_too_much():
 def test_mapply_classic_class_no_init_too_much():
     class Foo:
         pass
-    assert isinstance(mapply(Foo, a=1), Foo)
+    with pytest.raises(TypeError):
+        mapply(Foo, a=1)
 
 
 def test_mapply_kw_class():
@@ -252,9 +253,8 @@ class ClassicInheritedNoArgs(ClassicNoArgs):
                                       StaticMethodNoArgs.method,
                                       ClassMethodNoArgs.method,
                                       ClassNoInit, ClassNoArgs,
-                                      ClassicNoInit, ClassicNoArgs,
+                                      ClassicNoArgs,
                                       InheritedNoInit, InheritedNoArgs,
-                                      ClassicInheritedNoInit,
                                       ClassicInheritedNoArgs])
 def test_arginfo_no_args(callable):
     info = arginfo(callable)
@@ -262,6 +262,13 @@ def test_arginfo_no_args(callable):
     assert info.varargs is None
     assert info.keywords is None
     assert info.defaults is None
+
+
+def test_arginfo_no_args_classic_class_without_init():
+    with pytest.raises(TypeError):
+        arginfo(ClassicNoInit)
+    with pytest.raises(TypeError):
+        arginfo(ClassicInheritedNoInit)
 
 
 def func_args(a):

@@ -1,10 +1,13 @@
 CHANGES
 *******
 
-0.9.3 (unreleased)
-==================
+0.10 (unreleased)
+=================
 
 - Minor fixes to documentation.
+
+- Optional C implementation of ``mapply`` and ``lookup_mapply`` for
+  performance in Python 2.
 
 0.9.2 (2014-11-13)
 ==================

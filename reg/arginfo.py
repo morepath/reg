@@ -96,8 +96,7 @@ def get_class_init(class_):
     try:
         func = class_.__init__
     except AttributeError:
-        # Python 2 classic class without __init__.
-        return fake_empty_init
+        raise TypeError("Old-style class without __init__ not supported")
     # If this is a new-style class and there is no __init__
     # defined, in CPython (but not PyPy) this is a WRAPPER_DESCRIPTOR.
     if func is WRAPPER_DESCRIPTOR:

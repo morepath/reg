@@ -126,12 +126,11 @@ def test_lookup_mapply_old_style_instance_without_call():
     class Callable:
         pass
 
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         lookup_mapply(Callable(), 'lookup')
 
 
 def test_lookup_mapply_with_extension_function():
-    # use lookup_mapply implemented in C
-    from reg.fastmapply import lookup_mapply as c_lookup_mapply
+    # use dir which is implemented in C
     with pytest.raises(TypeError):
-        lookup_mapply(c_lookup_mapply, 'lookup')
+        lookup_mapply(dir, 'lookup')

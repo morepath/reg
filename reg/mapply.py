@@ -1,6 +1,10 @@
 from __future__ import unicode_literals
 from .arginfo import arginfo
-from .fastmapply import lookup_mapply, mapply
+try:
+    from .fastmapply import lookup_mapply, mapply  # noqa
+    C_MAPPLY = True
+except ImportError:
+    C_MAPPLY = False
 
 
 def py_mapply(func, *args, **kw):
@@ -29,6 +33,11 @@ def py_lookup_mapply(func, lookup, *args, **kw):
     """Apply lookup argument to function only if it defines it.
     """
     info = arginfo(func)
-    if not info.keywords and 'lookup' in info.args:
-        return func(*args, lookup=lookup, **kw)
-    return func(*args, **kw)
+    if info is None or info.keywords or 'lookup' not in info.args:
+        return func(*args, **kw)
+    return func(*args, lookup=lookup, **kw)
+
+
+if not C_MAPPLY:
+    mapply = py_mapply  # noqa
+    lookup_mapply = py_lookup_mapply  # noqa
