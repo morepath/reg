@@ -11,3 +11,5 @@ eggs/
 *.pyc
 *.egg-info
 *.so
+*.pyo
+
