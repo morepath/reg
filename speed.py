@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from timeit import timeit
 from reg.fastmapply import lookup_mapply as c_lookup_mapply
 from reg.fastmapply import mapply as c_mapply
@@ -32,34 +34,36 @@ class BarLookup(object):
         return a
 
 
+the_thing = foo_lookup
+
 def c_generic():
-    c_mapply(foo, 1, lookup='lookup')
+    c_mapply(the_thing, 1, lookup='lookup')
 
 
 def c_specialized():
-    c_lookup_mapply(foo, 'lookup', 1)
+    c_lookup_mapply(the_thing, 'lookup', 1)
 
 
 def py():
-    py_lookup_mapply(foo, 'lookup', 1)
+    py_lookup_mapply(the_thing, 'lookup', 1)
 
 
 def direct():
-    foo(1)
+    the_thing(1, 'lookup')
 
 
 def main():
-    print "Python version:"
-    print timeit(py)
+    print("Python version:")
+    print(timeit(py))
 
-    print "C version generic:"
-    print timeit(c_generic)
+    print("C version generic:")
+    print(timeit(c_generic))
 
-    print "C version specialized:"
-    print timeit(c_specialized)
+    print("C version specialized:")
+    print(timeit(c_specialized))
 
-    print "Direct call:"
-    print timeit(direct)
+    print("Direct call:")
+    print(timeit(direct))
 
 if __name__ == '__main__':
     main()
