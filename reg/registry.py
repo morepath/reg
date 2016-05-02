@@ -195,8 +195,9 @@ class Registry(object):
           and the names and defaults of the predicates the callable
           was configured with.
         """
-        r = self.predicate_registries.get(callable)
-        if r is None:
+        try:
+            r = self.predicate_registries[callable]
+        except KeyError:
             raise KeyError(
                 "No predicate_key information known for: %s"
                 % callable)
