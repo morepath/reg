@@ -1,11 +1,66 @@
 #include <Python.h>
 
+PyCodeObject* get_code(PyObject* callable_obj, PyObject** method_obj_out) {
+  PyObject* func_obj;
+  PyObject* method_obj = NULL;
+
+  if (PyFunction_Check(callable_obj)) {
+    /* function */
+    func_obj = callable_obj;
+  } else if (PyMethod_Check(callable_obj)) {
+    /* method */
+    func_obj = PyMethod_Function(callable_obj);
+  } else if (PyType_Check(callable_obj)) {
+    /* new style class */
+    method_obj = PyObject_GetAttrString(callable_obj, "__init__");
+    if (PyMethod_Check(method_obj)) {
+      func_obj = PyMethod_Function(method_obj);
+    } else {
+      /* descriptor found, not method, so no __init__ */
+      func_obj = NULL;
+    }
+  } else if (PyClass_Check(callable_obj)) {
+    /* old style class */
+    method_obj = PyObject_GetAttrString(callable_obj, "__init__");
+    if (method_obj != NULL) {
+      func_obj = PyMethod_Function(method_obj);
+    } else {
+      PyErr_SetString(PyExc_TypeError,
+                      "Old-style class without __init__ not supported");
+      return NULL;
+    }
+  } else if (PyCFunction_Check(callable_obj)) {
+    /* function implemented in C extension */
+    PyErr_SetString(PyExc_TypeError,
+                    "functions implemented in C are not supported");
+    return NULL;
+  } else {
+    /* new or old style class instance */
+    method_obj = PyObject_GetAttrString(callable_obj, "__call__");
+    if (method_obj != NULL) {
+      func_obj = PyMethod_Function(method_obj);
+    } else {
+      PyErr_SetString(PyExc_TypeError,
+                      "Instance is not callable");
+      return NULL;
+    }
+  }
+
+  // output method parameter
+  *method_obj_out = method_obj;
+
+  if (func_obj == NULL) {
+    return NULL;
+  }
+  /* we can determine the arguments now */
+  return (PyCodeObject*)PyFunction_GetCode(func_obj);
+}
+
 static PyObject*
 mapply(PyObject *self, PyObject *args, PyObject* kwargs)
 {
   PyObject* callable_obj;
   PyObject* remaining_args;
-  PyObject* func_obj;
   PyObject* result;
   PyCodeObject* co;
   PyObject* method_obj = NULL;
@@ -21,65 +76,35 @@ mapply(PyObject *self, PyObject *args, PyObject* kwargs)
   callable_obj = PyTuple_GET_ITEM(args, 0);
   remaining_args = PyTuple_GetSlice(args, 1, PyTuple_GET_SIZE(args));
 
-  if (!PyCallable_Check(callable_obj)) {
-    PyErr_SetString(PyExc_TypeError,
-                    "first parameter must be callable");
+  co = get_code(callable_obj, &method_obj);
+
+
+  /* an error was raised in get_code */
+  if (co == NULL && method_obj == NULL) {
     return NULL;
   }
-
-  if (PyFunction_Check(callable_obj)) {
-    /* function */
-    func_obj = callable_obj;
-  } else if (PyMethod_Check(callable_obj)) {
-    /* method */
-    func_obj = PyMethod_Function(callable_obj);
-  } else if (PyType_Check(callable_obj)) {
-    /* new style class */
-    method_obj = PyObject_GetAttrString(callable_obj, "__init__");
-    if (PyMethod_Check(method_obj)) {
-      func_obj = PyMethod_Function(method_obj);
-    } else {
-      /* descriptor found, not method, so no __init__ */
-      method_obj = NULL;
-      /* we are done immediately, just call type */
-      goto final;
-    }
-  } else if (PyClass_Check(callable_obj)) {
-    /* old style class */
-    method_obj = PyObject_GetAttrString(callable_obj, "__init__");
-    if (method_obj != NULL) {
-      func_obj = PyMethod_Function(method_obj);
-    } else {
-      PyErr_SetString(PyExc_TypeError,
-                      "Old-style class without __init__ not supported");
-      return NULL;
-    }
-  } else if (PyCFunction_Check(callable_obj)) {
-    /* function implemented in C extension */
-    PyErr_SetString(PyExc_TypeError,
-                    "functions implemented in C are not supported");
-    return NULL;
-  } else {
-    /* new or old style class instance */
-    method_obj = PyObject_GetAttrString(callable_obj, "__call__");
-    if (method_obj != NULL) {
-      func_obj = PyMethod_Function(method_obj);
-    } else {
-      PyErr_SetString(PyExc_TypeError,
-                      "Instance is not callable");
-      return NULL;
-    }
+  /* we did actually get a method, but it wasn't one we could do something
+     with; this happens with empty __init__ in new style classes */
+  if (co == NULL && method_obj != NULL) {
+    goto final;
   }
 
-  /* we can determine the arguments now */
-  co = (PyCodeObject*)PyFunction_GetCode(func_obj);
+  /* we have a method_obj but not one we can do anything with as we
+     have no co object, must be __init__ without parameters, go to end
 
-  if (kwargs == NULL || co->co_flags & CO_VARKEYWORDS) {
+     or we called this without keyword arguments
+
+     or this function accepts keyword arguments
+  */
+  if (co == NULL || kwargs == NULL || co->co_flags & CO_VARKEYWORDS) {
+    /* we reuse the existing kwargs, but incref so we can decref symmetrically
+       later */
     new_kwargs = kwargs;
     Py_XINCREF(new_kwargs);
     goto final;
   }
 
+  /* create a new keyword argument dict with only the desired args */
   new_kwargs = PyDict_New();
 
   for (i = 0; i < co->co_argcount; i++) {
@@ -91,10 +116,12 @@ mapply(PyObject *self, PyObject *args, PyObject* kwargs)
   }
 
  final:
+  /* call the underlying function */
   result = PyObject_Call(callable_obj, remaining_args, new_kwargs);
+  /* cleanup */
   Py_DECREF(remaining_args);
-  Py_XDECREF(new_kwargs);
-  Py_XDECREF(method_obj);
+  Py_XDECREF(new_kwargs); /* can be null */
+  Py_XDECREF(method_obj); /* can be null */
   return result;
 }
 
@@ -104,7 +131,6 @@ lookup_mapply(PyObject *self, PyObject *args, PyObject* kwargs)
   PyObject* callable_obj;
   PyObject* lookup_obj;
   PyObject* remaining_args;
-  PyObject* func_obj;
   PyObject* result;
   PyCodeObject* co;
   PyObject* method_obj = NULL;
@@ -120,58 +146,17 @@ lookup_mapply(PyObject *self, PyObject *args, PyObject* kwargs)
   lookup_obj = PyTuple_GET_ITEM(args, 1);
   remaining_args = PyTuple_GetSlice(args, 2, PyTuple_GET_SIZE(args));
 
-  if (!PyCallable_Check(callable_obj)) {
-    PyErr_SetString(PyExc_TypeError,
-                    "first parameter must be callable");
+  co = get_code(callable_obj, &method_obj);
+
+  /* an error was raised in get_code */
+  if (co == NULL && method_obj == NULL) {
     return NULL;
   }
-
-  if (PyFunction_Check(callable_obj)) {
-    /* function */
-    func_obj = callable_obj;
-  } else if (PyMethod_Check(callable_obj)) {
-    /* method */
-    func_obj = PyMethod_Function(callable_obj);
-  } else if (PyType_Check(callable_obj)) {
-    /* new style class */
-    method_obj = PyObject_GetAttrString(callable_obj, "__init__");
-    if (PyMethod_Check(method_obj)) {
-      func_obj = PyMethod_Function(method_obj);
-    } else {
-      /* descriptor found, not method, so no __init__ */
-      method_obj = NULL;
-      /* we are done immediately, just call type */
-      goto final;
-    }
-  } else if (PyClass_Check(callable_obj)) {
-    /* old style class */
-    method_obj = PyObject_GetAttrString(callable_obj, "__init__");
-    if (method_obj != NULL) {
-      func_obj = PyMethod_Function(method_obj);
-    } else {
-      PyErr_SetString(PyExc_TypeError,
-                      "Old-style class without __init__ not supported");
-      return NULL;
-    }
-  } else if (PyCFunction_Check(callable_obj)) {
-    /* function implemented in C extension */
-    PyErr_SetString(PyExc_TypeError,
-                    "functions implemented in C are not supported");
-    return NULL;
-  } else {
-    /* new or old style class instance */
-    method_obj = PyObject_GetAttrString(callable_obj, "__call__");
-    if (method_obj != NULL) {
-      func_obj = PyMethod_Function(method_obj);
-    } else {
-      PyErr_SetString(PyExc_TypeError,
-                      "Instance is not callable");
-      return NULL;
-    }
+  /* we did actually get a method, but it wasn't one we could do something
+     with; this happens with empty __init__ in new style classes */
+  if (co == NULL && method_obj != NULL) {
+    goto final;
   }
-
-  /* we can determine the arguments now */
-  co = (PyCodeObject*)PyFunction_GetCode(func_obj);
 
   if (!(co->co_flags & CO_VARKEYWORDS)) {
     for (i = 0; i < co->co_argcount; i++) {
