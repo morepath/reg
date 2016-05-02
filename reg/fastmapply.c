@@ -195,7 +195,7 @@ lookup_mapply(PyObject *self, PyObject *args, PyObject* kwargs)
 
   for (i = 0; i < co->co_argcount; i++) {
     PyObject* name = PyTuple_GET_ITEM(co->co_varnames, i);
-    if (PyObject_RichCompareBool(lookup_str, name, Py_EQ)) {
+    if (PyUnicode_Compare(lookup_str, name) == 0) {
       has_lookup = 1;
       break;
     }
@@ -207,6 +207,8 @@ lookup_mapply(PyObject *self, PyObject *args, PyObject* kwargs)
     }
     PyDict_SetItem(kwargs, lookup_str, lookup_obj);
   }
+  Py_DECREF(lookup_str);
+
  final:
   result = PyObject_Call(callable_obj, remaining_args, kwargs);
 
