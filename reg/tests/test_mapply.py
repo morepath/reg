@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 import pytest
 from reg.mapply import mapply
 from reg.arginfo import arginfo
+from reg.compat import PY3
 
 
 def test_mapply():
@@ -136,8 +137,11 @@ def test_mapply_class_no_init_too_much():
 def test_mapply_classic_class_no_init_too_much():
     class Foo:
         pass
-    with pytest.raises(TypeError):
-        mapply(Foo, a=1)
+    if not PY3:
+        with pytest.raises(TypeError):
+            mapply(Foo, a=1)
+    else:
+        assert isinstance(mapply(Foo, a=1), Foo)
 
 
 def test_mapply_kw_class():
@@ -248,14 +252,20 @@ class ClassicInheritedNoArgs(ClassicNoArgs):
     pass
 
 
-@pytest.mark.parametrize("callable", [func_no_args, obj_no_args,
-                                      method_no_args.method,
-                                      StaticMethodNoArgs.method,
-                                      ClassMethodNoArgs.method,
-                                      ClassNoInit, ClassNoArgs,
-                                      ClassicNoArgs,
-                                      InheritedNoInit, InheritedNoArgs,
-                                      ClassicInheritedNoArgs])
+options = [func_no_args, obj_no_args,
+           method_no_args.method,
+           StaticMethodNoArgs.method,
+           ClassMethodNoArgs.method,
+           ClassNoInit, ClassNoArgs,
+           ClassicNoArgs,
+           InheritedNoInit, InheritedNoArgs,
+           ClassicInheritedNoArgs]
+if PY3:
+    options.append(ClassicNoInit)
+    options.append(ClassicInheritedNoInit)
+
+
+@pytest.mark.parametrize("callable", options)
 def test_arginfo_no_args(callable):
     info = arginfo(callable)
     assert info.args == []
@@ -265,10 +275,12 @@ def test_arginfo_no_args(callable):
 
 
 def test_arginfo_no_args_classic_class_without_init():
-    with pytest.raises(TypeError):
-        arginfo(ClassicNoInit)
-    with pytest.raises(TypeError):
-        arginfo(ClassicInheritedNoInit)
+    # these are different only on PY2
+    if not PY3:
+        with pytest.raises(TypeError):
+            arginfo(ClassicNoInit)
+        with pytest.raises(TypeError):
+            arginfo(ClassicInheritedNoInit)
 
 
 def func_args(a):

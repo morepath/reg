@@ -1,5 +1,5 @@
 import pytest
-
+from reg.compat import PY3
 from reg.mapply import lookup_mapply
 
 
@@ -105,8 +105,11 @@ def test_lookup_mapply_with_old_style_class_without_init():
     class Callable:
         pass
 
-    with pytest.raises(TypeError):
-        lookup_mapply(Callable, 'lookup')
+    if not PY3:
+        with pytest.raises(TypeError):
+            lookup_mapply(Callable, 'lookup')
+    else:
+        assert isinstance(lookup_mapply(Callable, 'lookup'), Callable)
 
 
 def test_lookup_mapply_with_type():
@@ -126,11 +129,14 @@ def test_lookup_mapply_old_style_instance_without_call():
     class Callable:
         pass
 
-    with pytest.raises(AttributeError):
-        lookup_mapply(Callable(), 'lookup')
+    if not PY3:
+        with pytest.raises(AttributeError):
+            lookup_mapply(Callable(), 'lookup')
+    else:
+        with pytest.raises(TypeError):
+            lookup_mapply(Callable(), 'lookup')
 
 
 def test_lookup_mapply_with_extension_function():
-    # use dir which is implemented in C
     with pytest.raises(TypeError):
         lookup_mapply(dir, 'lookup')

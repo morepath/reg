@@ -1,5 +1,9 @@
 #include <Python.h>
 
+#if PY_MAJOR_VERSION >= 3
+#define IS_PY3
+#endif
+
 PyCodeObject* get_code(PyObject* callable_obj, PyObject** method_obj_out,
                        int* init_no_args) {
   PyObject* func_obj;
@@ -14,13 +18,28 @@ PyCodeObject* get_code(PyObject* callable_obj, PyObject** method_obj_out,
   } else if (PyType_Check(callable_obj)) {
     /* new style class */
     method_obj = PyObject_GetAttrString(callable_obj, "__init__");
+#ifndef IS_PY3
+    /* in Python 2 __init__ is a method */
     if (PyMethod_Check(method_obj)) {
       func_obj = PyMethod_Function(method_obj);
     } else {
-      /* descriptor found, not method, so no __init__ */
+      /* something else found, not method, so no __init__ */
       func_obj = NULL;
       *init_no_args = 1;
     }
+#else
+    /* in Python 3 __init__ is a function */
+    if (PyFunction_Check(method_obj)) {
+      func_obj = method_obj;
+    } else {
+      /* something else found, not function, so no __init__ */
+      func_obj = NULL;
+      *init_no_args = 1;
+    }
+#endif
+
+#ifndef IS_PY3
+    /* old style classes only exist in Python 2 */
   } else if (PyClass_Check(callable_obj)) {
     /* old style class */
     method_obj = PyObject_GetAttrString(callable_obj, "__init__");
@@ -31,6 +50,7 @@ PyCodeObject* get_code(PyObject* callable_obj, PyObject** method_obj_out,
                     "old-style classes without __init__ not supported");
       return NULL;
     }
+#endif
   } else if (PyCFunction_Check(callable_obj)) {
     /* function implemented in C extension */
     PyErr_SetString(PyExc_TypeError,
@@ -42,13 +62,18 @@ PyCodeObject* get_code(PyObject* callable_obj, PyObject** method_obj_out,
     if (method_obj != NULL) {
       func_obj = PyMethod_Function(method_obj);
     } else {
+#ifndef IS_PY3
+      /* old style classes only exist in Python 2 */
       if (PyInstance_Check(callable_obj)) {
         PyErr_SetString(PyExc_AttributeError,
                         "Instance has no __call__ method");
       } else {
+#endif
         PyErr_SetString(PyExc_TypeError,
                         "Instance is not callable");
+#ifndef IS_PY3
       }
+#endif
       return NULL;
     }
   }
@@ -166,9 +191,11 @@ lookup_mapply(PyObject *self, PyObject *args, PyObject* kwargs)
     return NULL;
   }
 
+  PyObject* lookup_str = PyUnicode_FromString("lookup");
+
   for (i = 0; i < co->co_argcount; i++) {
     PyObject* name = PyTuple_GET_ITEM(co->co_varnames, i);
-    if (strcmp(PyString_AS_STRING(name), "lookup") == 0) {
+    if (PyObject_RichCompareBool(lookup_str, name, Py_EQ)) {
       has_lookup = 1;
       break;
     }
@@ -178,7 +205,7 @@ lookup_mapply(PyObject *self, PyObject *args, PyObject* kwargs)
       kwargs = PyDict_New();
       cleanup_dict = 1;
     }
-    PyDict_SetItem(kwargs, PyString_FromString("lookup"), lookup_obj);
+    PyDict_SetItem(kwargs, lookup_str, lookup_obj);
   }
  final:
   result = PyObject_Call(callable_obj, remaining_args, kwargs);
@@ -200,8 +227,30 @@ static PyMethodDef FastMapplyMethods[] = {
   {NULL, NULL, 0, NULL}
 };
 
+#ifdef IS_PY3
+static struct PyModuleDef moduledef = {
+  PyModuleDef_HEAD_INIT,
+  "fastmapply",
+  NULL,
+  0,
+  FastMapplyMethods,
+  NULL,
+  NULL,
+  NULL,
+  NULL
+};
+#endif
+
 PyMODINIT_FUNC
+#ifndef IS_PY3
 initfastmapply(void)
+#else
+  PyInit_fastmapply(void)
+#endif
 {
+#ifndef IS_PY3
   (void) Py_InitModule("fastmapply", FastMapplyMethods);
+#else
+  return PyModule_Create(&moduledef);
+#endif
 }
