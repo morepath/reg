@@ -36,6 +36,7 @@ class BarLookup(object):
 
 the_thing = foo_lookup
 
+
 def c_generic():
     c_mapply(the_thing, 1, lookup='lookup')
 
