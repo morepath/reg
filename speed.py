@@ -20,8 +20,16 @@ def foo(a):
     return a
 
 
+def bar(a, b, c, d):
+    return a, b, c, d
+
+
 def foo_lookup(a, lookup):
     return a
+
+
+def bar_lookup(a, b, c, d, lookup):
+    return a, b, c, d
 
 
 class Bar(object):
@@ -45,17 +53,24 @@ def c_specialized():
     c_lookup_mapply(the_thing, 'lookup', 1)
 
 
-def py():
+def py_generic():
+    py_mapply(the_thing, 1, lookup='lookup')
+
+
+def py_specialized():
     py_lookup_mapply(the_thing, 'lookup', 1)
 
 
 def direct():
-    the_thing(1, 'lookup')
+    the_thing(1, lookup='lookup')
 
 
 def main():
-    print("Python version:")
-    print(timeit(py))
+    print("Python version specialized:")
+    print(timeit(py_specialized))
+
+    print("Python version generic:")
+    print(timeit(py_generic))
 
     print("C version generic:")
     print(timeit(c_generic))
