@@ -198,9 +198,9 @@ class ClassIndex(KeyIndex):
     def permutations(self, key):
         """Permutations for class key.
 
-        Returns class and its based in mro order. If a classic class in
-        Python 2, smuggle in ``object`` as the base class anyway to make
-        lookups consistent.
+        Returns class and its base classes in mro order. If a classic
+        class in Python 2, smuggle in ``object`` as the base class
+        anyway to make lookups consistent.
         """
         for class_ in inspect.getmro(key):
             yield class_
