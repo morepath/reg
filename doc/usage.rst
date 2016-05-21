@@ -808,7 +808,7 @@ Here's what it looks like:
   def something(cls):
       raise NotImplementedError()
 
-Note the call to :func:`match_class`` here. This lets us specify that
+Note the call to :func:`match_class` here. This lets us specify that
 we want to dispatch on the class, and we supply a lambda function that
 shows how to extract this from the arguments to ``something``; in this
 case we simply want the ``cls`` argument.
