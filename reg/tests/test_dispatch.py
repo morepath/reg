@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 import pytest
 
-from reg.implicit import NoImplicitLookupError
+from reg.implicit import NoImplicitLookupError, implicit
 from reg.registry import Registry
 from reg.predicate import (
     match_instance, match_key, match_class, key_predicate, NOT_FOUND)
@@ -540,6 +540,8 @@ def test_extra_arg_for_call():
 
 
 def test_no_implicit():
+    implicit.clear()
+
     @dispatch('obj')
     def target(obj):
         pass
