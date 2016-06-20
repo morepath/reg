@@ -40,7 +40,7 @@ depends on what you're building.
 
 .. _`PEP 443`: http://www.python.org/dev/peps/pep-0443/
 
-.. _`Morepath`: http://morepath.readthedocs.org
+.. _`Morepath`: http://morepath.readthedocs.io
 
 Example
 -------
