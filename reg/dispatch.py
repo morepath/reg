@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 from functools import update_wrapper
-from .implicit import implicit, NoImplicitLookupError
+from .implicit import implicit
+from .error import NoImplicitLookupError
 from .predicate import match_argname
 from .compat import string_types
 

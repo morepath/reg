@@ -3,9 +3,7 @@ explicitly.
 """
 from __future__ import unicode_literals
 
-from .error import NoImplicitLookupError
 import threading
-
 
 
 class Implicit(object):

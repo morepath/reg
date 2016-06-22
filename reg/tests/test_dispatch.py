@@ -1,7 +1,8 @@
 from __future__ import unicode_literals
 import pytest
 
-from reg.implicit import NoImplicitLookupError, implicit
+from reg.error import NoImplicitLookupError
+from reg.implicit import implicit
 from reg.registry import Registry
 from reg.predicate import (
     match_instance, match_key, match_class, key_predicate, NOT_FOUND)
@@ -100,6 +101,7 @@ def test_dispatch_no_arguments():
     assert list(foo.all(lookup=lookup)) == [special_foo]
     assert foo(lookup=lookup) == 'special'
     assert foo.fallback(lookup=lookup) is None
+
 
 def test_all():
     class Base(object):
@@ -860,6 +862,7 @@ def test_dispatch_external_predicates():
     assert view(Foo(), Request('', 'PUT'), lookup=l) == 'Request method fallback'
     assert view(FooSub(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
     assert view.fallback(Bar(), Request('', 'GET'), lookup=l) is model_fallback
+
 
 def test_register_dispatch_predicates_register_defaults():
     r = Registry()
