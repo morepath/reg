@@ -39,7 +39,8 @@ def test_registry():
     r.register_callable_predicates(view, [
         match_instance('model', get_model, model_fallback),
         match_key('name', get_name, name_fallback),
-        match_key('request_method', get_request_method, request_method_fallback)])
+        match_key('request_method', get_request_method,
+                  request_method_fallback)])
 
     def foo_default(self, request):
         return "foo default"

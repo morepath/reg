@@ -157,9 +157,6 @@ def test_all_key_dict():
     registry.register_function(target, registered_for_sub, obj=Sub)
     registry.register_function(target, registered_for_base, obj=Base)
 
-    base = Base()
-    sub = Sub()
-
     lookup = registry.lookup()
     assert list(target.all_key_dict(obj=Sub, lookup=lookup)) == [
         registered_for_sub, registered_for_base]
@@ -223,7 +220,6 @@ def test_component_one_source_key_dict():
 
     reg.register_function(target, foo, obj=Alpha)
 
-    alpha = Alpha()
     assert target.component_key_dict(obj=Alpha, lookup=reg.lookup()) is foo
 
 
@@ -787,7 +783,8 @@ def test_register_dispatch_predicates_no_defaults():
 
     assert view(Bar(), Request('', 'GET'), lookup=l) == 'Model fallback'
     assert view(Foo(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
-    assert view(Foo(), Request('', 'PUT'), lookup=l) == 'Request method fallback'
+    assert view(Foo(), Request('', 'PUT'),
+                lookup=l) == 'Request method fallback'
     assert view(FooSub(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
 
 
@@ -825,7 +822,8 @@ def test_dispatch_external_predicates():
     r.register_external_predicates(view, [
         match_instance('model', get_model, model_fallback),
         match_key('name', get_name, name_fallback),
-        match_key('request_method', get_request_method, request_method_fallback)])
+        match_key('request_method', get_request_method,
+                  request_method_fallback)])
 
     def foo_default(self, request):
         return "foo default"
@@ -859,7 +857,8 @@ def test_dispatch_external_predicates():
 
     assert view(Bar(), Request('', 'GET'), lookup=l) == 'Model fallback'
     assert view(Foo(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
-    assert view(Foo(), Request('', 'PUT'), lookup=l) == 'Request method fallback'
+    assert view(Foo(), Request('', 'PUT'),
+                lookup=l) == 'Request method fallback'
     assert view(FooSub(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
     assert view.fallback(Bar(), Request('', 'GET'), lookup=l) is model_fallback
 
@@ -900,7 +899,8 @@ def test_register_dispatch_predicates_register_defaults():
                        default=None),
         match_key('name', get_name, name_fallback,
                   default=''),
-        match_key('request_method', get_request_method, request_method_fallback,
+        match_key('request_method', get_request_method,
+                  request_method_fallback,
                   default='GET')])
 
     def foo_default(self, request):
@@ -937,7 +937,8 @@ def test_register_dispatch_predicates_register_defaults():
 
     assert view(Bar(), Request('', 'GET'), lookup=l) == 'Model fallback'
     assert view(Foo(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
-    assert view(Foo(), Request('', 'PUT'), lookup=l) == 'Request method fallback'
+    assert view(Foo(), Request('', 'PUT'),
+                lookup=l) == 'Request method fallback'
     assert view(FooSub(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
 
 
