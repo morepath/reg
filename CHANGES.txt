@@ -5,6 +5,8 @@ CHANGES
 ==================
 
 - Minor fixes to documentation.
+- Add tox test environments for Python 3.4 and 3.5, PyPy 3 and PEP 8.
+- Add missing classifiers.
 
 0.9.2 (2014-11-13)
 ==================
