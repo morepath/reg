@@ -205,7 +205,7 @@ class ClassIndex(KeyIndex):
         for class_ in inspect.getmro(key):
             yield class_
         if class_ is not object:
-            yield object
+            yield object  # pragma: no cover
 
 
 class MultiIndex(object):
