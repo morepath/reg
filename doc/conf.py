@@ -249,5 +249,5 @@ texinfo_documents = [
 doctest_path = [os.path.abspath('..')]
 
 intersphinx_mapping = {
-    'python': ('http://docs.python.org/2.7', None)
+    'python': ('http://docs.python.org/3.5', None)
 }
