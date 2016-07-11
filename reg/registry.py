@@ -79,9 +79,9 @@ class Registry(object):
         :param predicates: a sequence of :class:`reg.Predicate` objects.
         :returns: a :class:`reg.PredicateRegistry`.
         """
-        if callable in self.initialized:
+        if callable.wrapped_func in self.initialized:
             return
-        self.initialized.add(callable)
+        self.initialized.add(callable.wrapped_func)
         return self.register_callable_predicates(callable.wrapped_func,
                                                  predicates)
 
@@ -374,6 +374,40 @@ class Lookup(object):
         self.key_lookup = key_lookup
 
     def call(self, callable, *args, **kw):
+        """Call callable with args and kw.
+
+        Do a dispatch call for callable. If nothing more specific is
+        registered, call the dispatch function as a fallback.
+
+        :param callable: the dispatch function to call.
+        :args: varargs for the call. Is also used to extract
+           dispatch information to construct predicate_key.
+        :kw: keyword arguments for the call. Is also used to extract
+           dispatch information to construct predicate_key.
+        :returns: the result of the call.
+        """
+        try:
+            key = self.key_lookup.predicate_key(callable, *args, **kw)
+            component = self.key_lookup.component(callable, key)
+        except KeyExtractorError:
+            # if we cannot extract the key this could be because the
+            # dispatch was never initialized, as register_function
+            # was not called. In this case we want the fallback.
+            # Alternatively we cannot construct the key because we
+            # were passed the wrong arguments.
+            # In both cases, call the fallback. In case the wrong arguments
+            # were passed, we get the appropriate TypeError then
+            component = callable
+
+        if component is None:
+            # try to use the fallback
+            component = self.key_lookup.fallback(callable, key)
+            if component is None:
+                # if fallback is None use the original callable as fallback
+                component = callable
+        return component(*args, **kw)
+
+    def call_lookup(self, callable, *args, **kw):
         """Call callable with args and kw.
 
         Do a dispatch call for callable. If nothing more specific is

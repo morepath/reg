@@ -1137,7 +1137,7 @@ def test_register_dispatch_predicates_twice():
     registry.register_dispatch_predicates(
         foo, [match_instance('obj',
                              lambda obj: obj)])
-    assert foo in registry.initialized
+    assert foo.wrapped_func in registry.initialized
     # second time has no effect
     registry.register_dispatch_predicates(
         foo, [match_instance('obj',
