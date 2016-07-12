@@ -950,12 +950,13 @@ def test_register_dispatch_predicates_register_defaults():
     class FooSub(Foo):
         pass
 
-    @dispatch()
-    def view(self, request):
-        raise NotImplementedError()
+    class App(BaseApp):
+        @methoddispatch()
+        def view(self, obj, request):
+            raise NotImplementedError()
 
-    def get_model(self):
-        return self
+    def get_model(obj):
+        return obj
 
     def get_name(request):
         return request.name
@@ -963,16 +964,16 @@ def test_register_dispatch_predicates_register_defaults():
     def get_request_method(request):
         return request.request_method
 
-    def model_fallback(self, request):
+    def model_fallback(self, obj, request):
         return "Model fallback"
 
-    def name_fallback(self, request):
+    def name_fallback(self, obj, request):
         return "Name fallback"
 
-    def request_method_fallback(self, request):
+    def request_method_fallback(self, obj, request):
         return "Request method fallback"
 
-    r.register_dispatch_predicates(view, [
+    r.register_dispatch_predicates(App.view, [
         match_instance('model', get_model, model_fallback,
                        default=None),
         match_key('name', get_name, name_fallback,
@@ -981,60 +982,60 @@ def test_register_dispatch_predicates_register_defaults():
                   request_method_fallback,
                   default='GET')])
 
-    def foo_default(self, request):
+    def foo_default(self, obj, request):
         return "foo default"
 
-    def foo_post(self, request):
+    def foo_post(self, obj, request):
         return "foo default post"
 
-    def foo_edit(self, request):
+    def foo_edit(self, obj, request):
         return "foo edit"
 
     r.register_function(
-        view, foo_default, model=Foo)
+        App.view, foo_default, model=Foo)
     r.register_function(
-        view, foo_post,
+        App.view, foo_post,
         model=Foo, request_method='POST')
     r.register_function(
-        view, foo_edit,
+        App.view, foo_edit,
         model=Foo, name='edit', request_method='POST')
 
-    l = r.lookup()
+    app = App(r.lookup())
 
     class Request(object):
         def __init__(self, name, request_method):
             self.name = name
             self.request_method = request_method
 
-    assert view(Foo(), Request('', 'GET'), lookup=l) == 'foo default'
-    assert view(FooSub(), Request('', 'GET'), lookup=l) == 'foo default'
-    assert view(FooSub(), Request('edit', 'POST'), lookup=l) == 'foo edit'
+    assert app.view(Foo(), Request('', 'GET')) == 'foo default'
+    assert app.view(FooSub(), Request('', 'GET')) == 'foo default'
+    assert app.view(FooSub(), Request('edit', 'POST')) == 'foo edit'
 
     class Bar(object):
         pass
 
-    assert view(Bar(), Request('', 'GET'), lookup=l) == 'Model fallback'
-    assert view(Foo(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
-    assert view(Foo(), Request('', 'PUT'),
-                lookup=l) == 'Request method fallback'
-    assert view(FooSub(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
+    assert app.view(Bar(), Request('', 'GET')) == 'Model fallback'
+    assert app.view(Foo(), Request('dummy', 'GET')) == 'Name fallback'
+    assert app.view(Foo(), Request('', 'PUT')) == 'Request method fallback'
+    assert app.view(FooSub(), Request('dummy', 'GET')) == 'Name fallback'
 
 
 def test_key_dict_to_predicate_key():
     r = Registry()
 
-    @dispatch(
-        key_predicate('foo', default='default foo'),
-        key_predicate('bar', default='default bar'))
-    def view(self, request):
-        raise NotImplementedError()
+    class App(BaseApp):
+        @methoddispatch(
+            key_predicate('foo', default='default foo'),
+            key_predicate('bar', default='default bar'))
+        def view(self, obj, request):
+            raise NotImplementedError()
 
-    r.register_dispatch(view)
+    r.register_dispatch(App.view)
 
-    assert r.key_dict_to_predicate_key(view.wrapped_func, {
+    assert r.key_dict_to_predicate_key(App.view.wrapped_func, {
         'foo': 'FOO',
         'bar': 'BAR'}) == ('FOO', 'BAR')
-    assert r.key_dict_to_predicate_key(view.wrapped_func, {}) == (
+    assert r.key_dict_to_predicate_key(App.view.wrapped_func, {}) == (
         'default foo',
         'default bar')
 
@@ -1042,16 +1043,17 @@ def test_key_dict_to_predicate_key():
 def test_key_dict_to_predicate_key_unknown_keys():
     r = Registry()
 
-    @dispatch(
-        key_predicate('foo', default='default foo'),
-        key_predicate('bar', default='default bar'))
-    def view(self, request):
-        raise NotImplementedError()
+    class App(BaseApp):
+        @methoddispatch(
+            key_predicate('foo', default='default foo'),
+            key_predicate('bar', default='default bar'))
+        def view(self, obj, request):
+            raise NotImplementedError()
 
-    r.register_dispatch(view)
+    r.register_dispatch(App.view)
 
     # unknown keys are just ignored
-    r.key_dict_to_predicate_key(view.wrapped_func, {
+    r.key_dict_to_predicate_key(App.view.wrapped_func, {
         'unknown': 'blah'})
 
 
@@ -1064,12 +1066,13 @@ def test_register_dispatch_key_dict():
     class FooSub(Foo):
         pass
 
-    @dispatch_external_predicates()
-    def view(self, request):
-        raise NotImplementedError()
+    class App(BaseApp):
+        @methoddispatch_external_predicates()
+        def view(self, obj, request):
+            raise NotImplementedError()
 
-    def get_model(self):
-        return self
+    def get_model(self, obj):
+        return obj
 
     def get_name(request):
         return request.name
@@ -1077,16 +1080,16 @@ def test_register_dispatch_key_dict():
     def get_request_method(request):
         return request.request_method
 
-    def model_fallback(self, request):
+    def model_fallback(self, obj, request):
         return "Model fallback"
 
-    def name_fallback(self, request):
+    def name_fallback(self, obj, request):
         return "Name fallback"
 
-    def request_method_fallback(self, request):
+    def request_method_fallback(self, obj, request):
         return "Request method fallback"
 
-    r.register_external_predicates(view, [
+    r.register_external_predicates(App.view, [
         match_instance('model', get_model, model_fallback,
                        default=None),
         match_key('name', get_name, name_fallback,
@@ -1095,10 +1098,10 @@ def test_register_dispatch_key_dict():
                   request_method_fallback,
                   default='GET')])
 
-    r.register_dispatch(view)
+    r.register_dispatch(App.view)
 
     assert r.key_dict_to_predicate_key(
-        view.wrapped_func, {}) == (None, '', 'GET')
+        App.view.wrapped_func, {}) == (None, '', 'GET')
 
 
 def test_fallback_should_already_use_subset():
@@ -1108,8 +1111,8 @@ def test_fallback_should_already_use_subset():
             self.request_method = request_method
             self.body_obj = body_obj
 
-    def get_model(self):
-        return self
+    def get_model(self, obj):
+        return obj
 
     def get_name(request):
         return request.name
@@ -1120,34 +1123,35 @@ def test_fallback_should_already_use_subset():
     def get_body_model(request):
         return request.body_obj.__class__
 
-    def model_fallback(self, request):
+    def model_fallback(self, obj, request):
         return "Model fallback"
 
-    def name_fallback(self, request):
+    def name_fallback(self, obj, request):
         return "Name fallback"
 
-    def request_method_fallback(self, request):
+    def request_method_fallback(self, obj, request):
         return "Request method fallback"
 
-    def body_model_fallback(self, request):
+    def body_model_fallback(self, obj, request):
         return "Body model fallback"
 
-    @dispatch(
-        match_instance('model', get_model, model_fallback, default=None),
-        match_key('name', get_name, name_fallback, default=''),
-        match_key('request_method', get_request_method,
-                  request_method_fallback, default='GET'),
-        match_class('body_model', get_body_model,
-                    body_model_fallback, default=object))
-    def view(self, request):
-        return "view fallback"
+    class App(BaseApp):
+        @methoddispatch(
+            match_instance('model', get_model, model_fallback, default=None),
+            match_key('name', get_name, name_fallback, default=''),
+            match_key('request_method', get_request_method,
+                      request_method_fallback, default='GET'),
+            match_class('body_model', get_body_model,
+                        body_model_fallback, default=object))
+        def view(self, obj, request):
+            return "view fallback"
 
     r = Registry()
 
-    def exception_view(self, request):
+    def exception_view(self, obj, request):
         return "exception view"
 
-    r.register_function(view, exception_view, model=Exception)
+    r.register_function(App.view, exception_view, model=Exception)
 
     class Collection(object):
         pass
@@ -1158,26 +1162,28 @@ def test_fallback_should_already_use_subset():
     class Item2(object):
         pass
 
-    def collection_add(self, request):
+    def collection_add(self, obj, request):
         return "collection add"
 
-    r.register_function(view, collection_add,
+    r.register_function(App.view, collection_add,
                         model=Collection, request_method='POST',
                         body_model=Item)
 
-    assert view.fallback(Collection(),
-                         Request('', 'POST', Item2()),
-                         lookup=r.lookup()) is body_model_fallback
-    assert view(Collection(), Request('', 'POST', Item2()),
-                lookup=r.lookup()) == 'Body model fallback'
+    app = App(r.lookup())
+    assert app.view.fallback(
+        Collection(),
+        Request('', 'POST', Item2())) is body_model_fallback
+    assert app.view(
+        Collection(), Request('', 'POST', Item2())) == 'Body model fallback'
 
 
 def test_dispatch_missing_argument():
-    @dispatch('obj')
-    def foo(obj):
-        pass
+    class App(BaseApp):
+        @methoddispatch('obj')
+        def foo(self, obj):
+            pass
 
-    def for_bar(obj):
+    def for_bar(self, obj):
         return "for bar"
 
     class Bar(object):
@@ -1185,23 +1191,24 @@ def test_dispatch_missing_argument():
 
     registry = Registry()
 
-    registry.register_function(foo, for_bar, obj=Bar)
+    registry.register_function(App.foo, for_bar, obj=Bar)
 
-    lookup = registry.lookup()
+    app = App(registry.lookup())
 
     with pytest.raises(TypeError):
-        assert foo(lookup=lookup)
+        assert app.foo()
 
 
 def test_register_dispatch_predicates_twice():
-    @dispatch_external_predicates()
-    def foo(obj):
-        pass
+    class App(BaseApp):
+        @methoddispatch_external_predicates()
+        def foo(self, obj):
+            pass
 
-    def for_bar(obj):
+    def for_bar(self, obj):
         return "for bar"
 
-    def for_qux(obj):
+    def for_qux(self, obj):
         return "for qux"
 
     class Bar(object):
@@ -1213,42 +1220,43 @@ def test_register_dispatch_predicates_twice():
     registry = Registry()
 
     registry.register_dispatch_predicates(
-        foo, [match_instance('obj',
-                             lambda obj: obj)])
-    assert foo.wrapped_func in registry.initialized
+        App.foo, [match_instance('obj', lambda obj: obj)])
+    assert App.foo.wrapped_func in registry.initialized
     # second time has no effect
     registry.register_dispatch_predicates(
-        foo, [match_instance('obj',
-                             lambda obj: obj)])
+        App.foo, [match_instance('obj', lambda obj: obj)])
 
 
 def test_register_external_predicates_for_non_external():
-    @dispatch()
-    def foo():
-        pass
+    class App(BaseApp):
+        @methoddispatch()
+        def foo(self):
+            pass
 
     r = Registry()
 
     with pytest.raises(RegistrationError):
-        r.register_external_predicates(foo, [])
+        r.register_external_predicates(App.foo, [])
 
 
 def test_register_no_external_predicates_for_external():
-    @dispatch_external_predicates()
-    def foo():
-        pass
+    class App(BaseApp):
+        @methoddispatch_external_predicates()
+        def foo():
+            pass
 
     r = Registry()
     with pytest.raises(RegistrationError):
-        r.register_dispatch(foo)
+        r.register_dispatch(App.foo)
 
 
 def test_dict_to_predicate_key_for_unknown_dispatch():
-    @dispatch()
-    def foo():
-        pass
+    class App(BaseApp):
+        @methoddispatch()
+        def foo():
+            pass
 
     r = Registry()
 
     with pytest.raises(KeyError):
-        r.key_dict_to_predicate_key(foo, {})
+        r.key_dict_to_predicate_key(App.foo, {})
