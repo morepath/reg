@@ -1,4 +1,5 @@
 import reg
+from reg.dispatch import methoddispatch
 from reg.registry import Registry
 from reg.predicate import match_class
 
@@ -21,111 +22,128 @@ class Bar(object):
         return "<instance of Bar>"
 
 
-def test_dispatch_basic():
-    @reg.dispatch(match_class('cls', lambda cls: cls))
-    def something(cls):
-        raise NotImplementedError()
+class BaseApp(object):
+    def __init__(self, lookup):
+        self.lookup = lookup
 
-    def something_for_object(cls):
+
+def test_dispatch_basic():
+    class App(BaseApp):
+        @methoddispatch(match_class('cls', lambda cls: cls))
+        def something(self, cls):
+            raise NotImplementedError()
+
+    def something_for_object(self, cls):
         return "Something for %s" % cls
 
     r = Registry()
-    r.register_function(something, something_for_object, cls=object)
+    r.register_function(App.something, something_for_object, cls=object)
 
-    l = r.lookup()
-    assert something(DemoClass, lookup=l) == (
+    app = App(r.lookup())
+
+    assert app.something(DemoClass) == (
         "Something for <class 'reg.tests.test_classdispatch.DemoClass'>")
 
-    assert something.component(DemoClass, lookup=l) is something_for_object
-    assert list(something.all(DemoClass, lookup=l)) == [something_for_object]
+    assert app.something.component(DemoClass) is something_for_object
+    assert list(app.something.all(DemoClass)) == [something_for_object]
 
 
 def test_classdispatch_multidispatch():
-    @reg.dispatch(match_class('cls', lambda cls: cls), 'other')
-    def something(cls, other):
-        raise NotImplementedError()
+    class App(BaseApp):
+        @methoddispatch(match_class('cls', lambda cls: cls), 'other')
+        def something(self, cls, other):
+            raise NotImplementedError()
 
-    def something_for_object_and_object(cls, other):
+    def something_for_object_and_object(self, cls, other):
         return "Something, other is object: %s" % other
 
-    def something_for_object_and_foo(cls, other):
+    def something_for_object_and_foo(self, cls, other):
         return "Something, other is Foo: %s" % other
 
     r = Registry()
     r.register_function(
-        something,
+        App.something,
         something_for_object_and_object,
         cls=object, other=object)
 
     r.register_function(
-        something,
+        App.something,
         something_for_object_and_foo,
         cls=object, other=Foo)
 
-    l = r.lookup()
-    assert something(DemoClass, Bar(), lookup=l) == (
+    app = App(r.lookup())
+
+    assert app.something(DemoClass, Bar()) == (
         'Something, other is object: <instance of Bar>')
-    assert something(DemoClass, Foo(), lookup=l) == (
+    assert app.something(DemoClass, Foo()) == (
         "Something, other is Foo: <instance of Foo>")
 
 
 def test_classdispatch_extra_arguments():
-    @reg.dispatch(match_class('cls', lambda cls: cls))
-    def something(cls, extra):
-        raise NotImplementedError()
+    class App(BaseApp):
+        @methoddispatch(match_class('cls', lambda cls: cls))
+        def something(self, cls, extra):
+            raise NotImplementedError()
 
-    def something_for_object(cls, extra):
+    def something_for_object(self, cls, extra):
         return "Extra: %s" % extra
 
     r = Registry()
-    r.register_function(something, something_for_object,
+    r.register_function(App.something, something_for_object,
                         cls=object)
 
-    assert something(DemoClass, 'foo', lookup=r.lookup()) == "Extra: foo"
+    app = App(r.lookup())
+    assert app.something(DemoClass, 'foo') == "Extra: foo"
 
 
 def test_classdispatch_no_arguments():
-    @reg.dispatch()
-    def something():
-        raise NotImplementedError()
+    class App(BaseApp):
+        @methoddispatch()
+        def something(self):
+            raise NotImplementedError()
 
-    def something_impl():
+    def something_impl(self):
         return "Something!"
 
     r = Registry()
-    r.register_function(something, something_impl)
+    r.register_function(App.something, something_impl)
 
-    assert something(lookup=r.lookup()) == 'Something!'
+    app = App(r.lookup())
+    assert app.something() == 'Something!'
 
 
 def test_classdispatch_override():
-    @reg.dispatch(match_class('cls', lambda cls: cls))
-    def something(cls):
-        raise NotImplementedError()
+    class App(BaseApp):
+        @methoddispatch(match_class('cls', lambda cls: cls))
+        def something(self, cls):
+            raise NotImplementedError()
 
-    def something_for_object(cls):
+    def something_for_object(self, cls):
         return "Something for %s" % cls
 
-    def something_for_special(cls):
+    def something_for_special(self, cls):
         return "Special for %s" % cls
 
     r = Registry()
-    r.register_function(something,
+    r.register_function(App.something,
                         something_for_object,
                         cls=object)
-    r.register_function(something,
+    r.register_function(App.something,
                         something_for_special,
                         cls=SpecialClass)
 
-    assert something(SpecialClass, lookup=r.lookup()) == (
+    app = App(r.lookup())
+    assert app.something(SpecialClass) == (
         "Special for <class 'reg.tests.test_classdispatch.SpecialClass'>")
 
 
 def test_classdispatch_fallback():
-    @reg.dispatch()
-    def something(cls):
-        return "Fallback"
+    class App(BaseApp):
+        @methoddispatch()
+        def something(self, cls):
+            return "Fallback"
 
     r = Registry()
 
-    assert something(DemoClass, lookup=r.lookup()) == "Fallback"
+    app = App(r.lookup())
+    assert app.something(DemoClass) == "Fallback"
