@@ -6,7 +6,8 @@ from reg.implicit import implicit
 from reg.registry import Registry
 from reg.predicate import (
     match_instance, match_key, match_class, key_predicate, NOT_FOUND)
-from reg.dispatch import dispatch, dispatch_external_predicates, methoddispatch
+from reg.dispatch import (dispatch, dispatch_external_predicates,
+                          methoddispatch, methoddispatch_external_predicates)
 from reg.error import RegistrationError, KeyExtractorError
 
 
@@ -663,122 +664,132 @@ def test_fallback_to_dispatch():
 
 
 def test_calling_twice():
-    @dispatch('obj')
-    def target(obj):
-        return 'fallback'
+    class App(BaseApp):
+        @methoddispatch('obj')
+        def target(self, obj):
+            return 'fallback'
 
     reg = Registry()
 
-    def a(obj):
+    def a(self, obj):
         return 'a'
 
-    def b(obj):
+    def b(self, obj):
         return 'b'
 
-    reg.register_dispatch(target)
+    reg.register_dispatch(App.target)
 
-    reg.register_function(target, a, obj=Alpha)
-    reg.register_function(target, b, obj=Beta)
+    reg.register_function(App.target, a, obj=Alpha)
+    reg.register_function(App.target, b, obj=Beta)
 
-    lookup = reg.lookup()
+    app = App(reg.lookup())
 
-    assert target(Alpha(), lookup=lookup) == 'a'
-    assert target(Beta(), lookup=lookup) == 'b'
+    assert app.target(Alpha()) == 'a'
+    assert app.target(Beta()) == 'b'
 
 
 def test_lookup_passed_along():
-    @dispatch('obj')
-    def g1(obj):
-        pass
+    class App(BaseApp):
+        @methoddispatch('obj')
+        def g1(self, obj):
+            pass
 
-    @dispatch('obj')
-    def g2(obj):
-        pass
+        @methoddispatch('obj')
+        def g2(self, obj):
+            pass
 
     reg = Registry()
 
-    def g1_impl(obj, lookup):
-        return g2(obj, lookup=lookup)
+    def g1_impl(self, obj):
+        return self.g2(obj)
 
-    def g2_impl(obj):
+    def g2_impl(self, obj):
         return "g2"
 
-    reg.register_dispatch(g1)
-    reg.register_dispatch(g2)
+    reg.register_dispatch(App.g1)
+    reg.register_dispatch(App.g2)
 
-    reg.register_function(g1, g1_impl, obj=Alpha)
-    reg.register_function(g2, g2_impl, obj=Alpha)
+    reg.register_function(App.g1, g1_impl, obj=Alpha)
+    reg.register_function(App.g2, g2_impl, obj=Alpha)
 
-    assert g1(Alpha(), lookup=reg.lookup()) == 'g2'
+    app = App(reg.lookup())
+
+    assert app.g1(Alpha()) == 'g2'
 
 
 def test_different_defaults_in_specific_non_dispatch_arg():
-    @dispatch('obj')
-    def target(obj, blah='default'):
-        return 'fallback: %s' % blah
+    class App(BaseApp):
+        @methoddispatch('obj')
+        def target(self, obj, blah='default'):
+            return 'fallback: %s' % blah
 
     reg = Registry()
 
-    def a(obj, blah='default 2'):
+    def a(self, obj, blah='default 2'):
         return 'a: %s' % blah
 
-    reg.register_dispatch(target)
-    reg.register_function(target, a, obj=Alpha)
+    reg.register_dispatch(App.target)
+    reg.register_function(App.target, a, obj=Alpha)
 
-    lookup = reg.lookup()
+    app = App(reg.lookup())
 
-    assert target(Alpha(), lookup=lookup) == 'a: default 2'
+    assert app.target(Alpha()) == 'a: default 2'
 
 
 def test_different_defaults_in_specific_dispatch_arg():
-    @dispatch(match_key('key', lambda key: key))
-    def target(key='default'):
-        return 'fallback: %s' % key
+    class App(BaseApp):
+        @methoddispatch(match_key('key', lambda key: key))
+        def target(self, key='default'):
+            return 'fallback: %s' % key
 
     reg = Registry()
 
-    def a(key='default 2'):
+    def a(self, key='default 2'):
         return 'a: %s' % key
 
-    reg.register_dispatch(target)
-    reg.register_function(target, a, key='foo')
+    reg.register_dispatch(App.target)
+    reg.register_function(App.target, a, key='foo')
 
-    lookup = reg.lookup()
+    app = App(reg.lookup())
 
-    assert target('foo', lookup=lookup) == 'a: foo'
-    assert target('bar', lookup=lookup) == 'fallback: bar'
-    assert target(lookup=lookup) == 'fallback: default'
+    assert app.target('foo') == 'a: foo'
+    assert app.target('bar') == 'fallback: bar'
+    assert app.target() == 'fallback: default'
 
 
 def test_different_defaults_in_specific_dispatch_arg_causes_dispatch():
-    @dispatch(match_key('key', lambda key: key))
-    def target(key='foo'):
-        return 'fallback: %s' % key
+    class App(BaseApp):
+        @methoddispatch(match_key('key', lambda key: key))
+        def target(self, key='foo'):
+            return 'fallback: %s' % key
 
     reg = Registry()
 
-    def a(key='default 2'):
+    def a(self, key='default 2'):
         return 'a: %s' % key
 
-    reg.register_dispatch(target)
-    reg.register_function(target, a, key='foo')
+    reg.register_dispatch(App.target)
+    reg.register_function(App.target, a, key='foo')
 
-    lookup = reg.lookup()
+    app = App(reg.lookup())
 
-    assert target('foo', lookup=lookup) == 'a: foo'
-    assert target('bar', lookup=lookup) == 'fallback: bar'
-    assert target(lookup=lookup) == 'a: default 2'
+    assert app.target('foo') == 'a: foo'
+    assert app.target('bar') == 'fallback: bar'
+    assert app.target() == 'a: default 2'
 
 
-def test_lookup_passed_along_fallback():
-    @dispatch()
-    def a(lookup):
-        return "fallback"
+def test_self_passed_along_fallback():
+    class App(BaseApp):
+        @methoddispatch()
+        def a(self):
+            return isinstance(self, App)
 
     reg = Registry()
-    reg.register_dispatch(a)
+    reg.register_dispatch(App.a)
 
-    assert a(lookup=reg.lookup()) == 'fallback'
+    app = App(reg.lookup())
+
+    assert app.a()
 
 
 def test_register_dispatch_predicates_no_defaults():
@@ -790,12 +801,13 @@ def test_register_dispatch_predicates_no_defaults():
     class FooSub(Foo):
         pass
 
-    @dispatch()
-    def view(self, request):
-        raise NotImplementedError()
+    class App(BaseApp):
+        @methoddispatch()
+        def view(self, obj, request):
+            raise NotImplementedError()
 
-    def get_model(self):
-        return self
+    def get_model(self, obj):
+        return obj
 
     def get_name(request):
         return request.name
@@ -803,56 +815,55 @@ def test_register_dispatch_predicates_no_defaults():
     def get_request_method(request):
         return request.request_method
 
-    def model_fallback(self, request):
+    def model_fallback(self, obj, request):
         return "Model fallback"
 
-    def name_fallback(self, request):
+    def name_fallback(self, obj, request):
         return "Name fallback"
 
-    def request_method_fallback(self, request):
+    def request_method_fallback(self, obj, request):
         return "Request method fallback"
 
-    r.register_dispatch_predicates(view, [
+    r.register_dispatch_predicates(App.view, [
         match_instance('model', get_model, model_fallback),
         match_key('name', get_name, name_fallback),
         match_key('request_method', get_request_method,
                   request_method_fallback)])
 
-    def foo_default(self, request):
+    def foo_default(self, obj, request):
         return "foo default"
 
-    def foo_post(self, request):
+    def foo_post(self, obj, request):
         return "foo default post"
 
-    def foo_edit(self, request):
+    def foo_edit(self, obj, request):
         return "foo edit"
 
-    r.register_function(view, foo_default,
+    r.register_function(App.view, foo_default,
                         model=Foo, name='', request_method='GET')
-    r.register_function(view, foo_post,
+    r.register_function(App.view, foo_post,
                         model=Foo, name='', request_method='POST')
-    r.register_function(view, foo_edit,
+    r.register_function(App.view, foo_edit,
                         model=Foo, name='edit', request_method='POST')
 
-    l = r.lookup()
+    app = App(r.lookup())
 
     class Request(object):
         def __init__(self, name, request_method):
             self.name = name
             self.request_method = request_method
 
-    assert view(Foo(), Request('', 'GET'), lookup=l) == 'foo default'
-    assert view(FooSub(), Request('', 'GET'), lookup=l) == 'foo default'
-    assert view(FooSub(), Request('edit', 'POST'), lookup=l) == 'foo edit'
+    assert app.view(Foo(), Request('', 'GET')) == 'foo default'
+    assert app.view(FooSub(), Request('', 'GET')) == 'foo default'
+    assert app.view(FooSub(), Request('edit', 'POST')) == 'foo edit'
 
     class Bar(object):
         pass
 
-    assert view(Bar(), Request('', 'GET'), lookup=l) == 'Model fallback'
-    assert view(Foo(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
-    assert view(Foo(), Request('', 'PUT'),
-                lookup=l) == 'Request method fallback'
-    assert view(FooSub(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
+    assert app.view(Bar(), Request('', 'GET')) == 'Model fallback'
+    assert app.view(Foo(), Request('dummy', 'GET')) == 'Name fallback'
+    assert app.view(Foo(), Request('', 'PUT')) == 'Request method fallback'
+    assert app.view(FooSub(), Request('dummy', 'GET')) == 'Name fallback'
 
 
 def test_dispatch_external_predicates():
@@ -864,12 +875,13 @@ def test_dispatch_external_predicates():
     class FooSub(Foo):
         pass
 
-    @dispatch_external_predicates()
-    def view(self, request):
-        raise NotImplementedError()
+    class App(BaseApp):
+        @methoddispatch_external_predicates()
+        def view(self, obj, request):
+            raise NotImplementedError()
 
-    def get_model(self):
-        return self
+    def get_model(self, obj):
+        return obj
 
     def get_name(request):
         return request.name
@@ -877,57 +889,56 @@ def test_dispatch_external_predicates():
     def get_request_method(request):
         return request.request_method
 
-    def model_fallback(self, request):
+    def model_fallback(self, obj, request):
         return "Model fallback"
 
-    def name_fallback(self, request):
+    def name_fallback(self, obj, request):
         return "Name fallback"
 
-    def request_method_fallback(self, request):
+    def request_method_fallback(self, obj, request):
         return "Request method fallback"
 
-    r.register_external_predicates(view, [
+    r.register_external_predicates(App.view, [
         match_instance('model', get_model, model_fallback),
         match_key('name', get_name, name_fallback),
         match_key('request_method', get_request_method,
                   request_method_fallback)])
 
-    def foo_default(self, request):
+    def foo_default(self, obj, request):
         return "foo default"
 
-    def foo_post(self, request):
+    def foo_post(self, obj, request):
         return "foo default post"
 
-    def foo_edit(self, request):
+    def foo_edit(self, obj, request):
         return "foo edit"
 
-    r.register_function(view, foo_default,
+    r.register_function(App.view, foo_default,
                         model=Foo, name='', request_method='GET')
-    r.register_function(view, foo_post,
+    r.register_function(App.view, foo_post,
                         model=Foo, name='', request_method='POST')
-    r.register_function(view, foo_edit,
+    r.register_function(App.view, foo_edit,
                         model=Foo, name='edit', request_method='POST')
 
-    l = r.lookup()
+    app = App(r.lookup())
 
     class Request(object):
         def __init__(self, name, request_method):
             self.name = name
             self.request_method = request_method
 
-    assert view(Foo(), Request('', 'GET'), lookup=l) == 'foo default'
-    assert view(FooSub(), Request('', 'GET'), lookup=l) == 'foo default'
-    assert view(FooSub(), Request('edit', 'POST'), lookup=l) == 'foo edit'
+    assert app.view(Foo(), Request('', 'GET')) == 'foo default'
+    assert app.view(FooSub(), Request('', 'GET')) == 'foo default'
+    assert app.view(FooSub(), Request('edit', 'POST')) == 'foo edit'
 
     class Bar(object):
         pass
 
-    assert view(Bar(), Request('', 'GET'), lookup=l) == 'Model fallback'
-    assert view(Foo(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
-    assert view(Foo(), Request('', 'PUT'),
-                lookup=l) == 'Request method fallback'
-    assert view(FooSub(), Request('dummy', 'GET'), lookup=l) == 'Name fallback'
-    assert view.fallback(Bar(), Request('', 'GET'), lookup=l) is model_fallback
+    assert app.view(Bar(), Request('', 'GET')) == 'Model fallback'
+    assert app.view(Foo(), Request('dummy', 'GET')) == 'Name fallback'
+    assert app.view(Foo(), Request('', 'PUT')) == 'Request method fallback'
+    assert app.view(FooSub(), Request('dummy', 'GET')) == 'Name fallback'
+    assert app.view.fallback(Bar(), Request('', 'GET')) is model_fallback
 
 
 def test_register_dispatch_predicates_register_defaults():

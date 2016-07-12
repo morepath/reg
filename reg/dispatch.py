@@ -76,6 +76,12 @@ class dispatch_external_predicates(object):
         return result
 
 
+class methoddispatch_external_predicates(object):
+    def __call__(self, callable):
+        return MethodDispatchDescriptor([], callable,
+                                        external_predicates=True)
+
+
 class MethodDispatchDescriptor(object):
     def __init__(self, predicates, callable, external_predicates=False):
         self.predicates = predicates
