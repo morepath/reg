@@ -1,13 +1,10 @@
 from __future__ import unicode_literals
 import pytest
 
-from reg.error import NoImplicitLookupError
-from reg.implicit import implicit
 from reg.registry import Registry
 from reg.predicate import (
     match_instance, match_key, match_class, key_predicate, NOT_FOUND)
-from reg.dispatch import (dispatch, dispatch_external_predicates,
-                          methoddispatch, methoddispatch_external_predicates)
+from reg.dispatch import methoddispatch, methoddispatch_external_predicates
 from reg.error import RegistrationError, KeyExtractorError
 
 
@@ -595,18 +592,6 @@ def test_extra_arg_for_call():
     assert app.target(beta, extra="allowed") == 'General: allowed'
     assert app.target(alpha, 'allowed') == 'Specific: allowed'
     assert app.target(beta, 'allowed') == 'General: allowed'
-
-
-def test_no_implicit():
-    implicit.clear()
-
-    @dispatch('obj')
-    def target(obj):
-        pass
-
-    alpha = Alpha()
-    with pytest.raises(NoImplicitLookupError):
-        target.component(alpha)
 
 
 def test_fallback_to_fallback():
