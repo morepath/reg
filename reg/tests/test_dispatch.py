@@ -6,7 +6,7 @@ from reg.implicit import implicit
 from reg.registry import Registry
 from reg.predicate import (
     match_instance, match_key, match_class, key_predicate, NOT_FOUND)
-from reg.dispatch import dispatch, dispatch_external_predicates
+from reg.dispatch import dispatch, dispatch_external_predicates, methoddispatch
 from reg.error import RegistrationError, KeyExtractorError
 
 
@@ -26,15 +26,21 @@ class Beta(IBeta):
     pass
 
 
-def test_dispatch_argname():
-    @dispatch('obj')
-    def foo(obj):
-        pass
+class BaseApp(object):
+    def __init__(self, lookup):
+        self.lookup = lookup
 
-    def for_bar(obj):
+
+def test_dispatch_argname():
+    class App(BaseApp):
+        @methoddispatch('obj')
+        def foo(self, obj):
+            pass
+
+    def for_bar(self, obj):
         return obj.method()
 
-    def for_qux(obj):
+    def for_qux(self, obj):
         return obj.method()
 
     class Bar(object):
@@ -47,23 +53,25 @@ def test_dispatch_argname():
 
     registry = Registry()
 
-    registry.register_function(foo, for_bar, obj=Bar)
-    registry.register_function(foo, for_qux, obj=Qux)
+    registry.register_function(App.foo, for_bar, obj=Bar)
+    registry.register_function(App.foo, for_qux, obj=Qux)
 
-    lookup = registry.lookup()
-    assert foo(Bar(), lookup=lookup) == "bar's method"
-    assert foo(Qux(), lookup=lookup) == "qux's method"
+    app = App(registry.lookup())
+
+    assert app.foo(Bar()) == "bar's method"
+    assert app.foo(Qux()) == "qux's method"
 
 
 def test_dispatch_match_instance():
-    @dispatch(match_instance('obj', lambda obj: obj))
-    def foo(obj):
-        pass
+    class App(BaseApp):
+        @methoddispatch(match_instance('obj', lambda obj: obj))
+        def foo(self, obj):
+            pass
 
-    def for_bar(obj):
+    def for_bar(self, obj):
         return obj.method()
 
-    def for_qux(obj):
+    def for_qux(self, obj):
         return obj.method()
 
     class Bar(object):
@@ -76,31 +84,34 @@ def test_dispatch_match_instance():
 
     registry = Registry()
 
-    registry.register_function(foo, for_bar, obj=Bar)
-    registry.register_function(foo, for_qux, obj=Qux)
+    registry.register_function(App.foo, for_bar, obj=Bar)
+    registry.register_function(App.foo, for_qux, obj=Qux)
 
-    lookup = registry.lookup()
-    assert foo(Bar(), lookup=lookup) == "bar's method"
-    assert foo(Qux(), lookup=lookup) == "qux's method"
+    app = App(registry.lookup())
+
+    assert app.foo(Bar()) == "bar's method"
+    assert app.foo(Qux()) == "qux's method"
 
 
 def test_dispatch_no_arguments():
-    @dispatch()
-    def foo():
-        pass
+    class App(BaseApp):
+        @methoddispatch()
+        def foo(self):
+            pass
 
     registry = Registry()
 
-    def special_foo():
+    def special_foo(self):
         return "special"
 
-    registry.register_function(foo, special_foo)
+    registry.register_function(App.foo, special_foo)
 
-    lookup = registry.lookup()
-    assert foo.component(lookup=lookup) is special_foo
-    assert list(foo.all(lookup=lookup)) == [special_foo]
-    assert foo(lookup=lookup) == 'special'
-    assert foo.fallback(lookup=lookup) is None
+    app = App(registry.lookup())
+
+    assert app.foo.component() is special_foo
+    assert list(app.foo.all()) == [special_foo]
+    assert app.foo() == 'special'
+    assert app.foo.fallback() is None
 
 
 def test_all():
@@ -110,28 +121,30 @@ def test_all():
     class Sub(Base):
         pass
 
-    @dispatch('obj')
-    def target(obj):
+    class App(BaseApp):
+        @methoddispatch('obj')
+        def target(self, obj):
+            pass
+
+    def registered_for_sub(self, obj):
         pass
 
-    def registered_for_sub(obj):
-        pass
-
-    def registered_for_base(obj):
+    def registered_for_base(self, obj):
         pass
 
     registry = Registry()
 
-    registry.register_function(target, registered_for_sub, obj=Sub)
-    registry.register_function(target, registered_for_base, obj=Base)
+    registry.register_function(App.target, registered_for_sub, obj=Sub)
+    registry.register_function(App.target, registered_for_base, obj=Base)
 
     base = Base()
     sub = Sub()
 
-    lookup = registry.lookup()
-    assert list(target.all(sub, lookup=lookup)) == [
+    app = App(registry.lookup())
+
+    assert list(app.target.all(sub)) == [
         registered_for_sub, registered_for_base]
-    assert list(target.all(base, lookup=lookup)) == [
+    assert list(app.target.all(base)) == [
         registered_for_base]
 
 
@@ -142,103 +155,125 @@ def test_all_key_dict():
     class Sub(Base):
         pass
 
-    @dispatch('obj')
-    def target(obj):
+    class App(BaseApp):
+        @methoddispatch('obj')
+        def target(self, obj):
+            pass
+
+    def registered_for_sub(self, obj):
         pass
 
-    def registered_for_sub(obj):
-        pass
-
-    def registered_for_base(obj):
+    def registered_for_base(self, obj):
         pass
 
     registry = Registry()
 
-    registry.register_function(target, registered_for_sub, obj=Sub)
-    registry.register_function(target, registered_for_base, obj=Base)
+    registry.register_function(App.target, registered_for_sub, obj=Sub)
+    registry.register_function(App.target, registered_for_base, obj=Base)
 
-    lookup = registry.lookup()
-    assert list(target.all_key_dict(obj=Sub, lookup=lookup)) == [
+    app = App(registry.lookup())
+
+    assert list(app.target.all_key_dict(obj=Sub)) == [
         registered_for_sub, registered_for_base]
-    assert list(target.all_key_dict(obj=Base, lookup=lookup)) == [
+    assert list(app.target.all_key_dict(obj=Base)) == [
         registered_for_base]
 
 
 def test_component_no_source():
     reg = Registry()
 
-    @dispatch()
-    def target():
+    class App(BaseApp):
+
+        @methoddispatch()
+        def target(self):
+            pass
+
+    def foo(self):
         pass
 
-    def foo():
-        pass
+    reg.register_function(App.target, foo)
 
-    reg.register_function(target, foo)
-    assert target.component(lookup=reg.lookup()) is foo
+    app = App(reg.lookup())
+
+    assert app.target.component() is foo
 
 
 def test_component_no_source_key_dict():
     reg = Registry()
 
-    @dispatch()
-    def target():
+    class App(BaseApp):
+        @methoddispatch()
+        def target(self):
+            pass
+
+    def foo(self):
         pass
 
-    def foo():
-        pass
+    reg.register_function(App.target, foo)
 
-    reg.register_function(target, foo)
-    assert target.component_key_dict(lookup=reg.lookup()) is foo
+    app = App(reg.lookup())
+
+    assert app.target.component_key_dict() is foo
 
 
 def test_component_one_source():
     reg = Registry()
 
-    @dispatch('obj')
-    def target(obj):
+    class App(BaseApp):
+        @methoddispatch('obj')
+        def target(self, obj):
+            pass
+
+    def foo(self, obj):
         pass
 
-    def foo(obj):
-        pass
-
-    reg.register_function(target, foo, obj=Alpha)
+    reg.register_function(App.target, foo, obj=Alpha)
 
     alpha = Alpha()
-    assert target.component(alpha, lookup=reg.lookup()) is foo
+
+    app = App(reg.lookup())
+
+    assert app.target.component(alpha) is foo
 
 
 def test_component_one_source_key_dict():
     reg = Registry()
 
-    @dispatch('obj')
-    def target(obj):
+    class App(BaseApp):
+        @methoddispatch('obj')
+        def target(self, obj):
+            pass
+
+    def foo(self, obj):
         pass
 
-    def foo(obj):
-        pass
+    reg.register_function(App.target, foo, obj=Alpha)
 
-    reg.register_function(target, foo, obj=Alpha)
+    app = App(reg.lookup())
 
-    assert target.component_key_dict(obj=Alpha, lookup=reg.lookup()) is foo
+    assert app.target.component_key_dict(obj=Alpha) is foo
 
 
 def test_component_two_sources():
     reg = Registry()
 
-    @dispatch('a', 'b')
-    def target(a, b):
+    class App(BaseApp):
+        @methoddispatch('a', 'b')
+        def target(self, a, b):
+            pass
+
+    def foo(self, a, b):
         pass
 
-    def foo(a, b):
-        pass
-
-    reg.register_dispatch(target)
-    reg.register_function(target, foo, a=IAlpha, b=IBeta)
+    reg.register_dispatch(App.target)
+    reg.register_function(App.target, foo, a=IAlpha, b=IBeta)
 
     alpha = Alpha()
     beta = Beta()
-    assert target.component(alpha, beta, lookup=reg.lookup()) is foo
+
+    app = App(reg.lookup())
+
+    assert app.target.component(alpha, beta) is foo
 
 
 def test_component_inheritance():
@@ -250,19 +285,22 @@ def test_component_inheritance():
     class Delta(Gamma):
         pass
 
-    @dispatch('obj')
-    def target(obj):
+    class App(BaseApp):
+        @methoddispatch('obj')
+        def target(self, obj):
+            pass
+
+    def foo(self, obj):
         pass
 
-    def foo(obj):
-        pass
-
-    reg.register_dispatch(target)
-    reg.register_function(target, foo, obj=Gamma)
+    reg.register_dispatch(App.target)
+    reg.register_function(App.target, foo, obj=Gamma)
 
     delta = Delta()
 
-    assert target.component(delta, lookup=reg.lookup()) is foo
+    app = App(reg.lookup())
+
+    assert app.target.component(delta) is foo
 
 
 def test_component_inheritance_old_style_class():
@@ -274,267 +312,288 @@ def test_component_inheritance_old_style_class():
     class Delta(Gamma):
         pass
 
-    @dispatch('obj')
-    def target(obj):
+    class App(BaseApp):
+        @methoddispatch('obj')
+        def target(self, obj):
+            pass
+
+    def foo(self, obj):
         pass
 
-    def foo(obj):
-        pass
-
-    reg.register_dispatch(target)
-    reg.register_function(target, foo, obj=Gamma)
+    reg.register_dispatch(App.target)
+    reg.register_function(App.target, foo, obj=Gamma)
 
     gamma = Gamma()
     delta = Delta()
 
-    lookup = reg.lookup()
-    assert target.component(gamma, lookup=lookup) is foo
+    app = App(reg.lookup())
+
+    assert app.target.component(gamma) is foo
 
     # inheritance case
-    assert target.component(delta, lookup=lookup) is foo
+    assert app.target.component(delta) is foo
 
 
 def test_call_no_source():
     reg = Registry()
     foo = object()
 
-    @dispatch()
-    def target():
-        pass
+    class App(BaseApp):
+        @methoddispatch()
+        def target(self):
+            pass
 
-    def factory():
+    def factory(self):
         return foo
 
-    reg.register_dispatch(target)
-    reg.register_function(target, factory)
+    reg.register_dispatch(App.target)
+    reg.register_function(App.target, factory)
 
-    assert target(lookup=reg.lookup()) is foo
+    app = App(reg.lookup())
+
+    assert app.target() is foo
 
 
 def test_call_one_source():
     reg = Registry()
 
-    @dispatch('obj')
-    def target(obj):
-        pass
+    class App(BaseApp):
+        @methoddispatch('obj')
+        def target(self, obj):
+            pass
 
-    def foo(obj):
+    def foo(self, obj):
         return "foo"
 
-    def bar(obj):
+    def bar(self, obj):
         return "bar"
 
-    reg.register_dispatch(target)
-    reg.register_function(target, foo, obj=IAlpha)
-    reg.register_function(target, bar, obj=IBeta)
+    reg.register_dispatch(App.target)
+    reg.register_function(App.target, foo, obj=IAlpha)
+    reg.register_function(App.target, bar, obj=IBeta)
 
-    lookup = reg.lookup()
-    assert target(Alpha(), lookup=lookup) == 'foo'
-    assert target(Beta(), lookup=lookup) == 'bar'
+    app = App(reg.lookup())
+    assert app.target(Alpha()) == 'foo'
+    assert app.target(Beta()) == 'bar'
 
 
 def test_call_two_sources():
     reg = Registry()
 
-    @dispatch('a', 'b')
-    def target(a, b):
-        pass
+    class App(BaseApp):
+        @methoddispatch('a', 'b')
+        def target(self, a, b):
+            pass
 
-    def foo(a, b):
+    def foo(self, a, b):
         return "foo"
 
-    def bar(a, b):
+    def bar(self, a, b):
         return "bar"
 
-    reg.register_dispatch(target)
-    reg.register_function(target, foo, a=IAlpha, b=IBeta)
-    reg.register_function(target, bar, a=IBeta, b=IAlpha)
+    reg.register_dispatch(App.target)
+    reg.register_function(App.target, foo, a=IAlpha, b=IBeta)
+    reg.register_function(App.target, bar, a=IBeta, b=IAlpha)
     alpha = Alpha()
     beta = Beta()
 
-    lookup = reg.lookup()
+    app = App(reg.lookup())
 
-    assert target(alpha, beta, lookup=lookup) == 'foo'
-    assert target(beta, alpha, lookup=lookup) == 'bar'
+    assert app.target(alpha, beta) == 'foo'
+    assert app.target(beta, alpha) == 'bar'
 
 
 def test_component_not_found_no_sources():
     reg = Registry()
 
-    @dispatch()
-    def target():
-        pass
+    class App(BaseApp):
+        @methoddispatch()
+        def target(self):
+            pass
 
-    reg.register_dispatch(target)
+    reg.register_dispatch(App.target)
 
-    lookup = reg.lookup()
-    assert target.component(lookup=lookup) is None
+    app = App(reg.lookup())
+
+    assert app.target.component() is None
 
 
 def test_call_not_found_no_sources():
     reg = Registry()
 
-    @dispatch()
-    def target():
-        return "default"
+    class App(BaseApp):
+        @methoddispatch()
+        def target(self):
+            return "default"
 
-    reg.register_dispatch(target)
+    reg.register_dispatch(App.target)
 
-    lookup = reg.lookup()
-    assert target(lookup=lookup) == "default"
+    app = App(reg.lookup())
+
+    assert app.target() == "default"
 
 
 def test_component_not_found_one_source():
     reg = Registry()
 
-    @dispatch('obj')
-    def target(obj):
-        pass
+    class App(BaseApp):
+        @methoddispatch('obj')
+        def target(self, obj):
+            pass
 
-    reg.register_dispatch(target)
+    reg.register_dispatch(App.target)
 
-    lookup = reg.lookup()
+    app = App(reg.lookup())
 
-    assert target.component('dummy', lookup=lookup) is None
+    assert app.target.component('dummy') is None
 
 
 def test_call_not_found_one_source():
     reg = Registry()
 
-    @dispatch('obj')
-    def target(obj):
-        return "default: %s" % obj
+    class App(BaseApp):
+        @methoddispatch('obj')
+        def target(self, obj):
+            return "default: %s" % obj
 
-    reg.register_dispatch(target)
+    reg.register_dispatch(App.target)
 
-    lookup = reg.lookup()
+    app = App(reg.lookup())
 
-    assert target('dummy', lookup=lookup) == 'default: dummy'
+    assert app.target('dummy') == 'default: dummy'
 
 
 def test_component_not_found_two_sources():
     reg = Registry()
 
-    @dispatch('a', 'b')
-    def target(a, b):
-        pass
+    class App(BaseApp):
+        @methoddispatch('a', 'b')
+        def target(self, a, b):
+            pass
 
-    reg.register_dispatch(target)
+    reg.register_dispatch(App.target)
 
-    lookup = reg.lookup()
+    app = App(reg.lookup())
 
-    assert target.component('dummy', 'dummy', lookup=lookup) is None
+    assert app.target.component('dummy', 'dummy') is None
 
 
 def test_call_not_found_two_sources():
     reg = Registry()
 
-    @dispatch('a', 'b')
-    def target(a, b):
-        return "a: %s b: %s" % (a, b)
+    class App(BaseApp):
+        @methoddispatch('a', 'b')
+        def target(self, a, b):
+            return "a: %s b: %s" % (a, b)
 
-    reg.register_dispatch(target)
+    reg.register_dispatch(App.target)
 
-    lookup = reg.lookup()
+    app = App(reg.lookup())
 
-    assert target('dummy1', 'dummy2', lookup=lookup) == "a: dummy1 b: dummy2"
+    assert app.target('dummy1', 'dummy2') == "a: dummy1 b: dummy2"
 
 
 def test_wrong_callable_registered():
     reg = Registry()
 
-    @dispatch('obj')
-    def target(obj):
+    class App(BaseApp):
+        @methoddispatch('obj')
+        def target(self, obj):
+            pass
+
+    def callable(self, a, b):
         pass
 
-    def callable(a, b):
-        pass
-
-    reg.register_dispatch(target)
+    reg.register_dispatch(App.target)
     with pytest.raises(RegistrationError):
-        reg.register_function(target, callable, a=Alpha)
+        reg.register_function(App.target, callable, a=Alpha)
 
 
 def test_non_callable_registered():
     reg = Registry()
 
-    @dispatch('obj')
-    def target(obj):
-        pass
+    class App(BaseApp):
+        @methoddispatch('obj')
+        def target(self, obj):
+            pass
 
     non_callable = None
 
-    reg.register_dispatch(target)
+    reg.register_dispatch(App.target)
     with pytest.raises(RegistrationError):
-        reg.register_function(target, non_callable, a=Alpha)
+        reg.register_function(App.target, non_callable, a=Alpha)
 
 
 def test_call_with_no_args_while_arg_expected():
-    @dispatch('obj')
-    def target(obj):
-        pass
 
-    def specific(obj):
+    class App(BaseApp):
+        @methoddispatch('obj')
+        def target(self, obj):
+            pass
+
+    def specific(self, obj):
         return "specific"
 
     reg = Registry()
-    reg.register_dispatch(target)
-    reg.register_function(target, specific, obj=Alpha)
+    reg.register_dispatch(App.target)
+    reg.register_function(App.target, specific, obj=Alpha)
 
-    lookup = reg.lookup()
+    app = App(reg.lookup())
 
     # we are not allowed to call target without arguments
     with pytest.raises(TypeError):
-        target(lookup=lookup)
+        app.target()
 
     with pytest.raises(KeyExtractorError):
-        target.component(lookup=lookup)
+        app.target.component()
 
 
 def test_call_with_wrong_args():
-    @dispatch('obj')
-    def target(obj):
-        pass
+    class App(BaseApp):
+        @methoddispatch('obj')
+        def target(self, obj):
+            pass
 
-    def specific(obj):
+    def specific(self, obj):
         return "specific"
 
     reg = Registry()
-    reg.register_dispatch(target)
-    reg.register_function(target, specific, obj=Alpha)
+    reg.register_dispatch(App.target)
+    reg.register_function(App.target, specific, obj=Alpha)
 
-    lookup = reg.lookup()
+    app = App(reg.lookup())
 
     # we are not allowed to call target without arguments
     with pytest.raises(TypeError):
-        target(wrong=1, lookup=lookup)
+        app.target(wrong=1)
 
     with pytest.raises(KeyExtractorError):
-        target.component(wrong=1, lookup=lookup)
+        app.target.component(wrong=1)
 
 
 def test_extra_arg_for_call():
-    @dispatch('obj')
-    def target(obj, extra):
-        return "General: %s" % extra
+    class App(BaseApp):
+        @methoddispatch('obj')
+        def target(self, obj, extra):
+            return "General: %s" % extra
 
     reg = Registry()
 
-    def specific(obj, extra):
+    def specific(self, obj, extra):
         return "Specific: %s" % extra
 
-    reg.register_dispatch(target)
-    reg.register_function(target, specific, obj=Alpha)
+    reg.register_dispatch(App.target)
+    reg.register_function(App.target, specific, obj=Alpha)
 
     alpha = Alpha()
     beta = Beta()
 
-    lookup = reg.lookup()
+    app = App(reg.lookup())
 
-    assert target(alpha, lookup=lookup, extra="allowed") == 'Specific: allowed'
-    assert target(beta, lookup=lookup, extra="allowed") == 'General: allowed'
-    assert target(alpha, 'allowed', lookup=lookup) == 'Specific: allowed'
-    assert target(beta, 'allowed', lookup=lookup) == 'General: allowed'
+    assert app.target(alpha, extra="allowed") == 'Specific: allowed'
+    assert app.target(beta, extra="allowed") == 'General: allowed'
+    assert app.target(alpha, 'allowed') == 'Specific: allowed'
+    assert app.target(beta, 'allowed') == 'General: allowed'
 
 
 def test_no_implicit():
@@ -551,48 +610,56 @@ def test_no_implicit():
 
 def test_fallback_to_fallback():
 
-    def fallback(obj):
+    def fallback(self, obj):
         return 'fallback!'
 
-    @dispatch(match_instance('obj', lambda obj: obj,
-                             fallback=fallback))
-    def target(obj):
-        return 'not the fallback we want'
+    class App(BaseApp):
+        @methoddispatch(match_instance('obj', lambda obj: obj,
+                                       fallback=fallback))
+        def target(self, obj):
+            return 'not the fallback we want'
 
     reg = Registry()
 
-    def specific_target(obj):
+    def specific_target(self, obj):
         return 'specific'
 
-    reg.register_dispatch(target)
-    reg.register_function(target, specific_target, obj=Alpha)
+    reg.register_dispatch(App.target)
+    reg.register_function(App.target, specific_target, obj=Alpha)
 
     beta = Beta()
-    assert target(beta, lookup=reg.lookup()) == 'fallback!'
+
+    app = App(reg.lookup())
+
+    assert app.target(beta) == 'fallback!'
     # this is *not* a registered fallback so won't be returned here
-    assert target.fallback(beta, lookup=reg.lookup()) is fallback
+    assert app.target.fallback(beta) is fallback
     # we cannot find a fallback for alpha, as it doesn't hit the fallback
-    assert target(Alpha(), lookup=reg.lookup()) == 'specific'
-    assert target.fallback(Alpha(), lookup=reg.lookup()) is NOT_FOUND
+    assert app.target(Alpha()) == 'specific'
+    assert app.target.fallback(Alpha()) is NOT_FOUND
 
 
 def test_fallback_to_dispatch():
-    @dispatch('obj')
-    def target(obj):
-        return 'fallback'
+    class App(BaseApp):
+        @methoddispatch('obj')
+        def target(self, obj):
+            return 'fallback'
 
     reg = Registry()
 
-    def specific_target(obj):
+    def specific_target(self, obj):
         return 'specific'
 
-    reg.register_dispatch(target)
-    reg.register_function(target, specific_target, obj=Alpha)
+    reg.register_dispatch(App.target)
+    reg.register_function(App.target, specific_target, obj=Alpha)
 
     beta = Beta()
-    assert target(beta, lookup=reg.lookup()) == 'fallback'
+
+    app = App(reg.lookup())
+
+    assert app.target(beta) == 'fallback'
     # this is *not* a registered fallback so won't be returned here
-    assert target.fallback(beta, lookup=reg.lookup()) is None
+    assert app.target.fallback(beta) is None
 
 
 def test_calling_twice():

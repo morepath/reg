@@ -119,16 +119,18 @@ class MethodDispatch(object):
         return self.obj.lookup.call(self.wrapped_func, self.obj, *args, **kw)
 
     def component(self, *args, **kw):
-        return self.obj.lookup.component(self.wrapped_func, *args, **kw)
+        return self.obj.lookup.component(self.wrapped_func,
+                                         self.obj, *args, **kw)
 
     def fallback(self, *args, **kw):
-        return self.obj.lookup.fallback(self.wrapped_func, *args, **kw)
+        return self.obj.lookup.fallback(self.wrapped_func,
+                                        self.obj, *args, **kw)
 
     def component_key_dict(self, **kw):
         return self.obj.lookup.component_key_dict(self.wrapped_func, kw)
 
     def all(self, *args, **kw):
-        return self.obj.lookup.all(self.wrapped_func, *args, **kw)
+        return self.obj.lookup.all(self.wrapped_func, self.obj, *args, **kw)
 
     def all_key_dict(self, **kw):
         return self.obj.lookup.all_key_dict(self.wrapped_func, kw)
