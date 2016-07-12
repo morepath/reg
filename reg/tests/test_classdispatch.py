@@ -1,4 +1,3 @@
-import reg
 from reg.dispatch import methoddispatch
 from reg.registry import Registry
 from reg.predicate import match_class
