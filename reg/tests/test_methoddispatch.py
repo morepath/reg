@@ -38,6 +38,42 @@ def test_dispatch():
     assert example.foo(None) == "default"
 
 
+def test_dispatch_no_self():
+    class Example(object):
+        def __init__(self, lookup):
+            self.lookup = lookup
+
+        @methoddispatch('obj')
+        def foo(self, obj):
+            return "default"
+
+    def for_bar(obj):
+        return "we got bar"
+
+    def for_qux(obj):
+        return "we got qux"
+
+    class Bar(object):
+        pass
+
+    class Qux(object):
+        pass
+
+    registry = Registry()
+    registry.register_plain_function(Example.foo, for_bar, obj=Bar)
+    registry.register_plain_function(Example.foo, for_qux, obj=Qux)
+
+    lookup = registry.lookup()
+
+    example = Example(lookup)
+
+    assert example.foo(Bar()) == "we got bar"
+
+    assert example.foo(Qux()) == "we got qux"
+
+    assert example.foo(None) == "default"
+
+
 def test_classdispatch():
     registry = Registry()
 
