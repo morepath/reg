@@ -51,7 +51,7 @@ class MethodDispatchDescriptor(object):
         self.external_predicates = external_predicates
 
     def __get__(self, obj, type=None):
-        d = MethodDispatch(obj, self.predicates, self.wrapped_func,
+        d = MethodDispatch(obj, type, self.predicates, self.wrapped_func,
                            self.external_predicates)
         if obj is None:
             return d
@@ -66,7 +66,7 @@ class ClassMethodDispatchDescriptor(object):
         self.external_predicates = external_predicates
 
     def __get__(self, obj, type=None):
-        d = MethodDispatch(type, self.predicates, self.wrapped_func,
+        d = MethodDispatch(type, None, self.predicates, self.wrapped_func,
                            self.external_predicates)
         if type is None:
             return d
@@ -75,15 +75,31 @@ class ClassMethodDispatchDescriptor(object):
 
 
 class MethodDispatch(object):
-    def __init__(self, obj,
+    def __init__(self, obj, type,
                  predicates, wrapped_func, external_predicates=False):
         self.obj = obj
+        self.type = type
         self.predicates = predicates
         self.wrapped_func = wrapped_func
         self.external_predicates = external_predicates
 
-    # def __repr__(self):
-    #     return repr(self.wrapped_func)
+    def __repr__(self):
+        if self.obj is None:
+            # Python 3 style
+            return '<dispatch function %s.%s at 0x%02x>' % (
+                self.type.__name__, self.wrapped_func.__name__,
+                id(self.wrapped_func))
+        if self.obj is not None:
+            obj = self.obj
+            name = obj.__class__.__name__
+        else:
+            name = type.__name__
+            obj = type
+        return '<bound dispatch method %s.%s of %r>' % (
+            name,
+            self.wrapped_func.__name__,
+            obj)
+
     def __call__(self, *args, **kw):
         return self.obj.lookup.call(self.wrapped_func, self.obj, *args, **kw)
 

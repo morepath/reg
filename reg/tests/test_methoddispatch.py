@@ -38,6 +38,31 @@ def test_dispatch():
     assert example.foo(None) == "default"
 
 
+def test_dispatch_name():
+    class Example(object):
+        def __init__(self, lookup):
+            self.lookup = lookup
+
+        @dispatch_method('obj')
+        def foo(self, obj):
+            return "default"
+
+        @dispatch_classmethod()
+        def bar(cls):
+            pass
+
+    assert repr(Example.foo).startswith('<dispatch function Example.foo at')
+
+    example = Example(Registry().lookup())
+
+    assert repr(example.foo).startswith(
+        '<bound dispatch method Example.foo of <')
+
+    assert repr(Example.bar).startswith('<bound dispatch method type.bar of')
+
+    assert repr(example.bar).startswith('<bound dispatch method type.bar of')
+
+
 def test_dispatch_no_self():
     class Example(object):
         def __init__(self, lookup):
