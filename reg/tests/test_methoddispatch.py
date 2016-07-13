@@ -1,3 +1,4 @@
+import pytest
 from reg.dispatch import dispatch_method, dispatch_classmethod
 from reg.registry import Registry
 
@@ -61,6 +62,26 @@ def test_dispatch_name():
     assert repr(Example.bar).startswith('<bound dispatch method type.bar of')
 
     assert repr(example.bar).startswith('<bound dispatch method type.bar of')
+
+
+def test_dispatch_call_too_early():
+    class Example(object):
+        def __init__(self, lookup):
+            self.lookup = lookup
+
+        @dispatch_method('obj')
+        def foo(self, obj):
+            return "default"
+
+        @dispatch_method()
+        def bar(self):
+            return "default"
+
+    with pytest.raises(TypeError):
+        Example.foo(None)
+
+    with pytest.raises(TypeError):
+        Example.bar()
 
 
 def test_dispatch_no_self():

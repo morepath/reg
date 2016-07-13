@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 from functools import update_wrapper
 from .predicate import match_argname
 from .compat import string_types
+from .reify import reify
 
 
 class dispatch_method(object):
@@ -83,6 +84,12 @@ class MethodDispatch(object):
         self.wrapped_func = wrapped_func
         self.external_predicates = external_predicates
 
+    @reify
+    def lookup(self):
+        if self.obj is None:
+            raise TypeError("no lookup available for dispatch")
+        return self.obj.lookup
+
     def __repr__(self):
         if self.obj is None:
             # Python 3 style
@@ -101,21 +108,21 @@ class MethodDispatch(object):
             obj)
 
     def __call__(self, *args, **kw):
-        return self.obj.lookup.call(self.wrapped_func, self.obj, *args, **kw)
+        return self.lookup.call(self.wrapped_func, self.obj, *args, **kw)
 
     def component(self, *args, **kw):
-        return self.obj.lookup.component(self.wrapped_func,
-                                         self.obj, *args, **kw)
+        return self.lookup.component(self.wrapped_func,
+                                     self.obj, *args, **kw)
 
     def fallback(self, *args, **kw):
-        return self.obj.lookup.fallback(self.wrapped_func,
+        return self.lookup.fallback(self.wrapped_func,
                                         self.obj, *args, **kw)
 
     def component_key_dict(self, **kw):
-        return self.obj.lookup.component_key_dict(self.wrapped_func, kw)
+        return self.lookup.component_key_dict(self.wrapped_func, kw)
 
     def all(self, *args, **kw):
-        return self.obj.lookup.all(self.wrapped_func, self.obj, *args, **kw)
+        return self.lookup.all(self.wrapped_func, self.obj, *args, **kw)
 
     def all_key_dict(self, **kw):
-        return self.obj.lookup.all_key_dict(self.wrapped_func, kw)
+        return self.lookup.all_key_dict(self.wrapped_func, kw)
