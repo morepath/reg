@@ -169,7 +169,7 @@ class Registry(object):
                     value, callable.wrapped_func))
         self.register_value(callable.wrapped_func, predicate_key, value)
 
-    def register_plain_function(self, callable, value, **key_dict):
+    def register_function(self, callable, value, **key_dict):
         self.register_dispatch(callable)
         predicate_key = self.key_dict_to_predicate_key(
             callable.wrapped_func, key_dict)
@@ -178,7 +178,7 @@ class Registry(object):
             return value(*args, **kw)
         self.register_value(callable.wrapped_func, predicate_key, f)
 
-    def register_function(self, callable, value, **key_dict):
+    def register_method(self, callable, value, **key_dict):
         """Register a callable for a dispatch function.
 
         Like :meth:`register_function_by_predicate_key`, but

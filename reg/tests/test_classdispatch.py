@@ -36,7 +36,7 @@ def test_dispatch_basic():
         return "Something for %s" % cls
 
     r = Registry()
-    r.register_function(App.something, something_for_object, cls=object)
+    r.register_method(App.something, something_for_object, cls=object)
 
     app = App(r.lookup())
 
@@ -60,12 +60,12 @@ def test_classdispatch_multidispatch():
         return "Something, other is Foo: %s" % other
 
     r = Registry()
-    r.register_function(
+    r.register_method(
         App.something,
         something_for_object_and_object,
         cls=object, other=object)
 
-    r.register_function(
+    r.register_method(
         App.something,
         something_for_object_and_foo,
         cls=object, other=Foo)
@@ -88,8 +88,8 @@ def test_classdispatch_extra_arguments():
         return "Extra: %s" % extra
 
     r = Registry()
-    r.register_function(App.something, something_for_object,
-                        cls=object)
+    r.register_method(App.something, something_for_object,
+                      cls=object)
 
     app = App(r.lookup())
     assert app.something(DemoClass, 'foo') == "Extra: foo"
@@ -105,7 +105,7 @@ def test_classdispatch_no_arguments():
         return "Something!"
 
     r = Registry()
-    r.register_function(App.something, something_impl)
+    r.register_method(App.something, something_impl)
 
     app = App(r.lookup())
     assert app.something() == 'Something!'
@@ -124,12 +124,12 @@ def test_classdispatch_override():
         return "Special for %s" % cls
 
     r = Registry()
-    r.register_function(App.something,
-                        something_for_object,
-                        cls=object)
-    r.register_function(App.something,
-                        something_for_special,
-                        cls=SpecialClass)
+    r.register_method(App.something,
+                      something_for_object,
+                      cls=object)
+    r.register_method(App.something,
+                      something_for_special,
+                      cls=SpecialClass)
 
     app = App(r.lookup())
     assert app.something(SpecialClass) == (

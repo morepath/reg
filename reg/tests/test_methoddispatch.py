@@ -25,8 +25,8 @@ def test_dispatch():
         pass
 
     registry = Registry()
-    registry.register_function(Example.foo, for_bar, obj=Bar)
-    registry.register_function(Example.foo, for_qux, obj=Qux)
+    registry.register_method(Example.foo, for_bar, obj=Bar)
+    registry.register_method(Example.foo, for_qux, obj=Qux)
 
     lookup = registry.lookup()
 
@@ -106,8 +106,8 @@ def test_dispatch_no_self():
         pass
 
     registry = Registry()
-    registry.register_plain_function(Example.foo, for_bar, obj=Bar)
-    registry.register_plain_function(Example.foo, for_qux, obj=Qux)
+    registry.register_function(Example.foo, for_bar, obj=Bar)
+    registry.register_function(Example.foo, for_qux, obj=Qux)
 
     lookup = registry.lookup()
 
@@ -142,8 +142,8 @@ def test_classdispatch():
     class Qux(object):
         pass
 
-    registry.register_function(Example.foo, for_bar, obj=Bar)
-    registry.register_function(Example.foo, for_qux, obj=Qux)
+    registry.register_method(Example.foo, for_bar, obj=Bar)
+    registry.register_method(Example.foo, for_qux, obj=Qux)
 
     assert Example.foo(Bar()) == "we got bar"
 

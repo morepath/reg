@@ -51,8 +51,8 @@ def test_dispatch_argname():
 
     registry = Registry()
 
-    registry.register_function(App.foo, for_bar, obj=Bar)
-    registry.register_function(App.foo, for_qux, obj=Qux)
+    registry.register_method(App.foo, for_bar, obj=Bar)
+    registry.register_method(App.foo, for_qux, obj=Qux)
 
     app = App(registry.lookup())
 
@@ -82,8 +82,8 @@ def test_dispatch_match_instance():
 
     registry = Registry()
 
-    registry.register_function(App.foo, for_bar, obj=Bar)
-    registry.register_function(App.foo, for_qux, obj=Qux)
+    registry.register_method(App.foo, for_bar, obj=Bar)
+    registry.register_method(App.foo, for_qux, obj=Qux)
 
     app = App(registry.lookup())
 
@@ -102,7 +102,7 @@ def test_dispatch_no_arguments():
     def special_foo(self):
         return "special"
 
-    registry.register_function(App.foo, special_foo)
+    registry.register_method(App.foo, special_foo)
 
     app = App(registry.lookup())
 
@@ -132,8 +132,8 @@ def test_all():
 
     registry = Registry()
 
-    registry.register_function(App.target, registered_for_sub, obj=Sub)
-    registry.register_function(App.target, registered_for_base, obj=Base)
+    registry.register_method(App.target, registered_for_sub, obj=Sub)
+    registry.register_method(App.target, registered_for_base, obj=Base)
 
     base = Base()
     sub = Sub()
@@ -166,8 +166,8 @@ def test_all_key_dict():
 
     registry = Registry()
 
-    registry.register_function(App.target, registered_for_sub, obj=Sub)
-    registry.register_function(App.target, registered_for_base, obj=Base)
+    registry.register_method(App.target, registered_for_sub, obj=Sub)
+    registry.register_method(App.target, registered_for_base, obj=Base)
 
     app = App(registry.lookup())
 
@@ -189,7 +189,7 @@ def test_component_no_source():
     def foo(self):
         pass
 
-    reg.register_function(App.target, foo)
+    reg.register_method(App.target, foo)
 
     app = App(reg.lookup())
 
@@ -207,7 +207,7 @@ def test_component_no_source_key_dict():
     def foo(self):
         pass
 
-    reg.register_function(App.target, foo)
+    reg.register_method(App.target, foo)
 
     app = App(reg.lookup())
 
@@ -225,7 +225,7 @@ def test_component_one_source():
     def foo(self, obj):
         pass
 
-    reg.register_function(App.target, foo, obj=Alpha)
+    reg.register_method(App.target, foo, obj=Alpha)
 
     alpha = Alpha()
 
@@ -245,7 +245,7 @@ def test_component_one_source_key_dict():
     def foo(self, obj):
         pass
 
-    reg.register_function(App.target, foo, obj=Alpha)
+    reg.register_method(App.target, foo, obj=Alpha)
 
     app = App(reg.lookup())
 
@@ -264,7 +264,7 @@ def test_component_two_sources():
         pass
 
     reg.register_dispatch(App.target)
-    reg.register_function(App.target, foo, a=IAlpha, b=IBeta)
+    reg.register_method(App.target, foo, a=IAlpha, b=IBeta)
 
     alpha = Alpha()
     beta = Beta()
@@ -292,7 +292,7 @@ def test_component_inheritance():
         pass
 
     reg.register_dispatch(App.target)
-    reg.register_function(App.target, foo, obj=Gamma)
+    reg.register_method(App.target, foo, obj=Gamma)
 
     delta = Delta()
 
@@ -319,7 +319,7 @@ def test_component_inheritance_old_style_class():
         pass
 
     reg.register_dispatch(App.target)
-    reg.register_function(App.target, foo, obj=Gamma)
+    reg.register_method(App.target, foo, obj=Gamma)
 
     gamma = Gamma()
     delta = Delta()
@@ -345,7 +345,7 @@ def test_call_no_source():
         return foo
 
     reg.register_dispatch(App.target)
-    reg.register_function(App.target, factory)
+    reg.register_method(App.target, factory)
 
     app = App(reg.lookup())
 
@@ -367,8 +367,8 @@ def test_call_one_source():
         return "bar"
 
     reg.register_dispatch(App.target)
-    reg.register_function(App.target, foo, obj=IAlpha)
-    reg.register_function(App.target, bar, obj=IBeta)
+    reg.register_method(App.target, foo, obj=IAlpha)
+    reg.register_method(App.target, bar, obj=IBeta)
 
     app = App(reg.lookup())
     assert app.target(Alpha()) == 'foo'
@@ -390,8 +390,8 @@ def test_call_two_sources():
         return "bar"
 
     reg.register_dispatch(App.target)
-    reg.register_function(App.target, foo, a=IAlpha, b=IBeta)
-    reg.register_function(App.target, bar, a=IBeta, b=IAlpha)
+    reg.register_method(App.target, foo, a=IAlpha, b=IBeta)
+    reg.register_method(App.target, bar, a=IBeta, b=IAlpha)
     alpha = Alpha()
     beta = Beta()
 
@@ -504,7 +504,7 @@ def test_wrong_callable_registered():
 
     reg.register_dispatch(App.target)
     with pytest.raises(RegistrationError):
-        reg.register_function(App.target, callable, a=Alpha)
+        reg.register_method(App.target, callable, a=Alpha)
 
 
 def test_non_callable_registered():
@@ -519,7 +519,7 @@ def test_non_callable_registered():
 
     reg.register_dispatch(App.target)
     with pytest.raises(RegistrationError):
-        reg.register_function(App.target, non_callable, a=Alpha)
+        reg.register_method(App.target, non_callable, a=Alpha)
 
 
 def test_call_with_no_args_while_arg_expected():
@@ -534,7 +534,7 @@ def test_call_with_no_args_while_arg_expected():
 
     reg = Registry()
     reg.register_dispatch(App.target)
-    reg.register_function(App.target, specific, obj=Alpha)
+    reg.register_method(App.target, specific, obj=Alpha)
 
     app = App(reg.lookup())
 
@@ -557,7 +557,7 @@ def test_call_with_wrong_args():
 
     reg = Registry()
     reg.register_dispatch(App.target)
-    reg.register_function(App.target, specific, obj=Alpha)
+    reg.register_method(App.target, specific, obj=Alpha)
 
     app = App(reg.lookup())
 
@@ -581,7 +581,7 @@ def test_extra_arg_for_call():
         return "Specific: %s" % extra
 
     reg.register_dispatch(App.target)
-    reg.register_function(App.target, specific, obj=Alpha)
+    reg.register_method(App.target, specific, obj=Alpha)
 
     alpha = Alpha()
     beta = Beta()
@@ -611,7 +611,7 @@ def test_fallback_to_fallback():
         return 'specific'
 
     reg.register_dispatch(App.target)
-    reg.register_function(App.target, specific_target, obj=Alpha)
+    reg.register_method(App.target, specific_target, obj=Alpha)
 
     beta = Beta()
 
@@ -637,7 +637,7 @@ def test_fallback_to_dispatch():
         return 'specific'
 
     reg.register_dispatch(App.target)
-    reg.register_function(App.target, specific_target, obj=Alpha)
+    reg.register_method(App.target, specific_target, obj=Alpha)
 
     beta = Beta()
 
@@ -664,8 +664,8 @@ def test_calling_twice():
 
     reg.register_dispatch(App.target)
 
-    reg.register_function(App.target, a, obj=Alpha)
-    reg.register_function(App.target, b, obj=Beta)
+    reg.register_method(App.target, a, obj=Alpha)
+    reg.register_method(App.target, b, obj=Beta)
 
     app = App(reg.lookup())
 
@@ -694,8 +694,8 @@ def test_lookup_passed_along():
     reg.register_dispatch(App.g1)
     reg.register_dispatch(App.g2)
 
-    reg.register_function(App.g1, g1_impl, obj=Alpha)
-    reg.register_function(App.g2, g2_impl, obj=Alpha)
+    reg.register_method(App.g1, g1_impl, obj=Alpha)
+    reg.register_method(App.g2, g2_impl, obj=Alpha)
 
     app = App(reg.lookup())
 
@@ -714,7 +714,7 @@ def test_different_defaults_in_specific_non_dispatch_arg():
         return 'a: %s' % blah
 
     reg.register_dispatch(App.target)
-    reg.register_function(App.target, a, obj=Alpha)
+    reg.register_method(App.target, a, obj=Alpha)
 
     app = App(reg.lookup())
 
@@ -733,7 +733,7 @@ def test_different_defaults_in_specific_dispatch_arg():
         return 'a: %s' % key
 
     reg.register_dispatch(App.target)
-    reg.register_function(App.target, a, key='foo')
+    reg.register_method(App.target, a, key='foo')
 
     app = App(reg.lookup())
 
@@ -754,7 +754,7 @@ def test_different_defaults_in_specific_dispatch_arg_causes_dispatch():
         return 'a: %s' % key
 
     reg.register_dispatch(App.target)
-    reg.register_function(App.target, a, key='foo')
+    reg.register_method(App.target, a, key='foo')
 
     app = App(reg.lookup())
 
@@ -824,12 +824,12 @@ def test_register_dispatch_predicates_no_defaults():
     def foo_edit(self, obj, request):
         return "foo edit"
 
-    r.register_function(App.view, foo_default,
-                        model=Foo, name='', request_method='GET')
-    r.register_function(App.view, foo_post,
-                        model=Foo, name='', request_method='POST')
-    r.register_function(App.view, foo_edit,
-                        model=Foo, name='edit', request_method='POST')
+    r.register_method(App.view, foo_default,
+                      model=Foo, name='', request_method='GET')
+    r.register_method(App.view, foo_post,
+                      model=Foo, name='', request_method='POST')
+    r.register_method(App.view, foo_edit,
+                      model=Foo, name='edit', request_method='POST')
 
     app = App(r.lookup())
 
@@ -898,12 +898,12 @@ def test_dispatch_external_predicates():
     def foo_edit(self, obj, request):
         return "foo edit"
 
-    r.register_function(App.view, foo_default,
-                        model=Foo, name='', request_method='GET')
-    r.register_function(App.view, foo_post,
-                        model=Foo, name='', request_method='POST')
-    r.register_function(App.view, foo_edit,
-                        model=Foo, name='edit', request_method='POST')
+    r.register_method(App.view, foo_default,
+                      model=Foo, name='', request_method='GET')
+    r.register_method(App.view, foo_post,
+                      model=Foo, name='', request_method='POST')
+    r.register_method(App.view, foo_edit,
+                      model=Foo, name='edit', request_method='POST')
 
     app = App(r.lookup())
 
@@ -976,12 +976,12 @@ def test_register_dispatch_predicates_register_defaults():
     def foo_edit(self, obj, request):
         return "foo edit"
 
-    r.register_function(
+    r.register_method(
         App.view, foo_default, model=Foo)
-    r.register_function(
+    r.register_method(
         App.view, foo_post,
         model=Foo, request_method='POST')
-    r.register_function(
+    r.register_method(
         App.view, foo_edit,
         model=Foo, name='edit', request_method='POST')
 
@@ -1136,7 +1136,7 @@ def test_fallback_should_already_use_subset():
     def exception_view(self, obj, request):
         return "exception view"
 
-    r.register_function(App.view, exception_view, model=Exception)
+    r.register_method(App.view, exception_view, model=Exception)
 
     class Collection(object):
         pass
@@ -1150,9 +1150,9 @@ def test_fallback_should_already_use_subset():
     def collection_add(self, obj, request):
         return "collection add"
 
-    r.register_function(App.view, collection_add,
-                        model=Collection, request_method='POST',
-                        body_model=Item)
+    r.register_method(App.view, collection_add,
+                      model=Collection, request_method='POST',
+                      body_model=Item)
 
     app = App(r.lookup())
     assert app.view.fallback(
@@ -1176,7 +1176,7 @@ def test_dispatch_missing_argument():
 
     registry = Registry()
 
-    registry.register_function(App.foo, for_bar, obj=Bar)
+    registry.register_method(App.foo, for_bar, obj=Bar)
 
     app = App(registry.lookup())
 
