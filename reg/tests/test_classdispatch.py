@@ -1,4 +1,4 @@
-from reg.dispatch import methoddispatch
+from reg.dispatch import dispatch_method
 from reg.registry import Registry
 from reg.predicate import match_class
 
@@ -28,7 +28,7 @@ class BaseApp(object):
 
 def test_dispatch_basic():
     class App(BaseApp):
-        @methoddispatch(match_class('cls', lambda cls: cls))
+        @dispatch_method(match_class('cls', lambda cls: cls))
         def something(self, cls):
             raise NotImplementedError()
 
@@ -49,7 +49,7 @@ def test_dispatch_basic():
 
 def test_classdispatch_multidispatch():
     class App(BaseApp):
-        @methoddispatch(match_class('cls', lambda cls: cls), 'other')
+        @dispatch_method(match_class('cls', lambda cls: cls), 'other')
         def something(self, cls, other):
             raise NotImplementedError()
 
@@ -80,7 +80,7 @@ def test_classdispatch_multidispatch():
 
 def test_classdispatch_extra_arguments():
     class App(BaseApp):
-        @methoddispatch(match_class('cls', lambda cls: cls))
+        @dispatch_method(match_class('cls', lambda cls: cls))
         def something(self, cls, extra):
             raise NotImplementedError()
 
@@ -97,7 +97,7 @@ def test_classdispatch_extra_arguments():
 
 def test_classdispatch_no_arguments():
     class App(BaseApp):
-        @methoddispatch()
+        @dispatch_method()
         def something(self):
             raise NotImplementedError()
 
@@ -113,7 +113,7 @@ def test_classdispatch_no_arguments():
 
 def test_classdispatch_override():
     class App(BaseApp):
-        @methoddispatch(match_class('cls', lambda cls: cls))
+        @dispatch_method(match_class('cls', lambda cls: cls))
         def something(self, cls):
             raise NotImplementedError()
 
@@ -138,7 +138,7 @@ def test_classdispatch_override():
 
 def test_classdispatch_fallback():
     class App(BaseApp):
-        @methoddispatch()
+        @dispatch_method()
         def something(self, cls):
             return "Fallback"
 

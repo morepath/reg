@@ -1,7 +1,7 @@
 # flake8: noqa
 from .registry import Registry, CachingKeyLookup, Lookup
-from .dispatch import (methoddispatch, methoddispatch_external_predicates,
-                       classmethoddispatch)
+from .dispatch import (dispatch_method, dispatch_method_external_predicates,
+                       dispatch_classmethod)
 from .mapply import mapply
 from .arginfo import arginfo
 from .argextract import KeyExtractor

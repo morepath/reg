@@ -4,7 +4,7 @@ import pytest
 from reg.registry import Registry
 from reg.predicate import (
     match_instance, match_key, match_class, key_predicate, NOT_FOUND)
-from reg.dispatch import methoddispatch, methoddispatch_external_predicates
+from reg.dispatch import dispatch_method, dispatch_method_external_predicates
 from reg.error import RegistrationError, KeyExtractorError
 
 
@@ -31,7 +31,7 @@ class BaseApp(object):
 
 def test_dispatch_argname():
     class App(BaseApp):
-        @methoddispatch('obj')
+        @dispatch_method('obj')
         def foo(self, obj):
             pass
 
@@ -62,7 +62,7 @@ def test_dispatch_argname():
 
 def test_dispatch_match_instance():
     class App(BaseApp):
-        @methoddispatch(match_instance('obj', lambda obj: obj))
+        @dispatch_method(match_instance('obj', lambda obj: obj))
         def foo(self, obj):
             pass
 
@@ -93,7 +93,7 @@ def test_dispatch_match_instance():
 
 def test_dispatch_no_arguments():
     class App(BaseApp):
-        @methoddispatch()
+        @dispatch_method()
         def foo(self):
             pass
 
@@ -120,7 +120,7 @@ def test_all():
         pass
 
     class App(BaseApp):
-        @methoddispatch('obj')
+        @dispatch_method('obj')
         def target(self, obj):
             pass
 
@@ -154,7 +154,7 @@ def test_all_key_dict():
         pass
 
     class App(BaseApp):
-        @methoddispatch('obj')
+        @dispatch_method('obj')
         def target(self, obj):
             pass
 
@@ -182,7 +182,7 @@ def test_component_no_source():
 
     class App(BaseApp):
 
-        @methoddispatch()
+        @dispatch_method()
         def target(self):
             pass
 
@@ -200,7 +200,7 @@ def test_component_no_source_key_dict():
     reg = Registry()
 
     class App(BaseApp):
-        @methoddispatch()
+        @dispatch_method()
         def target(self):
             pass
 
@@ -218,7 +218,7 @@ def test_component_one_source():
     reg = Registry()
 
     class App(BaseApp):
-        @methoddispatch('obj')
+        @dispatch_method('obj')
         def target(self, obj):
             pass
 
@@ -238,7 +238,7 @@ def test_component_one_source_key_dict():
     reg = Registry()
 
     class App(BaseApp):
-        @methoddispatch('obj')
+        @dispatch_method('obj')
         def target(self, obj):
             pass
 
@@ -256,7 +256,7 @@ def test_component_two_sources():
     reg = Registry()
 
     class App(BaseApp):
-        @methoddispatch('a', 'b')
+        @dispatch_method('a', 'b')
         def target(self, a, b):
             pass
 
@@ -284,7 +284,7 @@ def test_component_inheritance():
         pass
 
     class App(BaseApp):
-        @methoddispatch('obj')
+        @dispatch_method('obj')
         def target(self, obj):
             pass
 
@@ -311,7 +311,7 @@ def test_component_inheritance_old_style_class():
         pass
 
     class App(BaseApp):
-        @methoddispatch('obj')
+        @dispatch_method('obj')
         def target(self, obj):
             pass
 
@@ -337,7 +337,7 @@ def test_call_no_source():
     foo = object()
 
     class App(BaseApp):
-        @methoddispatch()
+        @dispatch_method()
         def target(self):
             pass
 
@@ -356,7 +356,7 @@ def test_call_one_source():
     reg = Registry()
 
     class App(BaseApp):
-        @methoddispatch('obj')
+        @dispatch_method('obj')
         def target(self, obj):
             pass
 
@@ -379,7 +379,7 @@ def test_call_two_sources():
     reg = Registry()
 
     class App(BaseApp):
-        @methoddispatch('a', 'b')
+        @dispatch_method('a', 'b')
         def target(self, a, b):
             pass
 
@@ -405,7 +405,7 @@ def test_component_not_found_no_sources():
     reg = Registry()
 
     class App(BaseApp):
-        @methoddispatch()
+        @dispatch_method()
         def target(self):
             pass
 
@@ -420,7 +420,7 @@ def test_call_not_found_no_sources():
     reg = Registry()
 
     class App(BaseApp):
-        @methoddispatch()
+        @dispatch_method()
         def target(self):
             return "default"
 
@@ -435,7 +435,7 @@ def test_component_not_found_one_source():
     reg = Registry()
 
     class App(BaseApp):
-        @methoddispatch('obj')
+        @dispatch_method('obj')
         def target(self, obj):
             pass
 
@@ -450,7 +450,7 @@ def test_call_not_found_one_source():
     reg = Registry()
 
     class App(BaseApp):
-        @methoddispatch('obj')
+        @dispatch_method('obj')
         def target(self, obj):
             return "default: %s" % obj
 
@@ -465,7 +465,7 @@ def test_component_not_found_two_sources():
     reg = Registry()
 
     class App(BaseApp):
-        @methoddispatch('a', 'b')
+        @dispatch_method('a', 'b')
         def target(self, a, b):
             pass
 
@@ -480,7 +480,7 @@ def test_call_not_found_two_sources():
     reg = Registry()
 
     class App(BaseApp):
-        @methoddispatch('a', 'b')
+        @dispatch_method('a', 'b')
         def target(self, a, b):
             return "a: %s b: %s" % (a, b)
 
@@ -495,7 +495,7 @@ def test_wrong_callable_registered():
     reg = Registry()
 
     class App(BaseApp):
-        @methoddispatch('obj')
+        @dispatch_method('obj')
         def target(self, obj):
             pass
 
@@ -511,7 +511,7 @@ def test_non_callable_registered():
     reg = Registry()
 
     class App(BaseApp):
-        @methoddispatch('obj')
+        @dispatch_method('obj')
         def target(self, obj):
             pass
 
@@ -525,7 +525,7 @@ def test_non_callable_registered():
 def test_call_with_no_args_while_arg_expected():
 
     class App(BaseApp):
-        @methoddispatch('obj')
+        @dispatch_method('obj')
         def target(self, obj):
             pass
 
@@ -548,7 +548,7 @@ def test_call_with_no_args_while_arg_expected():
 
 def test_call_with_wrong_args():
     class App(BaseApp):
-        @methoddispatch('obj')
+        @dispatch_method('obj')
         def target(self, obj):
             pass
 
@@ -571,7 +571,7 @@ def test_call_with_wrong_args():
 
 def test_extra_arg_for_call():
     class App(BaseApp):
-        @methoddispatch('obj')
+        @dispatch_method('obj')
         def target(self, obj, extra):
             return "General: %s" % extra
 
@@ -600,7 +600,7 @@ def test_fallback_to_fallback():
         return 'fallback!'
 
     class App(BaseApp):
-        @methoddispatch(match_instance('obj', lambda obj: obj,
+        @dispatch_method(match_instance('obj', lambda obj: obj,
                                        fallback=fallback))
         def target(self, obj):
             return 'not the fallback we want'
@@ -627,7 +627,7 @@ def test_fallback_to_fallback():
 
 def test_fallback_to_dispatch():
     class App(BaseApp):
-        @methoddispatch('obj')
+        @dispatch_method('obj')
         def target(self, obj):
             return 'fallback'
 
@@ -650,7 +650,7 @@ def test_fallback_to_dispatch():
 
 def test_calling_twice():
     class App(BaseApp):
-        @methoddispatch('obj')
+        @dispatch_method('obj')
         def target(self, obj):
             return 'fallback'
 
@@ -675,11 +675,11 @@ def test_calling_twice():
 
 def test_lookup_passed_along():
     class App(BaseApp):
-        @methoddispatch('obj')
+        @dispatch_method('obj')
         def g1(self, obj):
             pass
 
-        @methoddispatch('obj')
+        @dispatch_method('obj')
         def g2(self, obj):
             pass
 
@@ -704,7 +704,7 @@ def test_lookup_passed_along():
 
 def test_different_defaults_in_specific_non_dispatch_arg():
     class App(BaseApp):
-        @methoddispatch('obj')
+        @dispatch_method('obj')
         def target(self, obj, blah='default'):
             return 'fallback: %s' % blah
 
@@ -723,7 +723,7 @@ def test_different_defaults_in_specific_non_dispatch_arg():
 
 def test_different_defaults_in_specific_dispatch_arg():
     class App(BaseApp):
-        @methoddispatch(match_key('key', lambda key: key))
+        @dispatch_method(match_key('key', lambda key: key))
         def target(self, key='default'):
             return 'fallback: %s' % key
 
@@ -744,7 +744,7 @@ def test_different_defaults_in_specific_dispatch_arg():
 
 def test_different_defaults_in_specific_dispatch_arg_causes_dispatch():
     class App(BaseApp):
-        @methoddispatch(match_key('key', lambda key: key))
+        @dispatch_method(match_key('key', lambda key: key))
         def target(self, key='foo'):
             return 'fallback: %s' % key
 
@@ -765,7 +765,7 @@ def test_different_defaults_in_specific_dispatch_arg_causes_dispatch():
 
 def test_self_passed_along_fallback():
     class App(BaseApp):
-        @methoddispatch()
+        @dispatch_method()
         def a(self):
             return isinstance(self, App)
 
@@ -787,7 +787,7 @@ def test_register_dispatch_predicates_no_defaults():
         pass
 
     class App(BaseApp):
-        @methoddispatch()
+        @dispatch_method()
         def view(self, obj, request):
             raise NotImplementedError()
 
@@ -861,7 +861,7 @@ def test_dispatch_external_predicates():
         pass
 
     class App(BaseApp):
-        @methoddispatch_external_predicates()
+        @dispatch_method_external_predicates()
         def view(self, obj, request):
             raise NotImplementedError()
 
@@ -936,7 +936,7 @@ def test_register_dispatch_predicates_register_defaults():
         pass
 
     class App(BaseApp):
-        @methoddispatch()
+        @dispatch_method()
         def view(self, obj, request):
             raise NotImplementedError()
 
@@ -1009,7 +1009,7 @@ def test_key_dict_to_predicate_key():
     r = Registry()
 
     class App(BaseApp):
-        @methoddispatch(
+        @dispatch_method(
             key_predicate('foo', default='default foo'),
             key_predicate('bar', default='default bar'))
         def view(self, obj, request):
@@ -1029,7 +1029,7 @@ def test_key_dict_to_predicate_key_unknown_keys():
     r = Registry()
 
     class App(BaseApp):
-        @methoddispatch(
+        @dispatch_method(
             key_predicate('foo', default='default foo'),
             key_predicate('bar', default='default bar'))
         def view(self, obj, request):
@@ -1052,7 +1052,7 @@ def test_register_dispatch_key_dict():
         pass
 
     class App(BaseApp):
-        @methoddispatch_external_predicates()
+        @dispatch_method_external_predicates()
         def view(self, obj, request):
             raise NotImplementedError()
 
@@ -1121,7 +1121,7 @@ def test_fallback_should_already_use_subset():
         return "Body model fallback"
 
     class App(BaseApp):
-        @methoddispatch(
+        @dispatch_method(
             match_instance('model', get_model, model_fallback, default=None),
             match_key('name', get_name, name_fallback, default=''),
             match_key('request_method', get_request_method,
@@ -1164,7 +1164,7 @@ def test_fallback_should_already_use_subset():
 
 def test_dispatch_missing_argument():
     class App(BaseApp):
-        @methoddispatch('obj')
+        @dispatch_method('obj')
         def foo(self, obj):
             pass
 
@@ -1186,7 +1186,7 @@ def test_dispatch_missing_argument():
 
 def test_register_dispatch_predicates_twice():
     class App(BaseApp):
-        @methoddispatch_external_predicates()
+        @dispatch_method_external_predicates()
         def foo(self, obj):
             pass
 
@@ -1214,7 +1214,7 @@ def test_register_dispatch_predicates_twice():
 
 def test_register_external_predicates_for_non_external():
     class App(BaseApp):
-        @methoddispatch()
+        @dispatch_method()
         def foo(self):
             pass
 
@@ -1226,7 +1226,7 @@ def test_register_external_predicates_for_non_external():
 
 def test_register_no_external_predicates_for_external():
     class App(BaseApp):
-        @methoddispatch_external_predicates()
+        @dispatch_method_external_predicates()
         def foo():
             pass
 
@@ -1237,7 +1237,7 @@ def test_register_no_external_predicates_for_external():
 
 def test_dict_to_predicate_key_for_unknown_dispatch():
     class App(BaseApp):
-        @methoddispatch()
+        @dispatch_method()
         def foo():
             pass
 

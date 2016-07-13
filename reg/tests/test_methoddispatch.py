@@ -1,4 +1,4 @@
-from reg.dispatch import methoddispatch, classmethoddispatch
+from reg.dispatch import dispatch_method, dispatch_classmethod
 from reg.registry import Registry
 
 
@@ -7,7 +7,7 @@ def test_dispatch():
         def __init__(self, lookup):
             self.lookup = lookup
 
-        @methoddispatch('obj')
+        @dispatch_method('obj')
         def foo(self, obj):
             return "default"
 
@@ -43,7 +43,7 @@ def test_dispatch_no_self():
         def __init__(self, lookup):
             self.lookup = lookup
 
-        @methoddispatch('obj')
+        @dispatch_method('obj')
         def foo(self, obj):
             return "default"
 
@@ -80,7 +80,7 @@ def test_classdispatch():
     class Example(object):
         lookup = registry.lookup()
 
-        @classmethoddispatch('obj')
+        @dispatch_classmethod('obj')
         def foo(cls, obj):
             return "default"
 

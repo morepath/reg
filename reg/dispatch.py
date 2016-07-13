@@ -4,7 +4,7 @@ from .predicate import match_argname
 from .compat import string_types
 
 
-class methoddispatch(object):
+class dispatch_method(object):
     def __init__(self, *predicates):
         self.predicates = [self._make_predicate(predicate)
                            for predicate in predicates]
@@ -21,7 +21,7 @@ class methoddispatch(object):
         return result
 
 
-class classmethoddispatch(object):
+class dispatch_classmethod(object):
     def __init__(self, *predicates):
         self.predicates = [self._make_predicate(predicate)
                            for predicate in predicates]
@@ -38,7 +38,7 @@ class classmethoddispatch(object):
         return result
 
 
-class methoddispatch_external_predicates(object):
+class dispatch_method_external_predicates(object):
     def __call__(self, callable):
         return MethodDispatchDescriptor([], callable,
                                         external_predicates=True)
