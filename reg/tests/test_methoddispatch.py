@@ -1,6 +1,7 @@
 import pytest
 from reg.dispatch import dispatch_method, dispatch_classmethod
 from reg.registry import Registry
+from reg.error import RegistrationError
 
 
 def test_dispatch():
@@ -118,6 +119,31 @@ def test_dispatch_no_self():
     assert example.foo(Qux()) == "we got qux"
 
     assert example.foo(None) == "default"
+
+
+def test_dispatch_function_wrong_arguments():
+    class Example(object):
+        def __init__(self, lookup):
+            self.lookup = lookup
+
+        @dispatch_method('obj')
+        def foo(self, obj):
+            return "default"
+
+    def for_bar():
+        return "we got bar"
+
+    def for_qux(obj, another):
+        return "we got qux"
+
+    class Bar(object):
+        pass
+
+    registry = Registry()
+    with pytest.raises(RegistrationError):
+        registry.register_function(Example.foo, for_bar, obj=Bar)
+    with pytest.raises(RegistrationError):
+        registry.register_function(Example.foo, for_qux, obj=Bar)
 
 
 def test_classdispatch():
