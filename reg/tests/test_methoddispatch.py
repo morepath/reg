@@ -176,5 +176,3 @@ def test_classdispatch():
     assert Example.foo(Qux()) == "we got qux"
 
     assert Example.foo(None) == "default"
-
-# reprs of the various objects

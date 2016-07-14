@@ -99,7 +99,6 @@ class Registry(object):
             raise RegistrationError(
                 "Cannot register external predicates for non-external "
                 "dispatch: %s" % callable)
-        #import pdb; pdb.set_trace()
         self.external_predicates[callable.wrapped_func] = predicates
 
     def register_dispatch(self, callable):

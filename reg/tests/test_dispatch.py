@@ -601,7 +601,7 @@ def test_fallback_to_fallback():
 
     class App(BaseApp):
         @dispatch_method(match_instance('obj', lambda obj: obj,
-                                       fallback=fallback))
+                                        fallback=fallback))
         def target(self, obj):
             return 'not the fallback we want'
 

@@ -1,5 +1,4 @@
 from __future__ import unicode_literals
-from functools import update_wrapper
 from .predicate import match_argname
 from .compat import string_types
 from .reify import reify
@@ -16,10 +15,7 @@ class dispatch_method(object):
         return predicate
 
     def __call__(self, callable):
-        result = MethodDispatchDescriptor(self.predicates, callable)
-        # XXX this isn't right as it isn't a function object
-        #update_wrapper(result, callable)
-        return result
+        return MethodDispatchDescriptor(self.predicates, callable)
 
 
 class dispatch_classmethod(object):
@@ -33,10 +29,7 @@ class dispatch_classmethod(object):
         return predicate
 
     def __call__(self, callable):
-        result = ClassMethodDispatchDescriptor(self.predicates, callable)
-        # XXX this isn't right as it isn't a function object
-        #update_wrapper(result, callable)
-        return result
+        return ClassMethodDispatchDescriptor(self.predicates, callable)
 
 
 class dispatch_method_external_predicates(object):
@@ -116,7 +109,7 @@ class MethodDispatch(object):
 
     def fallback(self, *args, **kw):
         return self.lookup.fallback(self.wrapped_func,
-                                        self.obj, *args, **kw)
+                                    self.obj, *args, **kw)
 
     def component_key_dict(self, **kw):
         return self.lookup.component_key_dict(self.wrapped_func, kw)
