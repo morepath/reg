@@ -48,14 +48,17 @@ Example
 Let's look at an example. First we create a class that when
 instantiated has a ``lookup`` attribute. This ``lookup`` attribute is
 used by Reg to look up the function to which it dispatches. We also define
-a single method it marked with the ``method_dispatch`` decorator:
+a single method it marked with the ``dispatch_method`` decorator:
 
 .. testcode::
 
   import reg
 
   class Example(object):
-      @reg.method_dispatch('obj')
+      def __init__(self, lookup):
+          self.lookup = lookup
+
+      @reg.dispatch_method('obj')
       def title(self, obj):
           return "We don't know the title"
 
@@ -101,13 +104,13 @@ We can now create a ``lookup`` object for this registry. The lookup is
 an object that uses a registry to find and call the correct registered
 implementations:
 
-.. testdoc::
+.. testcode::
 
   lookup = r.lookup()
 
 We can now instantiate ``Example`` with this lookup:
 
-.. testdoc::
+.. testcode::
 
   example = Example(lookup)
 
@@ -480,10 +483,15 @@ items in a registry:
 .. testcode::
 
   r = reg.Registry()
-  r.register_method(App.size, document_size, item=Document)
-  r.register_method(App.size, folder_size, item=Folder)
-  r.register_method(App.size, image_size, item=Image)
-  r.register_method(App.size, file_size, item=File)
+  r.register_function(App.size, document_size, item=Document)
+  r.register_function(App.size, folder_size, item=Folder)
+  r.register_function(App.size, image_size, item=Image)
+  r.register_function(App.size, file_size, item=File)
+
+Note that we've used ``register_function`` here instead of
+``register_method``. We can use ``register_function`` when we want to
+register plain functions which don't define a ``self`` or ``cls``
+first argument.
 
 Now we need to create an ``App`` instance with a lookup based on the registry:
 
@@ -600,7 +608,7 @@ let's create a dispatch method that gives us an implementation of
        def __init__(self, lookup):
            self.lookup = lookup
 
-       @reg.method_dispatch('obj')
+       @reg.dispatch_method('obj')
        def icon(self, obj):
            raise NotImplementedError
 
@@ -609,7 +617,7 @@ We register the ``DocumentIcon`` adapter class for this method and
 
 .. testcode::
 
-  r.register_method(App.icon, DocumentIcon, obj=Document)
+  r.register_function(App.icon, DocumentIcon, obj=Document)
 
 Let's set up an ``App`` instance with the correct lookup:
 
@@ -644,7 +652,7 @@ brevity let's just define one for ``Image`` here:
       def large(self):
           return load_icon('image_large.png')
 
-  r.register_method(App.icon, ImageIcon, obj=Image)
+  r.register_function(App.icon, ImageIcon, obj=Image)
 
 Now we can use ``icon`` to retrieve the ``Icon`` API for any item in
 the system for which an adapter was registered:
@@ -682,8 +690,8 @@ attribute:
 
 We use ``Document`` as the model class.
 
-Now we define a view function that dispatches on the class of the model instance,
-and the ``request_method`` attribute of the request:
+Now we define a view function that dispatches on the class of the
+model instance, and the ``request_method`` attribute of the request:
 
 .. testcode::
 
@@ -691,13 +699,23 @@ and the ``request_method`` attribute of the request:
       def __init__(self, lookup):
           self.lookup = lookup
 
-      @reg.method_dispatch(
+      @reg.dispatch_method(
           reg.match_instance('model',
-                             lambda obj: obj),
+                             lambda model: model),
           reg.match_key('request_method',
                         lambda request: request.request_method))
       def view(self, model, request):
           raise NotImplementedError
+
+As you can see here we use ``match_instance`` and ``match_key``
+instead of strings to specify how to dispatch. If you use a string
+argument, this string names an argument and dispatch is based on its
+class. Here we use ``match_instance``, which is equivalent to this: we
+have a ``model`` predicate which uses the class of the ``model``
+argument for dispatch. We also use ``match_key``, which dispatches on
+the ``request_method`` attribute of the request; this attribute is a
+string, so dispatch is on string matching, not ``isinstance`` as with
+``match_instance``.
 
 We now define a concrete view for ``Document``:
 
@@ -718,7 +736,11 @@ We register the view in the registry:
   r.register_method(App.view, document_post,
                     request_method='POST', model=Document)
 
-And create the app instance:
+For ``model`` we've specified the class that matches (``Document``),
+but for the ``request_method`` predicate we've given the key to match
+on, the strings ``"GET"`` and ``"POST"``.
+
+We create the app instance:
 
 .. testcode::
 
@@ -728,9 +750,9 @@ We can now call ``app.view``:
 
 .. doctest::
 
-  >>> view(doc, Request('GET'))
-  'GET for document: Hello world!'
-  >>> view(doc, Request('POST'))
+  >>> app.view(doc, Request('GET'))
+  'GET for document is: Hello world!'
+  >>> app.view(doc, Request('POST'))
   'POST for document'
 
 Service Discovery
@@ -751,7 +773,7 @@ the service for your application:
       def __init__(self, lookup):
           self.lookup = lookup
 
-      @reg.method_dispatch()
+      @reg.dispatch_method()
       def emailer(self):
           raise NotImplementedError
 
@@ -776,7 +798,7 @@ We instantiate with a ``lookup`` again:
 
 .. testcode::
 
-  >>> app = App(r.lookup())
+  app = App(r.lookup())
 
 When we call ``App.emailer``, we get the specific service we want:
 
@@ -794,21 +816,25 @@ more complex object as a service just as easily.
 replacing class methods
 -----------------------
 
-Reg generic functions can be used to replace methods, so that you can
-follow the open/closed principle and add functionality to a class
-without modifying it. This works for instance methods, but what about
-``classmethod``? This takes the *class* as the first argument, not an
-instance. You can configure ``@reg.dispatch`` decorator with a special
-:class:`Predicate` instance that lets you dispatch on a class argument
-instead of an instance argument.
+Reg's dispatch system can be used to replace methods, as you can
+dispatch on the class of an argument. This way you can follow the
+open/closed principle and add functionality to a class without
+modifying it. They can also be used to replace classmethods marked
+with ``classmethod``. This takes the *class* as the first argument,
+not an instance.
 
 Here's what it looks like:
 
 .. testcode::
 
-  @reg.dispatch(reg.match_class('cls', lambda cls: cls))
-  def something(cls):
-      raise NotImplementedError()
+  class App(object):
+      def __init__(self, lookup):
+          self.lookup = lookup
+
+      @reg.dispatch_method(
+         reg.match_class('cls', lambda cls: cls))
+      def something(self, cls):
+         raise NotImplementedError()
 
 Note the call to :func:`match_class` here. This lets us specify that
 we want to dispatch on the class, and we supply a lambda function that
@@ -819,42 +845,52 @@ Let's use it:
 
 .. testcode::
 
-  def something_for_object(cls):
+  def something_for_object(self, cls):
       return "Something for %s" % cls
-
-  r.register_function(something, something_for_object, cls=object)
 
   class DemoClass(object):
       pass
+
+  r.register_method(App.something, something_for_object, cls=DemoClass)
+
+  app = App(r.lookup())
 
 When we now call ``something()`` with ``DemoClass`` as the first
 argument we get the expected output:
 
 .. doctest::
 
-  >>> something(DemoClass)
+  >>> app.something(DemoClass)
   "Something for <class 'DemoClass'>"
 
-This also knows about inheritance. So, you can write more specific
-implementations for particular classes:
+This also knows about inheritance. Here's a subclass of ``DemoClass``:
 
 .. testcode::
 
-  class ParticularClass(object):
+  class ParticularClass(DemoClass):
       pass
 
-  def something_particular(cls):
+.. doctest::
+
+   >>> app.something(ParticularClass)
+   "Something for <class 'ParticularClass'>"
+
+We can also register something more specific for ``ParticularClass``:
+
+.. testcode::
+
+  def something_particular(self, cls):
       return "Particular for %s" % cls
 
-  r.register_function(something, something_particular,
-                      cls=ParticularClass)
+  r.register_method(App.something, something_particular,
+                    cls=ParticularClass)
 
 When we call ``something`` now with ``ParticularClass`` as the argument,
 then ``something_particular`` is called:
 
 .. doctest::
 
-  >>> something(ParticularClass)
+  >>> app.something(ParticularClass)
   "Particular for <class 'ParticularClass'>"
 
 Lower level API
@@ -863,27 +899,62 @@ Lower level API
 Component lookup
 ----------------
 
-You can look up the function that a function would dispatch to without
+You can look up the function that a method would dispatch to without
 calling it. You do this using the ``component`` method on the dispatch
 function:
 
+.. testcode::
+
+  class App(object):
+      def __init__(self, lookup):
+          self.lookup = lookup
+
+      @reg.dispatch_method('obj')
+      def foo(self, obj):
+          return "default"
+
+  class A(object):
+      pass
+
+  def a_func(self, obj):
+      return "A"
+
+  r = reg.Registry()
+  r.register_method(App.foo, a_func, obj=A)
+
+  app = App(r.lookup())
+
+  a = A()
+
 .. doctest::
 
-  >>> size.component(doc) is document_size
+  >>> app.foo(a)
+  'A'
+  >>> app.foo.component(a) is a_func
   True
 
 Getting all
 -----------
 
-As we've seen, Reg supports inheritance. ``size`` for instance was
-registered for ``Document`` instances, and is therefore also available
-of instances of its subclass, ``HtmlDocument``:
+As we've seen, Reg supports inheritance. ``foo`` had a registration for
+``A`` so it also applies to ``B`` if it subclasses ``A``:
+
+.. testcode::
+
+  class B(A):
+      pass
+
+  b = B()
 
 .. doctest::
 
-  >>> size.component(doc) is document_size
+  >>> app.foo(a)
+  'A'
+  >>> app.foo(b)
+  'A'
+  >>> app.foo.component(a) is a_func
   True
-  >>> size.component(htmldoc) is document_size
+  >>> app.foo.component(b) is a_func
   True
 
 Using the special ``all`` function we can also get an iterable of
@@ -893,76 +964,104 @@ only one of them:
 
 .. doctest::
 
-  >>> list(size.all(doc))
-  [<function document_size at ...>]
-  >>> list(size.all(htmldoc))
-  [<function document_size at ...>]
+  >>> list(app.foo.all(a)) == [a_func]
+  True
+  >>> list(app.foo.all(b)) == [a_func]
+  True
 
-We can make this more interesting by registering a special
-``htmldocument_size`` to handle ``HtmlDocument`` instances:
+Let's create another subclass of ``A``:
 
 .. testcode::
 
-  def htmldocument_size(doc):
-     return len(doc.text) + 1 # 1 so we can see a difference
+   class C(A):
+       pass
 
-  r.register_function(size, htmldocument_size,
-                      item=HtmlDocument)
+   c = C()
 
-``size.all()`` for ``htmldoc`` now also gives back the more specific
-``htmldocument_size``::
+We now register a special ``c_func`` for it:
 
-  >>> list(size.all(htmldoc))
-  [<function htmldocument_size at ...>, <function document_size at ...>]
+.. testcode::
+
+  def c_func(self, obj):
+      return "C"
+
+  r.register_method(App.foo, c_func, obj=C)
+
+When we use ``all`` now, we get back the ``c_func`` specifically registered
+for it, and also ``a_func`` which is registered for its base class ``A``:
+
+.. doctest::
+
+  >>> list(app.foo.all(c)) == [c_func, a_func]
+  True
 
 Using the Registry directly
 ---------------------------
 
-The key under which we register something in a registry in fact doesn't
-need to be a function. We can register predicate for any immutable key such
-as a string:
+Until now we've seen access through the high-level API of Reg,
+centered around calling methods. We can also use the registry API
+directly. In this case we aren't registered to registering functions
+for methods; we can register anything for any immutable key:
 
 .. testcode::
 
-  r.register_predicates('some key', [reg.match_argname('obj')])
+  lowlevel_r = reg.Registry()
+
+  lowlevel_r.register_predicates('some key', [reg.match_argname('obj')])
 
 We can now register something for this key:
 
 .. testcode::
 
-  r.register_value('some key', [Document], 'some registered')
+  lowlevel_r.register_value('some key', [Document], 'some registered')
 
-We can't get it at it using a generic dispatch function anymore
-now. We can use the :class:`reg.Registry` API instead. Here's what to
-do:
+We can access the information in the registry using the :class:`reg.Registry`
+API:
 
 .. doctest::
 
-  >>> r.component('some key', Document)
+  >>> lowlevel_r.component('some key', Document)
   'some registered'
-  >>> list(r.all('some key', Document))
+  >>> list(lowlevel_r.all('some key', Document))
   ['some registered']
 
 Caching
 -------
 
-We can turn a plain :class:`reg.Registry` into a faster, caching class
-lookup using :class:`reg.CachingKeyLookup`:
+The default lookup that we get from a registry is designed to be easy
+to understand and debug, but it is relatively slow. In real-world
+applications it is useful to introduce caching. We can use
+:class:`reg.CachingKeyLookup` for this:
+
+.. testcode::
+
+  caching = reg.CachingKeyLookup(r, 100, 100, 100)
+
+This isn't a lookup yet: it's a *key lookup*, which is a lower layer
+in the API. We can turn it back into a lookup to give us a caching
+version:
+
+.. testcode::
+
+   caching_lookup = caching.lookup()
+
+We can now create a caching application:
+
+.. testcode::
+
+  caching_app = App(caching_lookup)
+
+It behaves the same way as the original:
 
 .. doctest::
 
-  >>> caching = reg.CachingKeyLookup(r, 100, 100, 100)
+  >>> caching_app.foo(a)
+  'A'
+  >>> caching_app.foo(b)
+  'A'
+  >>> caching_app.foo(c)
+  'C'
 
-Turning it back into a lookup gives us a caching version of what we had
-before:
-
-.. doctest::
-
-  >>> caching_lookup = caching.lookup()
-  >>> size(doc, lookup=caching_lookup)
-  12
-  >>> size(doc, lookup=caching_lookup)
-  12
-
-You'll have to trust us on this, but it's faster the second time as
-the dispatch to ``document_size`` was cached!
+But if you call the dispatch method again with the same arguments, the
+second time the dispatch is faster because it can skip looking through
+indexes.
