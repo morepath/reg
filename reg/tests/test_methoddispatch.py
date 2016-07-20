@@ -176,3 +176,54 @@ def test_classdispatch():
     assert Example.foo(Qux()) == "we got qux"
 
     assert Example.foo(None) == "default"
+
+
+def test_dispatch_identity_method_on_class():
+    class Example(object):
+        def __init__(self, lookup):
+            self.lookup = lookup
+
+        @dispatch_method('obj')
+        def foo(self, obj):
+            return "default"
+
+    assert Example.foo is Example.foo
+
+
+def test_dispatch_identity_classmethod_on_class():
+    class Example(object):
+        lookup = Registry().lookup()
+
+        @dispatch_classmethod('obj')
+        def foo(cls, obj):
+            return "default"
+
+    assert Example.foo is Example.foo
+
+
+def test_dispatch_identity_method_on_instance():
+    class Example(object):
+        def __init__(self, lookup):
+            self.lookup = lookup
+
+        @dispatch_method('obj')
+        def foo(self, obj):
+            return "default"
+
+    registry = Registry()
+    example = Example(registry.lookup())
+
+    assert example.foo is example.foo
+
+
+def test_dispatch_identity_classmethod_on_instance():
+    class Example(object):
+        lookup = Registry().lookup()
+
+        @dispatch_classmethod('obj')
+        def foo(self, obj):
+            return "default"
+
+    example = Example()
+
+    assert example.foo is example.foo

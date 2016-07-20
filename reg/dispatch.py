@@ -38,6 +38,9 @@ class dispatch_method_external_predicates(object):
                                         external_predicates=True)
 
 
+cached_method_dispatch = {}
+
+
 class MethodDispatchDescriptor(object):
     def __init__(self, predicates, callable, external_predicates=False):
         self.predicates = predicates
@@ -45,9 +48,14 @@ class MethodDispatchDescriptor(object):
         self.external_predicates = external_predicates
 
     def __get__(self, obj, type=None):
+        if obj is None:
+            d = cached_method_dispatch.get((type, self.wrapped_func))
+            if d is not None:
+                return d
         d = MethodDispatch(obj, type, self.predicates, self.wrapped_func,
                            self.external_predicates)
         if obj is None:
+            cached_method_dispatch[(type, self.wrapped_func)] = d
             return d
         setattr(obj, self.wrapped_func.__name__, d)
         return d
