@@ -165,6 +165,7 @@ class Registry(object):
 
         def without_self(_self, *args, **kw):
             return value(*args, **kw)
+        without_self.value = value
         self.register_value(callable.wrapped_func, predicate_key, without_self)
 
     def register_method(self, callable, value, **key_dict):
