@@ -163,9 +163,9 @@ class Registry(object):
         predicate_key = self.key_dict_to_predicate_key(
             callable.wrapped_func, key_dict)
 
-        def f(_self, *args, **kw):
+        def without_self(_self, *args, **kw):
             return value(*args, **kw)
-        self.register_value(callable.wrapped_func, predicate_key, f)
+        self.register_value(callable.wrapped_func, predicate_key, without_self)
 
     def register_method(self, callable, value, **key_dict):
         """Register a callable for a dispatch method.
