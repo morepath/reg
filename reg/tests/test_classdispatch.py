@@ -1,5 +1,4 @@
 import reg
-from reg.registry import Registry
 from reg.predicate import match_class
 
 
@@ -29,15 +28,13 @@ def test_dispatch_basic():
     def something_for_object(cls):
         return "Something for %s" % cls
 
-    r = Registry()
-    r.register_function(something, something_for_object, cls=object)
+    something.register(something_for_object, cls=object)
 
-    l = r.lookup()
-    assert something(DemoClass, lookup=l) == (
+    assert something(DemoClass) == (
         "Something for <class 'reg.tests.test_classdispatch.DemoClass'>")
 
-    assert something.component(DemoClass, lookup=l) is something_for_object
-    assert list(something.all(DemoClass, lookup=l)) == [something_for_object]
+    assert something.component(DemoClass) is something_for_object
+    assert list(something.all(DemoClass)) == [something_for_object]
 
 
 def test_classdispatch_multidispatch():
@@ -51,21 +48,17 @@ def test_classdispatch_multidispatch():
     def something_for_object_and_foo(cls, other):
         return "Something, other is Foo: %s" % other
 
-    r = Registry()
-    r.register_function(
-        something,
+    something.register(
         something_for_object_and_object,
         cls=object, other=object)
 
-    r.register_function(
-        something,
+    something.register(
         something_for_object_and_foo,
         cls=object, other=Foo)
 
-    l = r.lookup()
-    assert something(DemoClass, Bar(), lookup=l) == (
+    assert something(DemoClass, Bar()) == (
         'Something, other is object: <instance of Bar>')
-    assert something(DemoClass, Foo(), lookup=l) == (
+    assert something(DemoClass, Foo()) == (
         "Something, other is Foo: <instance of Foo>")
 
 
@@ -77,11 +70,9 @@ def test_classdispatch_extra_arguments():
     def something_for_object(cls, extra):
         return "Extra: %s" % extra
 
-    r = Registry()
-    r.register_function(something, something_for_object,
-                        cls=object)
+    something.register(something_for_object, cls=object)
 
-    assert something(DemoClass, 'foo', lookup=r.lookup()) == "Extra: foo"
+    assert something(DemoClass, 'foo') == "Extra: foo"
 
 
 def test_classdispatch_no_arguments():
@@ -92,10 +83,9 @@ def test_classdispatch_no_arguments():
     def something_impl():
         return "Something!"
 
-    r = Registry()
-    r.register_function(something, something_impl)
+    something.register(something_impl)
 
-    assert something(lookup=r.lookup()) == 'Something!'
+    assert something() == 'Something!'
 
 
 def test_classdispatch_override():
@@ -109,15 +99,14 @@ def test_classdispatch_override():
     def something_for_special(cls):
         return "Special for %s" % cls
 
-    r = Registry()
-    r.register_function(something,
+    something.register(
                         something_for_object,
                         cls=object)
-    r.register_function(something,
+    something.register(
                         something_for_special,
                         cls=SpecialClass)
 
-    assert something(SpecialClass, lookup=r.lookup()) == (
+    assert something(SpecialClass) == (
         "Special for <class 'reg.tests.test_classdispatch.SpecialClass'>")
 
 
@@ -126,6 +115,12 @@ def test_classdispatch_fallback():
     def something(cls):
         return "Fallback"
 
-    r = Registry()
+    assert something(DemoClass) == "Fallback"
 
-    assert something(DemoClass, lookup=r.lookup()) == "Fallback"
+
+def test_classdispatch_fallback_lowlevel():
+    @reg.dispatch()
+    def something(cls):
+        return "Fallback"
+
+    assert something.registry.lookup().call(something, DemoClass) == "Fallback"
