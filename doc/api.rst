@@ -45,11 +45,6 @@ API
 
 .. autoexception:: KeyExtractorError
 
-.. autoclass:: reg.implicit.Implicit
-   :members:
-
-.. autoexception:: NoImplicitLookupError
-
 .. autofunction:: mapply
 
 .. autofunction:: arginfo
