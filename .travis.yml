@@ -10,6 +10,7 @@ env:
     - TOXENV=pypy3
     - TOXENV=coverage
     - TOXENV=pep8
+    - TOXENV=docs
 install:
     - pip install tox
     - if [ "$TOXENV" = 'coverage' ]; then pip install coveralls; fi
