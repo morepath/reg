@@ -5,7 +5,6 @@ from .sentinel import NOT_FOUND
 from .argextract import ArgExtractor
 from .arginfo import arginfo
 from .error import RegistrationError, KeyExtractorError
-from .mapply import lookup_mapply
 
 
 class Registry(object):
@@ -441,7 +440,7 @@ class Lookup(object):
             if component is None:
                 # if fallback is None use the original callable as fallback
                 component = callable
-        return lookup_mapply(component, self, *args, **kw)
+        return component(self, *args, **kw)
 
     def component(self, callable, *args, **kw):
         """Lookup function dispatched to with args and kw.

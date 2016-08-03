@@ -22,12 +22,3 @@ def mapply(func, *args, **kw):
     # XXX we don't support nested arguments
     new_kw = dict((name, kw[name]) for name in info.args if name in kw)
     return func(*args, **new_kw)
-
-
-def lookup_mapply(func, lookup, *args, **kw):
-    """Apply lookup argument to function only if it defines it.
-    """
-    info = arginfo(func)
-    if not info.keywords and 'lookup' in info.args:
-        return func(*args, lookup=lookup, **kw)
-    return func(*args, **kw)
