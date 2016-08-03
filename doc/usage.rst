@@ -8,123 +8,129 @@ Using Reg
 Introduction
 ------------
 
-Reg lets you write `generic functions`_ that dispatch on some of their
-arguments. To support this, Reg provides an implementation of
-`multiple dispatch`_ in Python. Reg goes beyond dispatching on the
-class of the arguments but can also dispatch on other aspects of
-arguments.
+Reg implements *predicate dispatch* and *pluggable registries*:
 
-In other words: Reg lets you define methods outside their classes as
-plain Python functions. Reg in its basic use is like the single
-dispatch implementation described in Python `PEP 443`_, but Reg
-provides a lot more flexibility.
+Predicate dispatch
 
-Reg supports loose coupling. You can define a function in your core
-application or framework but provide implementations of this function
-outside of it.
+  We all know about `dynamic dispatch`_: a method call is dispatched
+  on its first argument: ``self``, typically based on its class. This
+  is known as single dispatch. Reg implements `multiple dispatch`_,
+  which generalizes this by allowing dispatch on the class of *other*
+  arguments as well. Reg actually implements `predicate dispatch`_,
+  which is a further generalization that allows dispatch on arbitrary
+  properties of arguments, instead of just the class.
 
-Reg gives developers fine control over how to find implemenations of
-these functions. You can have multiple independent dispatch
-registries. For special use cases you can also register and look up
-other objects instead of functions.
+  The Morepath_ web framework uses the full power of predicate
+  dispatch in its view lookup system.
 
-What is Reg for? Reg offers infrastructure that lets you build more
-powerful frameworks -- frameworks that can be extended and overridden
-in a general way. The Morepath_ web framework is built on top of
-Reg. Reg may seem like overkill to you. You may very well be right; it
-depends on what you're building.
+  .. _`dynamic dispatch`: https://en.wikipedia.org/wiki/Dynamic_dispatch
 
-.. _`multiple dispatch`: http://en.wikipedia.org/wiki/Multiple_dispatch
+  .. _`multiple dispatch`: http://en.wikipedia.org/wiki/Multiple_dispatch
 
-.. _`generic functions`: https://en.wikipedia.org/wiki/Generic_function
+  .. _`predicate dispatch`: https://en.wikipedia.org/wiki/Predicate_dispatch
 
-.. _`PEP 443`: http://www.python.org/dev/peps/pep-0443/
+Pluggable registries
+
+  Reg lets you have multiple predicate dispatch registries in the same
+  runtime: each can dispatch differently.
+
+  Morepath_ uses multiple pluggable registries to support its
+  application composition system (mounting).
+
+To support these features efficiently, Reg also makes heavy use of
+caching throughout.
 
 .. _`Morepath`: http://morepath.readthedocs.io
 
 Example
 -------
 
-Here is an example of Reg. First we define a generic function that
-dispatches based on the class of its ``obj`` argument:
+Let's look at an example. First we create a class that when
+instantiated has a ``lookup`` attribute. This ``lookup`` attribute is
+used by Reg to look up the function to which it dispatches. We also define
+a single method it marked with the ``dispatch_method`` decorator:
 
 .. testcode::
 
   import reg
-  @reg.dispatch('obj')
-  def title(obj):
-     return "we don't know the title"
 
-Now we create a few example classes for which we want to be able to use
-the ``title`` function we defined above.
+  class Example(object):
+      def __init__(self, lookup):
+          self.lookup = lookup
+
+      @reg.dispatch_method('obj')
+      def title(self, obj):
+          return "We don't know the title"
+
+Now we create a few classes for which we want to be able to use the
+``title`` method we defined above:
 
 .. testcode::
 
   class TitledReport(object):
-     def __init__(self, title):
-        self.title = title
+      def __init__(self, title):
+          self.title = title
 
   class LabeledReport(object):
-     def __init__(self, label):
-        self.label = label
+      def __init__(self, label):
+          self.label = label
 
 In ``TitledReport`` there's an attribute called ``title`` but in the
 ``LabeledReport`` case we have an attribute ``label`` we want to use
-as the title. We will implement this behavior in a few plain python
+as the title. We implement this behavior in a few plain python
 functions:
 
 .. testcode::
 
-  def titled_report_title(obj):
+  def titled_report_title(self, obj):
       return obj.title
 
-  def labeled_report_title(obj):
+  def labeled_report_title(self, obj):
       return obj.label
 
-We now create a Reg :class:`reg.Registry`, and tell it about a few
-implementations for the ``title`` function:
+We can now create a registry that knows that we want to use
+``titled_report_title`` with instances of ``TitledReport`` and
+``labeled_report_title`` with instances of ``LabeledReport``:
 
 .. testcode::
 
-  registry = reg.Registry()
-  registry.register_function(
-      title, titled_report_title, obj=TitledReport)
-  registry.register_function(
-      title, labeled_report_title, obj=LabeledReport)
+  r = reg.Registry()
+  r.register_method(
+      Example.title, titled_report_title, obj=TitledReport)
+  r.register_method(
+      Example.title, labeled_report_title, obj=LabeledReport)
 
-We then tell Reg to use it automatically using
-:meth:`reg.implicit.Implicit.initialize`:
+We can now create a ``lookup`` object for this registry. The lookup is
+an object that uses a registry to find and call the correct registered
+implementations:
 
 .. testcode::
 
-  from reg import implicit
-  implicit.initialize(registry.lookup())
+  lookup = r.lookup()
 
-Once we've done this, our generic ``title`` function works on both
-titled and labeled objects:
+We can now instantiate ``Example`` with this lookup:
+
+.. testcode::
+
+  example = Example(lookup)
+
+Once we've done this, we can use ``example.title`` with both titled
+and labeled objects:
 
 .. doctest::
 
   >>> titled = TitledReport('This is a report')
   >>> labeled = LabeledReport('This is also a report')
-  >>> title(titled)
+  >>> example.title(titled)
   'This is a report'
-  >>> title(labeled)
+  >>> example.title(labeled)
   'This is also a report'
 
-Our example is over, so we reset the implicit registry set up before:
+What is going on and why is this useful at all? We present a worked
+out example next.
 
-.. testcode::
-
-  implicit.clear()
-
-Why not just use plain functions or methods instead of generic
-functions? Often plain functions or methods will be the right
-solution. But not always -- in this document we will examine a
-situation where generic functions are useful.
-
-Generic functions
-=================
+Dispatch methods
+================
 
 A Hypothetical CMS
 ------------------
@@ -163,8 +169,8 @@ folder is defined as the sum of the size of everything in it.
 .. sidebar:: ``len(text)`` is not in bytes!
 
   Yeah, we're lying here. ``len(text)`` is not in bytes if text is in
-  unicode. Just pretend that text is in ASCII only for the sake of
-  this example, so that it's true.
+  unicode. Just pretend that text is in ASCII for the sake of this
+  example.
 
 If we have control over the implementation of ``Document`` and
 ``Folder`` we can implement this feature easily by adding a ``size``
@@ -245,7 +251,8 @@ Adding ``size`` from outside
 So far we didn't need Reg at all. But in the real world things may be
 a lot more complicated. We may be dealing with a content management
 system core where we *cannot* control the implementation of
-``Document`` and ``Folder``. What if we want to add a size calculation
+``Document`` and ``Folder``. Or perhaps we can, but we want to keep
+our code modular anyway. So how would we add a size calculation
 feature in an extension package?
 
 We can fall back on good-old Python functions instead. We separate out
@@ -279,7 +286,7 @@ Generic size
 
 There is a problem with the above implementation however:
 ``folder_size`` is not generic anymore, but now depends on
-``document_size``. It would fail when presented with a folder with an
+``document_size``. It fails when presented with a folder with an
 ``Image`` in it:
 
 .. doctest::
@@ -333,8 +340,8 @@ All a bit complicated and hard-coded, but it works!
 New ``File`` content
 --------------------
 
-What if we now want to write a new extension to our CMS that adds a
-new kind of folder item, the ``File``, with a ``file_size`` function?
+What if we want to write a new extension to our CMS that adds a new
+kind of folder item, the ``File``, with a ``file_size`` function?
 
 .. testcode::
 
@@ -345,17 +352,16 @@ new kind of folder item, the ``File``, with a ``file_size`` function?
   def file_size(item):
       return len(item.bytes)
 
-We would need to remember to adjust the generic ``size`` function so
-we can teach it about ``file_size`` as well. Annoying, tightly
-coupled, but sometimes doable.
+We need to remember to adjust the generic ``size`` function so we can
+teach it about ``file_size`` as well. Annoying, tightly coupled, but
+sometimes doable.
 
-But what if we are actually yet another party, and we have control of
+But what if we are actually another party, and we have control of
 neither the basic CMS *nor* its size extension? We cannot adjust
 ``generic_size`` to teach it about ``File`` now! Uh oh!
 
-Perhaps the implementers of the size extension were wise and
-anticipated this use case. They could have implemented
-``size`` like this:
+Perhaps the implementers of the size extension anticipated this use
+case. They could have implemented ``size`` like this:
 
 .. testcode::
 
@@ -378,16 +384,16 @@ the size of a ``File`` instance:
 
   register_size(File, file_size)
 
-And it would work:
+And it works:
 
 .. doctest::
 
   >>> size(File('xyz'))
   3
 
-This is quite a bit of custom work on the parts of the implementers,
-though. The API to manipulate the size registry is also completely
-custom. But you can do it.
+But this is quite a bit of custom work that the implementers need to
+do, and it involves a new API (``register_size``) to manipulate the
+``size_function_registry``.  But it can be done.
 
 New ``HtmlDocument`` content
 ----------------------------
@@ -410,8 +416,8 @@ Let's try to get its size:
      ...
   KeyError: ...
 
-Uh oh, that doesn't work! There's nothing registered for the
-``HtmlDocument`` class.
+That doesn't work! There's nothing registered for the ``HtmlDocument``
+class.
 
 We need to remember to also call ``register_size`` for
 ``HtmlDocument``. We can reuse ``document_size``:
@@ -431,40 +437,45 @@ This is getting rather complicated, requiring not only foresight and
 extra implementation work for the developers of ``size`` but also
 extra work for the person who wants to subclass a content item.
 
-Hey, we should write a system that generalizes this and automates a
-lot of this, and gives us a more universal registry API, making our
-life easier! And that's Reg.
+Hey, we should write a system that automates a lot of this, and gives
+us a universal registration API, making our life easier! And what if
+we want to switch behavior based on more than just one argument? Plus
+we might want more than one registry in the same application. That's
+what Reg does.
 
 Doing this with Reg
 -------------------
 
-Let's see how we could implement ``size`` using Reg.
+Let's see how we can implement ``size`` using Reg:
 
-First we need our generic ``size`` function:
+.. sidebar:: Why is size a method?
 
-.. testcode::
+  Reg (as of version 0.10) requires you implement ``size`` as a
+  *method*, but not a method on the content objects. Reg requires this
+  because it supports multiple registries in the same application, and
+  the instance that the method is attached to determines which
+  registry is in use.
 
-  def size(item):
-      raise NotImplementedError
-
-This function raises ``NotImplementedError`` as we don't know how to
-get the size for an arbitrary Python object. Not very useful yet. We need
-to be able to hook the actual implementations into it. To do this, we first
-need to transform the ``size`` function to a generic one:
-
-.. testcode::
-
-  import reg
-  size = reg.dispatch('item')(size)
-
-We can actually spell these two steps in a single step, as
-:func:`reg.dispatch` can be used as decorator:
+  This way we can make what registry is used for lookup explicit: the
+  lookup is determined by looking at the first (``self`` or ``cls``)
+  argument of the method (or ``classmethod``).
 
 .. testcode::
 
-  @reg.dispatch('item')
-  def size(item):
-      raise NotImplementedError
+  class App(object):
+      def __init__(self, lookup):
+          self.lookup = lookup
+
+      @reg.dispatch_method('item')
+      def size(self, item):
+          raise NotImplementedError
+
+This method raises ``NotImplementedError`` as we don't know how to get
+the size for an arbitrary Python object. Not very useful yet. We need
+to be able to hook the actual implementations into it. That's why the
+``@reg.dispatch_method`` decorator is here. To be able to use any
+dispatch method the instance must have a ``lookup`` attribute, so we
+set this up when we initialize ``App``.
 
 We can now register the various size functions for the various content
 items in a registry:
@@ -472,78 +483,41 @@ items in a registry:
 .. testcode::
 
   r = reg.Registry()
-  r.register_function(size, document_size, item=Document)
-  r.register_function(size, folder_size, item=Folder)
-  r.register_function(size, image_size, item=Image)
-  r.register_function(size, file_size, item=File)
+  r.register_function(App.size, document_size, item=Document)
+  r.register_function(App.size, folder_size, item=Folder)
+  r.register_function(App.size, image_size, item=Image)
+  r.register_function(App.size, file_size, item=File)
 
-We can now use our ``size`` function:
+Note that we've used ``register_function`` here instead of
+``register_method``. We can use ``register_function`` when we want to
+register plain functions which don't define a ``self`` or ``cls``
+first argument.
 
-.. doctest::
-
-  >>> size(doc, lookup=r.lookup())
-  12
-
-.. sidebar:: The ``lookup`` argument
-
-  What's this ``lookup`` argument about? It lets you specify explicitly
-  what registry Reg looks in to look up the size functions, on our case
-  ``r``.
-
-  If we forget it, we'll get an error:
-
-  .. doctest::
-
-    >>> size(doc)
-    Traceback (most recent call last):
-      ...
-    NoImplicitLookupError: Cannot lookup without explicit lookup argument because no implicit lookup was configured.
-
-  If your generic function implementation defines a ``lookup``
-  argument it will receive the lookup used. This way you can continue
-  passing the lookup along explicitly from generic function to generic
-  function if you want to.
-
-  It's annoying to have to keep spelling this out all the time -- we
-  don't do it in our ``folder_size`` implementation, for instance, so
-  that will fail too, even if we pass a lookup to the our ``size``
-  function, as it won't be passed along implicitly.
-
-  .. doctest::
-
-    >>> size(folder, lookup=r.lookup())
-    Traceback (most recent call last):
-      ...
-    NoImplicitLookupError: Cannot lookup without explicit lookup argument because no implicit lookup was configured.
-
-Using :py:meth:`reg.implicit.Implicit.initialize` we can specify an
-implicit lookup argument for all generic lookups so we don't have to
-pass it in anymore:
+Now we need to create an ``App`` instance with a lookup based on the registry:
 
 .. testcode::
 
-  from reg import implicit
-  implicit.initialize(r.lookup())
+   app = App(r.lookup())
 
-Now we can just call our new generic ``size``:
+We can now use our ``size`` method:
 
 .. doctest::
 
-  >>> size(doc)
+  >>> app.size(doc)
   12
 
 And it will work for folder too:
 
 .. doctest::
 
-  >>> size(folder)
+  >>> app.size(folder)
   25
 
 It will work for subclasses too:
 
 .. doctest::
 
-  >>> size(htmldoc)
+  >>> app.size(htmldoc)
   19
 
 Reg knows that ``HtmlDocument`` is a subclass of ``Document`` and will
@@ -554,9 +528,9 @@ different size function for ``HtmlDocument``.
 Using classes
 -------------
 
-The previous example worked well for a single function to get the
-size, but what if we wanted to add a feature that required multiple
-methods, not just one?
+The previous example worked well for a single method to get the size,
+but what if we wanted to add a feature that required multiple methods,
+not just one?
 
 Let's imagine we have a feature to get the icon for a content object
 in our CMS, and that this consists of two methods, with a way to get a
@@ -624,29 +598,39 @@ manually:
   >>> icon_api.large()
   'document_large.png'
 
-But we want to be able to use the ``Icon`` API in a generic way, so let's
-create a generic function that gives us an implementation of ``Icon`` back for
-any object:
+But we want to be able to use the ``Icon`` API in a generic way, so
+let's create a dispatch method that gives us an implementation of
+``Icon`` back for any object:
 
 .. testcode::
 
-  @reg.dispatch('obj')
-  def icon(obj):
-      raise NotImplementedError
+  class App(object):
+       def __init__(self, lookup):
+           self.lookup = lookup
 
-We can now register the ``DocumentIcon`` adapter class for this
-function and ``Document``:
+       @reg.dispatch_method('obj')
+       def icon(self, obj):
+           raise NotImplementedError
+
+We register the ``DocumentIcon`` adapter class for this method and
+``Document``:
 
 .. testcode::
 
-  r.register_function(icon, DocumentIcon, obj=Document)
+  r.register_function(App.icon, DocumentIcon, obj=Document)
 
-We can now use the generic ``icon`` to get ``Icon`` API for a
-document:
+Let's set up an ``App`` instance with the correct lookup:
+
+.. testcode::
+
+  app = App(r.lookup())
+
+We can use the dispatch method ``icon`` to get ``Icon`` API for a
+document now:
 
 .. doctest::
 
-  >>> api = icon(doc)
+  >>> api = app.icon(doc)
   >>> api.small()
   'document_small.png'
   >>> api.large()
@@ -668,78 +652,108 @@ brevity let's just define one for ``Image`` here:
       def large(self):
           return load_icon('image_large.png')
 
-  r.register_function(icon, ImageIcon, obj=Image)
+  r.register_function(App.icon, ImageIcon, obj=Image)
 
 Now we can use ``icon`` to retrieve the ``Icon`` API for any item in
 the system for which an adapter was registered:
 
 .. doctest::
 
-  >>> icon(doc).small()
+  >>> app.icon(doc).small()
   'document_small.png'
-  >>> icon(doc).large()
+  >>> app.icon(doc).large()
   'document_large.png'
-  >>> icon(image).small()
+  >>> app.icon(image).small()
   'image_small.png'
-  >>> icon(image).large()
+  >>> app.icon(image).large()
   'image_large.png'
 
-Multiple dispatch
-------------------
+Multiple and predicate dispatch
+-------------------------------
 
-Sometimes we want to adapt more than one thing at the time. The
-canonical example for this is a web view lookup system. Given a
-request and a model, we want to find a view that represents these. The
-view needs to get the request, for parameter information, POST body,
-URL information, and so on. The view also needs to get the model, as
-that is what will be represented in the view.
+Sometimes we want to dispatch on multiple arguments. A good example
+for this is a web view lookup system. Given a request and a model, we
+want to find a view that knows how to make a representation of the
+model given the request. Information in the request can influence the
+representation. In this example we use the ``request_method``. This
+can can be ``GET``, ``POST``, ``PUT``, etc. The request method used
+determines to which actual view function Reg dispatches.
 
-You want to be able to vary the view depending on the type of the request
-as well as the type of the model.
-
-Let's imagine we have a ``Request`` class:
+Let's imagine we have a ``Request`` class with a ``request_method``
+attribute:
 
 .. testcode::
 
   class Request(object):
-      pass
+      def __init__(self, request_method):
+          self.request_method = request_method
 
-We'll use ``Document`` as the model class.
+We use ``Document`` as the model class.
 
-We want a generic ``view`` function that given a request and a model
-generates content for it:
+Now we define a view function that dispatches on the class of the
+model instance, and the ``request_method`` attribute of the request:
 
 .. testcode::
 
-  @reg.dispatch('request', 'model')
-  def view(request, model):
-      raise NotImplementedError
+  class App(object):
+      def __init__(self, lookup):
+          self.lookup = lookup
+
+      @reg.dispatch_method(
+          reg.match_instance('model',
+                             lambda model: model),
+          reg.match_key('request_method',
+                        lambda request: request.request_method))
+      def view(self, model, request):
+          raise NotImplementedError
+
+As you can see here we use ``match_instance`` and ``match_key``
+instead of strings to specify how to dispatch. If you use a string
+argument, this string names an argument and dispatch is based on its
+class. Here we use ``match_instance``, which is equivalent to this: we
+have a ``model`` predicate which uses the class of the ``model``
+argument for dispatch. We also use ``match_key``, which dispatches on
+the ``request_method`` attribute of the request; this attribute is a
+string, so dispatch is on string matching, not ``isinstance`` as with
+``match_instance``.
 
 We now define a concrete view for ``Document``:
 
 .. testcode::
 
-  def document_view(request, document):
-      return "The document content is: " + document.text
+  def document_get(self, model, request):
+      return "GET for document is: " + model.text
 
-Let's register the view in the registry:
+  def document_post(self, model, request):
+      return "POST for document"
+
+We register the view in the registry:
 
 .. testcode::
 
-  r.register_function(view, document_view,
-                      request=Request, model=Document)
+  r.register_method(App.view, document_get,
+                    request_method='GET', model=Document)
+  r.register_method(App.view, document_post,
+                    request_method='POST', model=Document)
 
-We now see why the second argument to ``register()`` is a list; so far
-we only supplied a single entry in it, but here we supply two, as we
-have two parameters on which to do dynamic dispatch.
+For ``model`` we've specified the class that matches (``Document``),
+but for the ``request_method`` predicate we've given the key to match
+on, the strings ``"GET"`` and ``"POST"``.
 
-Given a request and a document, we can now call ``view``:
+We create the app instance:
+
+.. testcode::
+
+  app = App(r.lookup())
+
+We can now call ``app.view``:
 
 .. doctest::
 
-  >>> request = Request()
-  >>> view(request, doc)
-  'The document content is: Hello world!'
+  >>> app.view(doc, Request('GET'))
+  'GET for document is: Hello world!'
+  >>> app.view(doc, Request('POST'))
+  'POST for document'
 
 Service Discovery
 =================
@@ -750,18 +764,22 @@ want to hardcode any particular way into your app, but instead leave
 this to a particular deployment-specific configuration. You can use the Reg
 infrastructure for this as well.
 
-The simplest way to do this with Reg is by using a generic service lookup
-function:
+The simplest way to do this with Reg is by using a method that finds
+the service for your application:
 
 .. testcode::
 
-  @reg.dispatch()
-  def emailer():
-      raise NotImplementedError
+  class App(object):
+      def __init__(self, lookup):
+          self.lookup = lookup
 
-Here we've created a generic function that takes no arguments (and
-thus does no dynamic dispatch). But it's still generic, so we can plug
-in its actual implementation elsewhere, into the registry:
+      @reg.dispatch_method()
+      def emailer(self):
+          raise NotImplementedError
+
+Here we've created a generic method that takes no arguments (besides
+self) and thus no dynamic dispatch. But it still makes use of the
+lookup, so we can plug in its actual implementation elsewhere:
 
 .. testcode::
 
@@ -771,42 +789,52 @@ in its actual implementation elsewhere, into the registry:
       # some specific way to send email
       sent.append((sender, subject, body))
 
-  def actual_emailer():
+  def actual_emailer(self):
       return send_email
 
-  r.register_function(emailer, actual_emailer)
+  r.register_method(App.emailer, actual_emailer)
 
-Now when we call emailer, we'll get the specific service we want:
+We instantiate with a ``lookup`` again:
+
+.. testcode::
+
+  app = App(r.lookup())
+
+When we call ``App.emailer``, we get the specific service we want:
 
 .. doctest::
 
-  >>> the_emailer = emailer()
+  >>> the_emailer = app.emailer()
   >>> the_emailer('someone@example.com', 'Hello', 'hello world!')
   >>> sent
   [('someone@example.com', 'Hello', 'hello world!')]
 
-In this case we return the function ``send_email`` from the
-``emailer()`` function, but we could return any object we want that
-implements the service, such as an instance with a more extensive API.
+In this case what we expect from the service is a function that we can
+call to send email. But you can register a function that returns a
+more complex object as a service just as easily.
 
 replacing class methods
 -----------------------
 
-Reg generic functions can be used to replace methods, so that you can
-follow the open/closed principle and add functionality to a class
-without modifying it. This works for instance methods, but what about
-``classmethod``? This takes the *class* as the first argument, not an
-instance. You can configure ``@reg.dispatch`` decorator with a special
-:class:`Predicate` instance that lets you dispatch on a class argument
-instead of an instance argument.
+Reg's dispatch system can be used to replace methods, as you can
+dispatch on the class of an argument. This way you can follow the
+open/closed principle and add functionality to a class without
+modifying it. They can also be used to replace classmethods marked
+with ``classmethod``. This takes the *class* as the first argument,
+not an instance.
 
 Here's what it looks like:
 
 .. testcode::
 
-  @reg.dispatch(reg.match_class('cls', lambda cls: cls))
-  def something(cls):
-      raise NotImplementedError()
+  class App(object):
+      def __init__(self, lookup):
+          self.lookup = lookup
+
+      @reg.dispatch_method(
+         reg.match_class('cls', lambda cls: cls))
+      def something(self, cls):
+         raise NotImplementedError()
 
 Note the call to :func:`match_class` here. This lets us specify that
 we want to dispatch on the class, and we supply a lambda function that
@@ -817,42 +845,52 @@ Let's use it:
 
 .. testcode::
 
-  def something_for_object(cls):
+  def something_for_object(self, cls):
       return "Something for %s" % cls
-
-  r.register_function(something, something_for_object, cls=object)
 
   class DemoClass(object):
       pass
+
+  r.register_method(App.something, something_for_object, cls=DemoClass)
+
+  app = App(r.lookup())
 
 When we now call ``something()`` with ``DemoClass`` as the first
 argument we get the expected output:
 
 .. doctest::
 
-  >>> something(DemoClass)
+  >>> app.something(DemoClass)
   "Something for <class 'DemoClass'>"
 
-This also knows about inheritance. So, you can write more specific
-implementations for particular classes:
+This also knows about inheritance. Here's a subclass of ``DemoClass``:
 
 .. testcode::
 
-  class ParticularClass(object):
+  class ParticularClass(DemoClass):
       pass
 
-  def something_particular(cls):
+.. doctest::
+
+   >>> app.something(ParticularClass)
+   "Something for <class 'ParticularClass'>"
+
+We can also register something more specific for ``ParticularClass``:
+
+.. testcode::
+
+  def something_particular(self, cls):
       return "Particular for %s" % cls
 
-  r.register_function(something, something_particular,
-                      cls=ParticularClass)
+  r.register_method(App.something, something_particular,
+                    cls=ParticularClass)
 
 When we call ``something`` now with ``ParticularClass`` as the argument,
 then ``something_particular`` is called:
 
 .. doctest::
 
-  >>> something(ParticularClass)
+  >>> app.something(ParticularClass)
   "Particular for <class 'ParticularClass'>"
 
 Lower level API
@@ -861,27 +899,62 @@ Lower level API
 Component lookup
 ----------------
 
-You can look up the function that a function would dispatch to without
+You can look up the function that a method would dispatch to without
 calling it. You do this using the ``component`` method on the dispatch
 function:
 
+.. testcode::
+
+  class App(object):
+      def __init__(self, lookup):
+          self.lookup = lookup
+
+      @reg.dispatch_method('obj')
+      def foo(self, obj):
+          return "default"
+
+  class A(object):
+      pass
+
+  def a_func(self, obj):
+      return "A"
+
+  r = reg.Registry()
+  r.register_method(App.foo, a_func, obj=A)
+
+  app = App(r.lookup())
+
+  a = A()
+
 .. doctest::
 
-  >>> size.component(doc) is document_size
+  >>> app.foo(a)
+  'A'
+  >>> app.foo.component(a) is a_func
   True
 
 Getting all
 -----------
 
-As we've seen, Reg supports inheritance. ``size`` for instance was
-registered for ``Document`` instances, and is therefore also available
-of instances of its subclass, ``HtmlDocument``:
+As we've seen, Reg supports inheritance. ``foo`` had a registration for
+``A`` so it also applies to ``B`` if it subclasses ``A``:
+
+.. testcode::
+
+  class B(A):
+      pass
+
+  b = B()
 
 .. doctest::
 
-  >>> size.component(doc) is document_size
+  >>> app.foo(a)
+  'A'
+  >>> app.foo(b)
+  'A'
+  >>> app.foo.component(a) is a_func
   True
-  >>> size.component(htmldoc) is document_size
+  >>> app.foo.component(b) is a_func
   True
 
 Using the special ``all`` function we can also get an iterable of
@@ -891,76 +964,104 @@ only one of them:
 
 .. doctest::
 
-  >>> list(size.all(doc))
-  [<function document_size at ...>]
-  >>> list(size.all(htmldoc))
-  [<function document_size at ...>]
+  >>> list(app.foo.all(a)) == [a_func]
+  True
+  >>> list(app.foo.all(b)) == [a_func]
+  True
 
-We can make this more interesting by registering a special
-``htmldocument_size`` to handle ``HtmlDocument`` instances:
+Let's create another subclass of ``A``:
 
 .. testcode::
 
-  def htmldocument_size(doc):
-     return len(doc.text) + 1 # 1 so we can see a difference
+   class C(A):
+       pass
 
-  r.register_function(size, htmldocument_size,
-                      item=HtmlDocument)
+   c = C()
 
-``size.all()`` for ``htmldoc`` now also gives back the more specific
-``htmldocument_size``::
+We now register a special ``c_func`` for it:
 
-  >>> list(size.all(htmldoc))
-  [<function htmldocument_size at ...>, <function document_size at ...>]
+.. testcode::
+
+  def c_func(self, obj):
+      return "C"
+
+  r.register_method(App.foo, c_func, obj=C)
+
+When we use ``all`` now, we get back the ``c_func`` specifically registered
+for it, and also ``a_func`` which is registered for its base class ``A``:
+
+.. doctest::
+
+  >>> list(app.foo.all(c)) == [c_func, a_func]
+  True
 
 Using the Registry directly
 ---------------------------
 
-The key under which we register something in a registry in fact doesn't
-need to be a function. We can register predicate for any immutable key such
-as a string:
+Until now we've seen access through the high-level API of Reg,
+centered around calling methods. We can also use the registry API
+directly. In this case we aren't registered to registering functions
+for methods; we can register anything for any immutable key:
 
 .. testcode::
 
-  r.register_predicates('some key', [reg.match_argname('obj')])
+  lowlevel_r = reg.Registry()
+
+  lowlevel_r.register_predicates('some key', [reg.match_argname('obj')])
 
 We can now register something for this key:
 
 .. testcode::
 
-  r.register_value('some key', [Document], 'some registered')
+  lowlevel_r.register_value('some key', [Document], 'some registered')
 
-We can't get it at it using a generic dispatch function anymore
-now. We can use the :class:`reg.Registry` API instead. Here's what to
-do:
+We can access the information in the registry using the :class:`reg.Registry`
+API:
 
 .. doctest::
 
-  >>> r.component('some key', Document)
+  >>> lowlevel_r.component('some key', Document)
   'some registered'
-  >>> list(r.all('some key', Document))
+  >>> list(lowlevel_r.all('some key', Document))
   ['some registered']
 
 Caching
 -------
 
-We can turn a plain :class:`reg.Registry` into a faster, caching class
-lookup using :class:`reg.CachingKeyLookup`:
+The default lookup that we get from a registry is designed to be easy
+to understand and debug, but it is relatively slow. In real-world
+applications it is useful to introduce caching. We can use
+:class:`reg.CachingKeyLookup` for this:
+
+.. testcode::
+
+  caching = reg.CachingKeyLookup(r, 100, 100, 100)
+
+This isn't a lookup yet: it's a *key lookup*, which is a lower layer
+in the API. We can turn it back into a lookup to give us a caching
+version:
+
+.. testcode::
+
+   caching_lookup = caching.lookup()
+
+We can now create a caching application:
+
+.. testcode::
+
+  caching_app = App(caching_lookup)
+
+It behaves the same way as the original:
 
 .. doctest::
 
-  >>> caching = reg.CachingKeyLookup(r, 100, 100, 100)
+  >>> caching_app.foo(a)
+  'A'
+  >>> caching_app.foo(b)
+  'A'
+  >>> caching_app.foo(c)
+  'C'
 
-Turning it back into a lookup gives us a caching version of what we had
-before:
-
-.. doctest::
-
-  >>> caching_lookup = caching.lookup()
-  >>> size(doc, lookup=caching_lookup)
-  12
-  >>> size(doc, lookup=caching_lookup)
-  12
-
-You'll have to trust us on this, but it's faster the second time as
-the dispatch to ``document_size`` was cached!
+But if you call the dispatch method again with the same arguments, the
+second time the dispatch is faster because it can skip looking through
+indexes.

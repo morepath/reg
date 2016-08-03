@@ -1,10 +1,10 @@
+import inspect
 from repoze.lru import LRUCache
 from .predicate import PredicateRegistry, MultiPredicate, SingleValueRegistry
 from .sentinel import NOT_FOUND
 from .argextract import ArgExtractor
 from .arginfo import arginfo
 from .error import RegistrationError, KeyExtractorError
-from .mapply import lookup_mapply
 
 
 class Registry(object):
@@ -79,9 +79,9 @@ class Registry(object):
         :param predicates: a sequence of :class:`reg.Predicate` objects.
         :returns: a :class:`reg.PredicateRegistry`.
         """
-        if callable in self.initialized:
+        if callable.wrapped_func in self.initialized:
             return
-        self.initialized.add(callable)
+        self.initialized.add(callable.wrapped_func)
         return self.register_callable_predicates(callable.wrapped_func,
                                                  predicates)
 
@@ -98,7 +98,7 @@ class Registry(object):
             raise RegistrationError(
                 "Cannot register external predicates for non-external "
                 "dispatch: %s" % callable)
-        self.external_predicates[callable] = predicates
+        self.external_predicates[callable.wrapped_func] = predicates
 
     def register_dispatch(self, callable):
         """Register a dispatch function.
@@ -120,7 +120,7 @@ class Registry(object):
         if callable in self.initialized:
             return
         if callable.external_predicates:
-            predicates = self.external_predicates.get(callable)
+            predicates = self.external_predicates.get(callable.wrapped_func)
             if predicates is None:
                 raise RegistrationError(
                     "No external predicates were registered for: %s" %
@@ -148,38 +148,39 @@ class Registry(object):
             predicate_key = predicate_key[0]
         self.predicate_registries[key].register(predicate_key, value)
 
-    def register_function_by_predicate_key(self, callable,
-                                           predicate_key, value):
-        """Register a callable for a dispatch function.
+    def register_function(self, callable, value, **key_dict):
+        """Register a function for a dispatch method.
 
         Like :meth:`register_value`, but makes sure that the value is
-        a callable with the same signature as the original dispatch callable.
+        a callable with the same signature as the original dispatch method,
+        ignoring the first argument (``self`` or ``cls``).
+
         If not, a :exc:`reg.RegistrationError` is raised.
         """
-        value_arginfo = arginfo(value)
-        if value_arginfo is None:
-            raise RegistrationError(
-                "Cannot register non-callable for dispatch "
-                "function %r: %r" % (callable, value))
-        if not same_signature(arginfo(callable.wrapped_func), value_arginfo):
-            raise RegistrationError(
-                "Signature of callable dispatched to (%r) "
-                "not that of dispatch function (%r)" % (
-                    value, callable.wrapped_func))
-        self.register_value(callable.wrapped_func, predicate_key, value)
-
-    def register_function(self, callable, value, **key_dict):
-        """Register a callable for a dispatch function.
-
-        Like :meth:`register_function_by_predicate_key`, but
-        constructs the predicate_key based on the ``key_dict``
-        argument, using the ``name`` and ``default`` arguments to
-        :class:`Predicate`.
-        """
+        validate_function_signature(value, callable)
         self.register_dispatch(callable)
         predicate_key = self.key_dict_to_predicate_key(
             callable.wrapped_func, key_dict)
-        self.register_function_by_predicate_key(callable, predicate_key, value)
+
+        def without_self(_self, *args, **kw):
+            return value(*args, **kw)
+        without_self.value = value
+        self.register_value(callable.wrapped_func, predicate_key, without_self)
+
+    def register_method(self, callable, value, **key_dict):
+        """Register a callable for a dispatch method.
+
+        Like :meth:`register_value`, but makes sure that the value is
+        a callable with the same signature as the original dispatch method,
+        including the ``self`` or ``cls`` argument.
+
+        If not, a :exc:`reg.RegistrationError` is raised.
+        """
+        validate_method_signature(value, callable)
+        self.register_dispatch(callable)
+        predicate_key = self.key_dict_to_predicate_key(
+            callable.wrapped_func, key_dict)
+        self.register_value(callable.wrapped_func, predicate_key, value)
 
     def key_dict_to_predicate_key(self, callable, key_dict):
         """Construct predicate key from key dictionary.
@@ -405,7 +406,41 @@ class Lookup(object):
             if component is None:
                 # if fallback is None use the original callable as fallback
                 component = callable
-        return lookup_mapply(component, self, *args, **kw)
+        return component(*args, **kw)
+
+    def call_lookup(self, callable, *args, **kw):
+        """Call callable with args and kw.
+
+        Do a dispatch call for callable. If nothing more specific is
+        registered, call the dispatch function as a fallback.
+
+        :param callable: the dispatch function to call.
+        :args: varargs for the call. Is also used to extract
+           dispatch information to construct predicate_key.
+        :kw: keyword arguments for the call. Is also used to extract
+           dispatch information to construct predicate_key.
+        :returns: the result of the call.
+        """
+        try:
+            key = self.key_lookup.predicate_key(callable, *args, **kw)
+            component = self.key_lookup.component(callable, key)
+        except KeyExtractorError:
+            # if we cannot extract the key this could be because the
+            # dispatch was never initialized, as register_function
+            # was not called. In this case we want the fallback.
+            # Alternatively we cannot construct the key because we
+            # were passed the wrong arguments.
+            # In both cases, call the fallback. In case the wrong arguments
+            # were passed, we get the appropriate TypeError then
+            component = callable
+
+        if component is None:
+            # try to use the fallback
+            component = self.key_lookup.fallback(callable, key)
+            if component is None:
+                # if fallback is None use the original callable as fallback
+                component = callable
+        return component(self, *args, **kw)
 
     def component(self, callable, *args, **kw):
         """Lookup function dispatched to with args and kw.
@@ -482,6 +517,40 @@ class Lookup(object):
         """
         key = self.key_lookup.key_dict_to_predicate_key(callable, key_dict)
         return self.key_lookup.all(callable, key)
+
+
+def validate_method_signature(f, dispatch):
+    f_arginfo = arginfo(f)
+    if f_arginfo is None:
+        raise RegistrationError(
+            "Cannot register non-callable for dispatch "
+            "method %r: %r" % (dispatch, f))
+    if not same_signature(arginfo(dispatch.wrapped_func), f_arginfo):
+        raise RegistrationError(
+            "Signature of callable dispatched to (%r) "
+            "not that of dispatch method (%r)" % (
+                f, dispatch))
+
+
+def validate_function_signature(f, dispatch):
+    f_arginfo = arginfo(f)
+    if f_arginfo is None:
+        raise RegistrationError(
+            "Cannot register non-callable for dispatch "
+            "method %r: %r" % (dispatch, f))
+
+    dispatch_arginfo = arginfo(dispatch.wrapped_func)
+    # strip off first argument (as this is self or cls)
+    dispatch_arginfo = inspect.ArgInfo(
+        dispatch_arginfo.args[1:],
+        dispatch_arginfo.varargs,
+        dispatch_arginfo.keywords,
+        dispatch_arginfo.defaults)
+    if not same_signature(dispatch_arginfo, f_arginfo):
+        raise RegistrationError(
+            "Signature of callable dispatched to (%r) "
+            "not that of dispatch method (without self) (%r)" % (
+                f, dispatch))
 
 
 def same_signature(a, b):
