@@ -22,7 +22,7 @@ class Bar(object):
 
 
 def test_dispatch_basic():
-    @reg.dispatch(match_class('cls', lambda cls: cls))
+    @reg.dispatch(match_class('cls'))
     def something(cls):
         raise NotImplementedError()
 
@@ -41,7 +41,7 @@ def test_dispatch_basic():
 
 
 def test_classdispatch_multidispatch():
-    @reg.dispatch(match_class('cls', lambda cls: cls), 'other')
+    @reg.dispatch(match_class('cls'), 'other')
     def something(cls, other):
         raise NotImplementedError()
 
@@ -70,7 +70,7 @@ def test_classdispatch_multidispatch():
 
 
 def test_classdispatch_extra_arguments():
-    @reg.dispatch(match_class('cls', lambda cls: cls))
+    @reg.dispatch(match_class('cls'))
     def something(cls, extra):
         raise NotImplementedError()
 
@@ -99,7 +99,7 @@ def test_classdispatch_no_arguments():
 
 
 def test_classdispatch_override():
-    @reg.dispatch(match_class('cls', lambda cls: cls))
+    @reg.dispatch(match_class('cls'))
     def something(cls):
         raise NotImplementedError()
 

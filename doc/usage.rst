@@ -804,14 +804,13 @@ Here's what it looks like:
 
 .. testcode::
 
-  @reg.dispatch(reg.match_class('cls', lambda cls: cls))
+  @reg.dispatch(reg.match_class('cls'))
   def something(cls):
       raise NotImplementedError()
 
 Note the call to :func:`match_class` here. This lets us specify that
-we want to dispatch on the class, and we supply a lambda function that
-shows how to extract this from the arguments to ``something``; in this
-case we simply want the ``cls`` argument.
+we want to dispatch on the class, in this case we simply want the
+``cls`` argument.
 
 Let's use it:
 

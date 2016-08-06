@@ -6,6 +6,9 @@ CHANGES
 
 - Include doctests in Tox and Travis.
 
+- Have the ``match_class`` predicate use the class of the argument
+  with the given name by default.
+
 
 0.9.3 (2016-07-18)
 ==================
