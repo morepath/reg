@@ -1,9 +1,9 @@
 from __future__ import unicode_literals
 from functools import update_wrapper
-from .implicit import implicit
-from .error import NoImplicitLookupError
 from .predicate import match_argname
 from .compat import string_types
+from .registry import Registry
+from .reify import reify
 
 
 class dispatch(object):
@@ -44,44 +44,48 @@ class dispatch_external_predicates(object):
 
 class Dispatch(object):
     def __init__(self, predicates, callable, external_predicates=False):
+        self.registry = Registry()
         self.predicates = predicates
         self.wrapped_func = callable
         self.external_predicates = external_predicates
+        # self.registry.register_dispatch(self)
+
+    def register(self, value, **key_dict):
+        self.registry.register_function(self, value, **key_dict)
+
+    def register_external_predicates(self, predicates):
+        self.registry.register_external_predicates(self, predicates)
+
+    def register_dispatch_predicates(self, predicates):
+        self.registry.register_dispatch_predicates(self, predicates)
 
     def __repr__(self):
         return repr(self.wrapped_func)
 
+    @reify
+    def _lookup(self):
+        self.registry.register_dispatch(self)
+        return self.registry.lookup
+
     def __call__(self, *args, **kw):
-        lookup = get_lookup(kw)
-        return lookup.call(self.wrapped_func, *args, **kw)
+        return self._lookup().call(self.wrapped_func, *args, **kw)
 
     def component(self, *args, **kw):
-        return get_lookup(kw).component(self.wrapped_func, *args, **kw)
+        return self._lookup().component(self.wrapped_func, *args, **kw)
 
     def fallback(self, *args, **kw):
-        return get_lookup(kw).fallback(self.wrapped_func, *args, **kw)
+        return self._lookup().fallback(self.wrapped_func, *args, **kw)
 
     def component_key_dict(self, **kw):
-        return get_lookup(kw).component_key_dict(self.wrapped_func, kw)
+        return self._lookup().component_key_dict(self.wrapped_func, kw)
 
     def all(self, *args, **kw):
-        return get_lookup(kw).all(self.wrapped_func, *args, **kw)
+        return self._lookup().all(self.wrapped_func, *args, **kw)
 
     def all_key_dict(self, **kw):
-        return get_lookup(kw).all_key_dict(self.wrapped_func, kw)
+        return self._lookup().all_key_dict(self.wrapped_func, kw)
 
-
-def get_lookup(kw):
-    """Find lookup to use.
-
-    First inspects ``kw``, a dictionary of keyword arguments given for
-    an argument called ``lookup``. If that cannot be found, fall back
-    on a global ``implicit.lookup``. If no such lookup is available,
-    raise a ``NoImplicitLookupError``.
-    """
-    lookup = kw.pop('lookup', implicit.lookup)
-    if lookup is None:
-        raise NoImplicitLookupError(
-            "Cannot lookup without explicit lookup argument "
-            "because no implicit lookup was configured.")
-    return lookup
+    def key_dict_to_predicate_key(self, key_dict):
+        self.registry.register_dispatch(self)
+        return self.registry.key_dict_to_predicate_key(
+            self.wrapped_func, key_dict)
