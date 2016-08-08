@@ -1,5 +1,5 @@
-import reg
-from reg.predicate import match_class
+from ..dispatch import dispatch
+from ..predicate import match_class
 
 
 class DemoClass(object):
@@ -21,7 +21,7 @@ class Bar(object):
 
 
 def test_dispatch_basic():
-    @reg.dispatch(match_class('cls'))
+    @dispatch(match_class('cls'))
     def something(cls):
         raise NotImplementedError()
 
@@ -38,7 +38,7 @@ def test_dispatch_basic():
 
 
 def test_classdispatch_multidispatch():
-    @reg.dispatch(match_class('cls'), 'other')
+    @dispatch(match_class('cls'), 'other')
     def something(cls, other):
         raise NotImplementedError()
 
@@ -63,7 +63,7 @@ def test_classdispatch_multidispatch():
 
 
 def test_classdispatch_extra_arguments():
-    @reg.dispatch(match_class('cls'))
+    @dispatch(match_class('cls'))
     def something(cls, extra):
         raise NotImplementedError()
 
@@ -76,7 +76,7 @@ def test_classdispatch_extra_arguments():
 
 
 def test_classdispatch_no_arguments():
-    @reg.dispatch()
+    @dispatch()
     def something():
         raise NotImplementedError()
 
@@ -89,7 +89,7 @@ def test_classdispatch_no_arguments():
 
 
 def test_classdispatch_override():
-    @reg.dispatch(match_class('cls'))
+    @dispatch(match_class('cls'))
     def something(cls):
         raise NotImplementedError()
 
@@ -111,7 +111,7 @@ def test_classdispatch_override():
 
 
 def test_classdispatch_fallback():
-    @reg.dispatch()
+    @dispatch()
     def something(cls):
         return "Fallback"
 
@@ -119,7 +119,7 @@ def test_classdispatch_fallback():
 
 
 def test_classdispatch_fallback_lowlevel():
-    @reg.dispatch()
+    @dispatch()
     def something(cls):
         return "Fallback"
 
