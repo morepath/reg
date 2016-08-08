@@ -1,10 +1,10 @@
 from __future__ import unicode_literals
 import pytest
 
-from reg.predicate import (
+from ..predicate import (
     match_instance, match_key, match_class, key_predicate, NOT_FOUND)
-from reg.dispatch import dispatch
-from reg.error import RegistrationError, KeyExtractorError
+from ..dispatch import dispatch
+from ..error import RegistrationError, KeyExtractorError
 
 
 class IAlpha(object):

@@ -1,10 +1,10 @@
 from __future__ import unicode_literals
-from reg.predicate import (PredicateRegistry, SingleValueRegistry,
-                           class_predicate,
-                           match_instance, match_key,
-                           Lookup, CachingKeyLookup)
-from reg.error import RegistrationError
-from reg.dispatch import dispatch
+from ..predicate import (PredicateRegistry, SingleValueRegistry,
+                         class_predicate,
+                         match_instance, match_key,
+                         Lookup, CachingKeyLookup)
+from ..error import RegistrationError
+from ..dispatch import dispatch
 import pytest
 
 
