@@ -110,18 +110,22 @@ def match_argname(argname, fallback=None, default=None):
                            fallback, default)
 
 
-def match_class(name, func, fallback=None, default=None):
+def match_class(name, func=None, fallback=None, default=None):
     """Predicate that extracts class returned by func.
 
     :name: predicate name.
     :func: argument that takes arguments. These arguments are
       extracted from the arguments given to the dispatch function.
-      This function should return a class; dispatching is done
-      on this class.
+      This function should return a class; dispatching is done on this
+      class. If ``None`` use the class of the argument having the same
+      name as the predicate.
     :fallback: the fallback value. By default it is ``None``.
     :default: optional default value.
     :returns: a :class:`Predicate`.
+
     """
+    if func is None:
+        func = eval('lambda {0}: {0}'.format(name))
     return class_predicate(name, KeyExtractor(func), fallback, default)
 
 
