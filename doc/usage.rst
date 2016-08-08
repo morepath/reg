@@ -846,56 +846,7 @@ We can make this more interesting by registering a special
   >>> list(size.all(htmldoc))
   [<function htmldocument_size at ...>, <function document_size at ...>]
 
-Using the Registry directly
----------------------------
+ TDB lower level access to component, etc
 
-The key under which we register something in a registry in fact doesn't
-need to be a function. We can register predicate for any immutable key such
-as a string:
-
-.. testcode::
-
-  r = reg.Registry()
-  r.register_predicates('some key', [reg.match_argname('obj')])
-
-We can now register something for this key:
-
-.. testcode::
-
-  r.register_value('some key', [Document], 'some registered')
-
-We can't get it at it using a generic dispatch function anymore
-now. We can use the :class:`reg.Registry` API instead. Here's what to
-do:
-
-.. doctest::
-
-  >>> r.component('some key', Document)
-  'some registered'
-  >>> list(r.all('some key', Document))
-  ['some registered']
-
-Caching
--------
-
-We can turn a plain :class:`reg.Registry` into a faster, caching class
-lookup using :class:`reg.CachingKeyLookup`:
-
-.. doctest::
-
-  >>> caching = reg.CachingKeyLookup(r, 100, 100, 100)
-
-Turning it back into a lookup gives us a caching version of what we had
-before:
-
-.. doctest::
-
-  #   **XXX TO BE FIXED** 
-  #>>> caching_lookup = caching.lookup()
-  #>>> size(doc, lookup=caching_lookup)
-  #12
-  #>>> size(doc, lookup=caching_lookup)
-  #12
-
-You'll have to trust us on this, but it's faster the second time as
-the dispatch to ``document_size`` was cached!
+ TDB caching lookup
+ 

@@ -1,20 +1,21 @@
 from __future__ import unicode_literals
-from reg.registry import Registry, CachingKeyLookup
-from reg.predicate import (class_predicate,
-                           match_instance, match_key)
+from reg.predicate import (PredicateRegistry, SingleValueRegistry,
+                           class_predicate,
+                           match_instance, match_key,
+                           Lookup, CachingKeyLookup)
 from reg.error import RegistrationError
+from reg.dispatch import dispatch
 import pytest
 
 
 def test_registry():
-    r = Registry()
-
     class Foo(object):
         pass
 
     class FooSub(Foo):
         pass
 
+    @dispatch()
     def view(self, request):
         raise NotImplementedError()
 
@@ -36,7 +37,7 @@ def test_registry():
     def request_method_fallback(self, request):
         return "Request method fallback"
 
-    r.register_callable_predicates(view, [
+    view.add_predicates([
         match_instance('model', get_model, model_fallback),
         match_key('name', get_name, name_fallback),
         match_key('request_method', get_request_method,
@@ -51,38 +52,44 @@ def test_registry():
     def foo_edit(self, request):
         return "foo edit"
 
-    r.register_value(view, (Foo, '', 'GET'), foo_default)
-    r.register_value(view, (Foo, '', 'POST'), foo_post)
-    r.register_value(view, (Foo, 'edit', 'POST'), foo_edit)
+    view.register_value((Foo, '', 'GET'), foo_default)
+    view.register_value((Foo, '', 'POST'), foo_post)
+    view.register_value((Foo, 'edit', 'POST'), foo_edit)
 
-    assert r.component(view, (Foo, '', 'GET')) is foo_default
-    assert r.component(view, (Foo, '', 'POST')) is foo_post
-    assert r.component(view, (Foo, 'edit', 'POST')) is foo_edit
-    assert r.component(view, (FooSub, '', 'GET')) is foo_default
-    assert r.component(view, (FooSub, '', 'POST')) is foo_post
-
-    l = r.lookup()
+    key_lookup = view.lookup.key_lookup
+    assert key_lookup.component((Foo, '', 'GET')) is foo_default
+    assert key_lookup.component((Foo, '', 'POST')) is foo_post
+    assert key_lookup.component((Foo, 'edit', 'POST')) is foo_edit
+    assert key_lookup.component((FooSub, '', 'GET')) is foo_default
+    assert key_lookup.component((FooSub, '', 'POST')) is foo_post
 
     class Request(object):
         def __init__(self, name, request_method):
             self.name = name
             self.request_method = request_method
 
-    assert l.call(view, Foo(), Request('', 'GET')) == 'foo default'
-    assert l.call(view, FooSub(), Request('', 'GET')) == 'foo default'
-    assert l.call(view, FooSub(), Request('edit', 'POST')) == 'foo edit'
+    assert view.lookup.call(
+        view, Foo(), Request('', 'GET')) == 'foo default'
+    assert view.lookup.call(
+        view, FooSub(), Request('', 'GET')) == 'foo default'
+    assert view.lookup.call(
+        view, FooSub(), Request('edit', 'POST')) == 'foo edit'
 
     class Bar(object):
         pass
 
-    assert l.call(view, Bar(), Request('', 'GET')) == 'Model fallback'
-    assert l.call(view, Foo(), Request('dummy', 'GET')) == 'Name fallback'
-    assert l.call(view, Foo(), Request('', 'PUT')) == 'Request method fallback'
-    assert l.call(view, FooSub(), Request('dummy', 'GET')) == 'Name fallback'
+    assert view.lookup.call(
+        view, Bar(), Request('', 'GET')) == 'Model fallback'
+    assert view.lookup.call(
+        view, Foo(), Request('dummy', 'GET')) == 'Name fallback'
+    assert view.lookup.call(
+        view, Foo(), Request('', 'PUT')) == 'Request method fallback'
+    assert view.lookup.call(
+        view, FooSub(), Request('dummy', 'GET')) == 'Name fallback'
 
 
-def test_registry_class_lookup():
-    reg = Registry()
+def test_predicate_registry_class_lookup():
+    reg = PredicateRegistry(class_predicate('obj'))
 
     class Document(object):
         pass
@@ -90,33 +97,31 @@ def test_registry_class_lookup():
     class SpecialDocument(Document):
         pass
 
-    linecount = 'linecount'
+    reg.register(Document, 'document line count')
+    reg.register(SpecialDocument,
+                 'special document line count')
 
-    reg.register_predicates(linecount, [class_predicate('obj')])
-    reg.register_value(linecount, [Document], 'document line count')
-    reg.register_value(linecount, [SpecialDocument],
-                       'special document line count')
-
-    assert (reg.component(linecount, Document) ==
+    assert (reg.component(Document) ==
             'document line count')
 
-    assert (reg.component(linecount, SpecialDocument) ==
+    assert (reg.component(SpecialDocument) ==
             'special document line count')
 
     class AnotherDocument(Document):
         pass
 
-    assert (reg.component(linecount, AnotherDocument) ==
+    assert (reg.component(AnotherDocument) ==
             'document line count')
 
     class Other(object):
         pass
 
-    assert reg.component(linecount, Other) is None
+    assert reg.component(Other) is None
 
 
-def test_registry_target_find_specific():
-    reg = Registry()
+def test_predicate_registry_target_find_specific():
+    reg = PredicateRegistry(class_predicate('obj'))
+    reg2 = PredicateRegistry(class_predicate('obj'))
 
     class Document(object):
         pass
@@ -130,86 +135,53 @@ def test_registry_target_find_specific():
     def special_linecount(obj):
         pass
 
-    reg.register_predicates(linecount, [class_predicate('obj')])
-    reg.register_value(linecount, [Document], 'line count')
-    reg.register_predicates(special_linecount, [class_predicate('obj')])
-    reg.register_value(special_linecount, [Document], 'special line count')
+    reg.register(Document, 'line count')
+    reg2.register(Document, 'special line count')
 
-    assert reg.component(linecount, Document) == 'line count'
-    assert (reg.component(special_linecount, Document) ==
+    assert reg.component(Document) == 'line count'
+    assert (reg2.component(Document) ==
             'special line count')
 
-    assert reg.component(linecount, SpecialDocument) == 'line count'
-    assert (reg.component(special_linecount, SpecialDocument) ==
+    assert reg.component(SpecialDocument) == 'line count'
+    assert (reg2.component(SpecialDocument) ==
             'special line count')
 
 
 def test_registry_no_sources():
-    reg = Registry()
+    reg = SingleValueRegistry()
 
     class Animal(object):
         pass
 
-    def something():
-        pass
-
-    reg.register_predicates(something, [])
-    reg.register_value(something, (), 'elephant')
-    assert reg.component(something, ()) == 'elephant'
+    reg.register((), 'elephant')
+    assert reg.component(()) == 'elephant'
 
 
 def test_register_twice_with_predicate():
-    reg = Registry()
+    reg = PredicateRegistry(class_predicate('obj'))
 
     class Document(object):
         pass
 
-    def linecount(obj):
-        pass
-
-    reg.register_predicates(linecount, [class_predicate('obj')])
-    reg.register_value(linecount, [Document], 'document line count')
+    reg.register(Document, 'document line count')
     with pytest.raises(RegistrationError):
-        reg.register_value(linecount, [Document], 'another line count')
+        reg.register(Document, 'another line count')
 
 
 def test_register_twice_without_predicates():
-    reg = Registry()
+    reg = SingleValueRegistry()
 
-    def linecount(obj):
-        pass
-
-    reg.register_predicates(linecount, [])
-    reg.register_value(linecount, (), 'once')
+    reg.register((), 'once')
     with pytest.raises(RegistrationError):
-        reg.register_value(linecount, (), 'twice')
-
-
-def test_clear():
-    reg = Registry()
-
-    def linecount():
-        pass
-
-    reg.register_predicates(linecount, [])
-    reg.register_value(linecount, (), 'once')
-    assert reg.component(linecount, ()) == 'once'
-    reg.clear()
-    reg.register_predicates(linecount, [])
-    assert reg.component(linecount, ()) is None
+        reg.register((), 'twice')
 
 
 def test_caching_registry():
-    r = Registry()
-
     class Foo(object):
         pass
 
     class FooSub(Foo):
         pass
-
-    def view(self, request):
-        raise NotImplementedError()
 
     def get_model(self):
         return self
@@ -229,11 +201,17 @@ def test_caching_registry():
     def request_method_fallback(self, request):
         return "Request method fallback"
 
-    r.register_callable_predicates(view, [
+    def caching_lookup_factory(r):
+        return Lookup(CachingKeyLookup(r, 100, 100, 100))
+
+    @dispatch(
         match_instance('model', get_model, model_fallback),
         match_key('name', get_name, name_fallback),
         match_key('request_method', get_request_method,
-                  request_method_fallback)])
+                  request_method_fallback),
+        lookup_factory=caching_lookup_factory)
+    def view(self, request):
+        raise NotImplementedError()
 
     def foo_default(self, request):
         return "foo default"
@@ -244,54 +222,55 @@ def test_caching_registry():
     def foo_edit(self, request):
         return "foo edit"
 
-    r.register_value(view, (Foo, '', 'GET'), foo_default)
-    r.register_value(view, (Foo, '', 'POST'), foo_post)
-    r.register_value(view, (Foo, 'edit', 'POST'), foo_edit)
-
-    l = CachingKeyLookup(r, 100, 100, 100).lookup()
+    view.register_value((Foo, '', 'GET'), foo_default)
+    view.register_value((Foo, '', 'POST'), foo_post)
+    view.register_value((Foo, 'edit', 'POST'), foo_edit)
 
     class Request(object):
         def __init__(self, name, request_method):
             self.name = name
             self.request_method = request_method
 
-    assert l.call(view, Foo(), Request('', 'GET')) == 'foo default'
-    assert l.call(view, FooSub(), Request('', 'GET')) == 'foo default'
-    assert l.call(view, FooSub(), Request('edit', 'POST')) == 'foo edit'
+    assert view.lookup.call(view, Foo(), Request('', 'GET')) == 'foo default'
+    assert view.lookup.call(
+        view, FooSub(), Request('', 'GET')) == 'foo default'
+    assert view.lookup.call(
+        view, FooSub(), Request('edit', 'POST')) == 'foo edit'
 
     # use a bit of inside knowledge to check the cache is filled
-    assert l.key_lookup.component_cache.get(
-        (view, (Foo, '', 'GET'))) is not None
-    assert l.key_lookup.component_cache.get(
-        (view, (FooSub, '', 'GET'))) is not None
-    assert l.key_lookup.component_cache.get(
-        (view, (FooSub, 'edit', 'POST'))) is not None
+    assert view.lookup.key_lookup.component_cache.get(
+        (Foo, '', 'GET')) is not None
+    assert view.lookup.key_lookup.component_cache.get(
+        (FooSub, '', 'GET')) is not None
+    assert view.lookup.key_lookup.component_cache.get(
+        (FooSub, 'edit', 'POST')) is not None
 
     # now let's do this again. this time things come from the component cache
-    assert l.call(view, Foo(), Request('', 'GET')) == 'foo default'
-    assert l.call(view, FooSub(), Request('', 'GET')) == 'foo default'
-    assert l.call(view, FooSub(), Request('edit', 'POST')) == 'foo edit'
+    assert view(Foo(), Request('', 'GET')) == 'foo default'
+    assert view(FooSub(), Request('', 'GET')) == 'foo default'
+    assert view(FooSub(), Request('edit', 'POST')) == 'foo edit'
 
+    key_lookup = view.lookup.key_lookup
     # prime and check the all cache
-    assert list(l.all(view, Foo(), Request('', 'GET'))) == [foo_default]
-    assert l.key_lookup.all_cache.get(
-        (view, (Foo, '', 'GET'))) is not None
+    assert list(view.all(Foo(), Request('', 'GET'))) == [foo_default]
+    assert key_lookup.all_cache.get(
+        (Foo, '', 'GET')) is not None
     # should be coming from cache now
-    assert list(l.all(view, Foo(), Request('', 'GET'))) == [foo_default]
+    assert list(view.all(Foo(), Request('', 'GET'))) == [foo_default]
 
     class Bar(object):
         pass
-    assert l.call(view, Bar(), Request('', 'GET')) == 'Model fallback'
-    assert l.call(view, Foo(), Request('dummy', 'GET')) == 'Name fallback'
-    assert l.call(view, Foo(), Request('', 'PUT')) == 'Request method fallback'
-    assert l.call(view, FooSub(), Request('dummy', 'GET')) == 'Name fallback'
+    assert view(Bar(), Request('', 'GET')) == 'Model fallback'
+    assert view(Foo(), Request('dummy', 'GET')) == 'Name fallback'
+    assert view(Foo(), Request('', 'PUT')) == 'Request method fallback'
+    assert view(FooSub(), Request('dummy', 'GET')) == 'Name fallback'
 
     # fallbacks get cached too
-    assert l.key_lookup.fallback_cache.get(
-        (view, (Bar, '', 'GET'))) is model_fallback
+    assert key_lookup.fallback_cache.get(
+        (Bar, '', 'GET')) is model_fallback
 
     # these come from the fallback cache now
-    assert l.call(view, Bar(), Request('', 'GET')) == 'Model fallback'
-    assert l.call(view, Foo(), Request('dummy', 'GET')) == 'Name fallback'
-    assert l.call(view, Foo(), Request('', 'PUT')) == 'Request method fallback'
-    assert l.call(view, FooSub(), Request('dummy', 'GET')) == 'Name fallback'
+    assert view(Bar(), Request('', 'GET')) == 'Model fallback'
+    assert view(Foo(), Request('dummy', 'GET')) == 'Name fallback'
+    assert view(Foo(), Request('', 'PUT')) == 'Request method fallback'
+    assert view(FooSub(), Request('dummy', 'GET')) == 'Name fallback'

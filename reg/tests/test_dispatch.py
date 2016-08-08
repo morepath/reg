@@ -3,7 +3,7 @@ import pytest
 
 from reg.predicate import (
     match_instance, match_key, match_class, key_predicate, NOT_FOUND)
-from reg.dispatch import dispatch, dispatch_external_predicates
+from reg.dispatch import dispatch
 from reg.error import RegistrationError, KeyExtractorError
 
 
@@ -495,27 +495,6 @@ def test_calling_twice():
     assert target(Beta()) == 'b'
 
 
-def test_lookup_passed_along():
-    @dispatch('obj')
-    def g1(obj):
-        pass
-
-    @dispatch('obj')
-    def g2(obj):
-        pass
-
-    def g1_impl(obj, lookup):
-        return g2(obj)
-
-    def g2_impl(obj):
-        return "g2"
-
-    g1.register(g1_impl, obj=Alpha)
-    g2.register(g2_impl, obj=Alpha)
-
-    assert g1(Alpha()) == 'g2'
-
-
 def test_different_defaults_in_specific_non_dispatch_arg():
     @dispatch('obj')
     def target(obj, blah='default'):
@@ -559,15 +538,7 @@ def test_different_defaults_in_specific_dispatch_arg_causes_dispatch():
     assert target() == 'a: default 2'
 
 
-def test_lookup_passed_along_fallback():
-    @dispatch()
-    def a(lookup):
-        return "fallback"
-
-    assert a() == 'fallback'
-
-
-def test_register_dispatch_predicates_no_defaults():
+def test_add_predicates_no_defaults():
     class Foo(object):
         pass
 
@@ -596,7 +567,7 @@ def test_register_dispatch_predicates_no_defaults():
     def request_method_fallback(self, request):
         return "Request method fallback"
 
-    view.register_dispatch_predicates([
+    view.add_predicates([
         match_instance('model', get_model, model_fallback),
         match_key('name', get_name, name_fallback),
         match_key('request_method', get_request_method,
@@ -640,7 +611,7 @@ def test_dispatch_external_predicates():
     class FooSub(Foo):
         pass
 
-    @dispatch_external_predicates()
+    @dispatch()
     def view(self, request):
         raise NotImplementedError()
 
@@ -662,7 +633,7 @@ def test_dispatch_external_predicates():
     def request_method_fallback(self, request):
         return "Request method fallback"
 
-    view.register_external_predicates([
+    view.add_predicates([
         match_instance('model', get_model, model_fallback),
         match_key('name', get_name, name_fallback),
         match_key('request_method', get_request_method,
@@ -700,7 +671,7 @@ def test_dispatch_external_predicates():
     assert view.fallback(Bar(), Request('', 'GET')) is model_fallback
 
 
-def test_register_dispatch_predicates_register_defaults():
+def test_dispatch_predicates_register_defaults():
     class Foo(object):
         pass
 
@@ -729,7 +700,7 @@ def test_register_dispatch_predicates_register_defaults():
     def request_method_fallback(self, request):
         return "Request method fallback"
 
-    view.register_dispatch_predicates([
+    view.add_predicates([
         match_instance('model', get_model, model_fallback,
                        default=None),
         match_key('name', get_name, name_fallback,
@@ -804,7 +775,7 @@ def test_register_dispatch_key_dict():
     class FooSub(Foo):
         pass
 
-    @dispatch_external_predicates()
+    @dispatch()
     def view(self, request):
         raise NotImplementedError()
 
@@ -826,7 +797,7 @@ def test_register_dispatch_key_dict():
     def request_method_fallback(self, request):
         return "Request method fallback"
 
-    view.register_external_predicates([
+    view.add_predicates([
         match_instance('model', get_model, model_fallback,
                        default=None),
         match_key('name', get_name, name_fallback,
@@ -926,14 +897,14 @@ def test_dispatch_missing_argument():
 
 
 def test_register_dispatch_predicates_twice():
-    @dispatch_external_predicates()
-    def foo(obj):
+    @dispatch()
+    def foo(a, b):
         pass
 
-    def for_bar(obj):
+    def for_bar(a, b):
         return "for bar"
 
-    def for_qux(obj):
+    def for_qux(a, b):
         return "for qux"
 
     class Bar(object):
@@ -942,36 +913,20 @@ def test_register_dispatch_predicates_twice():
     class Qux(object):
         pass
 
-    foo.register_dispatch_predicates(
-        [match_instance('obj', lambda obj: obj)])
-    assert foo in foo.registry.initialized
-    # second time has no effect
-    foo.register_dispatch_predicates(
-        [match_instance('obj', lambda obj: obj)])
+    foo.add_predicates(
+        [match_instance('a', lambda a: a)])
+    # second time adds another one
+    foo.add_predicates(
+        [match_instance('b', lambda b: b)])
+    foo.register(for_bar, a=Bar, b=Bar)
+    foo.register(for_qux, a=Qux, b=Qux)
+    assert foo(Bar(), Bar()) == "for bar"
+    assert foo(Qux(), Qux()) == "for qux"
 
 
-def test_register_external_predicates_for_non_external():
+def test_dict_to_predicate_key_for_no_dispatch():
     @dispatch()
     def foo():
         pass
 
-    with pytest.raises(RegistrationError):
-        foo.register_external_predicates([])
-
-
-def test_register_no_external_predicates_for_external():
-    @dispatch_external_predicates()
-    def foo():
-        pass
-
-    with pytest.raises(RegistrationError):
-        foo.component()
-
-
-def test_dict_to_predicate_key_for_unknown_dispatch():
-    @dispatch()
-    def foo():
-        pass
-
-    with pytest.raises(KeyError):
-        foo.registry.key_dict_to_predicate_key(foo, {})
+    assert foo.key_dict_to_predicate_key({}) == ()

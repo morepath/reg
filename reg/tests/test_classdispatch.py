@@ -99,12 +99,10 @@ def test_classdispatch_override():
     def something_for_special(cls):
         return "Special for %s" % cls
 
-    something.register(
-                        something_for_object,
-                        cls=object)
-    something.register(
-                        something_for_special,
-                        cls=SpecialClass)
+    something.register(something_for_object,
+                       cls=object)
+    something.register(something_for_special,
+                       cls=SpecialClass)
 
     assert something(SpecialClass) == (
         "Special for <class 'reg.tests.test_classdispatch.SpecialClass'>")
@@ -123,4 +121,4 @@ def test_classdispatch_fallback_lowlevel():
     def something(cls):
         return "Fallback"
 
-    assert something.registry.lookup().call(something, DemoClass) == "Fallback"
+    assert something.lookup.call(something, DemoClass) == "Fallback"

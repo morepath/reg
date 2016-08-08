@@ -2,8 +2,9 @@ from __future__ import unicode_literals
 from functools import update_wrapper
 from .predicate import match_argname
 from .compat import string_types
-from .registry import Registry
-from .reify import reify
+from .predicate import create_predicates_registry, Lookup
+from .arginfo import arginfo
+from .error import RegistrationError
 
 
 class dispatch(object):
@@ -14,9 +15,10 @@ class dispatch(object):
     :param predicates: sequence of :class:`Predicate` instances
       to do the dispatch on.
     """
-    def __init__(self, *predicates):
+    def __init__(self, *predicates, **kw):
         self.predicates = [self._make_predicate(predicate)
                            for predicate in predicates]
+        self.lookup_factory = kw.pop('lookup_factory', Lookup)
 
     def _make_predicate(self, predicate):
         if isinstance(predicate, string_types):
@@ -24,68 +26,109 @@ class dispatch(object):
         return predicate
 
     def __call__(self, callable):
-        result = Dispatch(self.predicates, callable)
-        update_wrapper(result, callable)
-        return result
-
-
-class dispatch_external_predicates(object):
-    """Decorator to make function dispatch based on external predicates.
-
-    The predicates to dispatch on are defined in the :class:`Registry`
-    object using :class:`register_external_predicates`. If no
-    external predicates were registered then this is an error.
-    """
-    def __call__(self, callable):
-        result = Dispatch([], callable, external_predicates=True)
+        result = Dispatch(self.predicates, callable, self.lookup_factory)
         update_wrapper(result, callable)
         return result
 
 
 class Dispatch(object):
-    def __init__(self, predicates, callable, external_predicates=False):
-        self.registry = Registry()
-        self.predicates = predicates
+    def __init__(self, predicates, callable, lookup_factory=Lookup):
         self.wrapped_func = callable
-        self.external_predicates = external_predicates
-        # self.registry.register_dispatch(self)
+        self.lookup_factory = lookup_factory
+        self._register_predicates(predicates)
+
+    def _register_predicates(self, predicates):
+        self.registry = create_predicates_registry(predicates,
+                                                   self.wrapped_func)
+        self.predicates = predicates
+        # (re)initialize the lookup and the cache
+        self.lookup = self.lookup_factory(self.registry)
+
+    def add_predicates(self, predicates):
+        self._register_predicates(self.predicates + predicates)
 
     def register(self, value, **key_dict):
-        self.registry.register_function(self, value, **key_dict)
+        validate_signature(value, self.wrapped_func)
+        predicate_key = self.registry.key_dict_to_predicate_key(key_dict)
+        self.register_value(predicate_key, value)
 
-    def register_external_predicates(self, predicates):
-        self.registry.register_external_predicates(self, predicates)
-
-    def register_dispatch_predicates(self, predicates):
-        self.registry.register_dispatch_predicates(self, predicates)
+    def register_value(self, predicate_key, value):
+        if isinstance(predicate_key, list):
+            predicate_key = tuple(predicate_key)
+        # if we have a 1 tuple, we register the single value inside
+        if isinstance(predicate_key, tuple) and len(predicate_key) == 1:
+            predicate_key = predicate_key[0]
+        self.registry.register(predicate_key, value)
 
     def __repr__(self):
         return repr(self.wrapped_func)
 
-    @reify
-    def _lookup(self):
-        self.registry.register_dispatch(self)
-        return self.registry.lookup
-
     def __call__(self, *args, **kw):
-        return self._lookup().call(self.wrapped_func, *args, **kw)
+        return self.lookup.call(self.wrapped_func, *args, **kw)
 
     def component(self, *args, **kw):
-        return self._lookup().component(self.wrapped_func, *args, **kw)
+        return self.lookup.component(*args, **kw)
 
     def fallback(self, *args, **kw):
-        return self._lookup().fallback(self.wrapped_func, *args, **kw)
+        return self.lookup.fallback(*args, **kw)
 
     def component_key_dict(self, **kw):
-        return self._lookup().component_key_dict(self.wrapped_func, kw)
+        return self.lookup.component_key_dict(kw)
 
     def all(self, *args, **kw):
-        return self._lookup().all(self.wrapped_func, *args, **kw)
+        return self.lookup.all(*args, **kw)
 
     def all_key_dict(self, **kw):
-        return self._lookup().all_key_dict(self.wrapped_func, kw)
+        return self.lookup.all_key_dict(kw)
 
     def key_dict_to_predicate_key(self, key_dict):
-        self.registry.register_dispatch(self)
-        return self.registry.key_dict_to_predicate_key(
-            self.wrapped_func, key_dict)
+        return self.registry.key_dict_to_predicate_key(key_dict)
+
+
+def validate_signature(f, dispatch):
+    f_arginfo = arginfo(f)
+    if f_arginfo is None:
+        raise RegistrationError(
+            "Cannot register non-callable for dispatch "
+            "method %r: %r" % (dispatch, f))
+    if not same_signature(arginfo(dispatch), f_arginfo):
+        raise RegistrationError(
+            "Signature of callable dispatched to (%r) "
+            "not that of dispatch method (%r)" % (
+                f, dispatch))
+
+
+# def validate_function_signature(f, dispatch):
+#     f_arginfo = arginfo(f)
+#     if f_arginfo is None:
+#         raise RegistrationError(
+#             "Cannot register non-callable for dispatch "
+#             "method %r: %r" % (dispatch, f))
+
+#     dispatch_arginfo = arginfo(dispatch)
+#     # strip off first argument (as this is self or cls)
+#     dispatch_arginfo = inspect.ArgInfo(
+#         dispatch_arginfo.args[1:],
+#         dispatch_arginfo.varargs,
+#         dispatch_arginfo.keywords,
+#         dispatch_arginfo.defaults)
+#     if not same_signature(dispatch_arginfo, f_arginfo):
+#         raise RegistrationError(
+#             "Signature of callable dispatched to (%r) "
+#             "not that of dispatch method (without self) (%r)" % (
+#                 f, dispatch))
+
+
+def same_signature(a, b):
+    """Check whether a arginfo and b arginfo are the same signature.
+
+    Signature may have an extra 'lookup' argument. Actual names of
+    argument may differ. Default arguments may be different.
+    """
+    a_args = set(a.args)
+    b_args = set(b.args)
+    a_args.discard('lookup')
+    b_args.discard('lookup')
+    return (len(a_args) == len(b_args) and
+            a.varargs == b.varargs and
+            a.keywords == b.keywords)
