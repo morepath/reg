@@ -31,7 +31,7 @@ def test_dispatch_basic():
     something.register(something_for_object, cls=object)
 
     assert something(DemoClass) == (
-        "Something for <class 'reg.tests.test_classdispatch.DemoClass'>")
+        "Something for <class '{}.DemoClass'>".format(__name__))
 
     assert something.component(DemoClass) is something_for_object
     assert list(something.all(DemoClass)) == [something_for_object]
@@ -107,7 +107,7 @@ def test_classdispatch_override():
                         cls=SpecialClass)
 
     assert something(SpecialClass) == (
-        "Special for <class 'reg.tests.test_classdispatch.SpecialClass'>")
+        "Special for <class '{}.SpecialClass'>".format(__name__))
 
 
 def test_classdispatch_fallback():
