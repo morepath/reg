@@ -334,9 +334,6 @@ class PredicateRegistry(object):
         """
         return self.key(self.arg_extractor(*args, **kw))
 
-    # def argnames(self):
-    #     return self.predicate.argnames()
-
     def component(self, key):
         return next(self.all(key), None)
 
@@ -382,9 +379,6 @@ class SingleValueRegistry(object):
           the callable was configured with.
         """
         return ()
-
-    # def argnames(self):
-    #     return set()
 
     def component(self, key):
         return self.value
