@@ -5,6 +5,7 @@ from .compat import string_types
 from .predicate import create_predicates_registry, Lookup
 from .arginfo import arginfo
 from .error import RegistrationError
+from .compat import create_method
 
 
 class dispatch(object):
@@ -89,6 +90,40 @@ class Dispatch(object):
         return self.registry.key_dict_to_predicate_key(key_dict)
 
 
+class dispatch_method(object):
+    def __init__(self, *predicates, **kw):
+        self.predicates = predicates
+        self.get_key_lookup = kw.pop('get_key_lookup', identity)
+
+    def __call__(self, callable):
+        return MethodDispatchDescriptor(callable,
+                                        self.predicates, self.get_key_lookup)
+
+
+class MethodDispatchDescriptor(object):
+    def __init__(self, callable, predicates, get_key_lookup):
+        self.callable = callable
+        self.name = self.callable.__name__
+        self.predicates = predicates
+        self.get_key_lookup = get_key_lookup
+
+    def __get__(self, obj, type=None):
+        # create the dispatch method
+        dispatch = Dispatch(self.predicates,
+                            self.callable,
+                            self.get_key_lookup)
+        # create a bound method for it
+        method = create_method(dispatch, type)
+        # set it on the class so we get it next time
+        setattr(type, self.name, method)
+        if obj is None:
+            # we get it from the class, don't bind it
+            return method
+        else:
+            # return bound version we just created
+            return getattr(obj, self.name)
+
+
 def validate_signature(f, dispatch):
     f_arginfo = arginfo(f)
     if f_arginfo is None:
@@ -100,27 +135,6 @@ def validate_signature(f, dispatch):
             "Signature of callable dispatched to (%r) "
             "not that of dispatch method (%r)" % (
                 f, dispatch))
-
-
-# def validate_function_signature(f, dispatch):
-#     f_arginfo = arginfo(f)
-#     if f_arginfo is None:
-#         raise RegistrationError(
-#             "Cannot register non-callable for dispatch "
-#             "method %r: %r" % (dispatch, f))
-
-#     dispatch_arginfo = arginfo(dispatch)
-#     # strip off first argument (as this is self or cls)
-#     dispatch_arginfo = inspect.ArgInfo(
-#         dispatch_arginfo.args[1:],
-#         dispatch_arginfo.varargs,
-#         dispatch_arginfo.keywords,
-#         dispatch_arginfo.defaults)
-#     if not same_signature(dispatch_arginfo, f_arginfo):
-#         raise RegistrationError(
-#             "Signature of callable dispatched to (%r) "
-#             "not that of dispatch method (without self) (%r)" % (
-#                 f, dispatch))
 
 
 def same_signature(a, b):
