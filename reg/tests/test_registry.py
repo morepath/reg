@@ -201,15 +201,15 @@ def test_caching_registry():
     def request_method_fallback(self, request):
         return "Request method fallback"
 
-    def caching_lookup_factory(r):
-        return Lookup(CachingKeyLookup(r, 100, 100, 100))
+    def get_caching_key_lookup(r):
+        return CachingKeyLookup(r, 100, 100, 100)
 
     @dispatch(
         match_instance('model', get_model, model_fallback),
         match_key('name', get_name, name_fallback),
         match_key('request_method', get_request_method,
                   request_method_fallback),
-        lookup_factory=caching_lookup_factory)
+        get_key_lookup=get_caching_key_lookup)
     def view(self, request):
         raise NotImplementedError()
 

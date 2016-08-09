@@ -273,7 +273,7 @@ class MultiIndex(object):
         return NOT_FOUND
 
 
-def create_predicates_registry(predicates, callable):
+def create_predicates_registry(predicates):
     if len(predicates) == 0:
         return SingleValueRegistry()
     if len(predicates) == 1:
@@ -281,13 +281,11 @@ def create_predicates_registry(predicates, callable):
         predicate = predicates[0]
     else:
         predicate = MultiPredicate(predicates)
-    arg_extractor = ArgExtractor(callable, predicate.argnames())
-    return PredicateRegistry(predicate, arg_extractor)
+    return PredicateRegistry(predicate)
 
 
 class PredicateRegistry(object):
-    def __init__(self, predicate, arg_extractor=None):
-        self.arg_extractor = arg_extractor
+    def __init__(self, predicate):
         self.known_keys = set()
         self.predicate = predicate
         self.index = self.predicate.create_index()
@@ -298,6 +296,9 @@ class PredicateRegistry(object):
                 "Already have registration for key: %s" % (key,))
         self.index.add(key, value)
         self.known_keys.add(key)
+
+    def argnames(self):
+        return self.predicate.argnames()
 
     def key(self, d):
         return self.predicate.get_key(d)
@@ -356,6 +357,9 @@ class SingleValueRegistry(object):
             raise RegistrationError(
                 "Already have registration for key: %s" % (key,))
         self.value = value
+
+    def argnames(self):
+        return []
 
     def key(self, d):
         return ()
@@ -416,6 +420,12 @@ class CachingKeyLookup(object):
         self.component_cache = LRUCache(component_cache_size)
         self.all_cache = LRUCache(all_cache_size)
         self.fallback_cache = LRUCache(fallback_cache_size)
+
+    def argnames(self):
+        return self.key_lookup.argnames()
+
+    def key(self, d):
+        return self.key_lookup.key(d)
 
     def component(self, predicate_key):
         """Lookup value in registry based on predicate_key.
@@ -482,8 +492,26 @@ class Lookup(object):
     :param key_lookup: the key lookup, either a :class:`PredicateRegistry` or
       :class:`CachingKeyLookup`.
     """
-    def __init__(self, key_lookup):
+    def __init__(self, callable, key_lookup):
         self.key_lookup = key_lookup
+        self.arg_extractor = ArgExtractor(callable, self.key_lookup.argnames())
+
+    def predicate_key(self, *args, **kw):
+        """Construct predicate_key for function arguments.
+
+        For function arguments, construct the appropriate
+        ``predicate_key``. This is used by the dispatch mechanism to
+        dispatch to the right function.
+
+        If the ``predicate_key`` cannot be constructed from ``args``
+        and ``kw``, this raises a :exc:`KeyExtractorError`.
+
+        :param args: the varargs given to the callable.
+        :param kw: the keyword arguments given to the callable.
+        :returns: an immutable ``predicate_key`` based on the predicates
+          the callable was configured with.
+        """
+        return self.key_lookup.key(self.arg_extractor(*args, **kw))
 
     def call(self, callable, *args, **kw):
         """Call with args and kw.
@@ -500,7 +528,7 @@ class Lookup(object):
         :returns: the result of the call.
         """
         try:
-            key = self.key_lookup.predicate_key(*args, **kw)
+            key = self.predicate_key(*args, **kw)
             component = self.key_lookup.component(key)
         except KeyExtractorError:
             # if we cannot extract the key this could be because the
@@ -533,7 +561,7 @@ class Lookup(object):
            dispatch information to construct ``predicate_key``.
         :returns: the function being dispatched to, or None.
         """
-        key = self.key_lookup.predicate_key(*args, **kw)
+        key = self.predicate_key(*args, **kw)
         return self.key_lookup.component(key)
 
     def fallback(self, *args, **kw):
@@ -545,7 +573,7 @@ class Lookup(object):
            dispatch information to construct ``predicate_key``.
         :returns: the function being dispatched to, or fallback.
         """
-        key = self.key_lookup.predicate_key(*args, **kw)
+        key = self.predicate_key(*args, **kw)
         return self.key_lookup.fallback(key)
 
     def component_key_dict(self, key_dict):
@@ -574,7 +602,7 @@ class Lookup(object):
            dispatch information to construct predicate_key.
         :returns: an iterable of functions.
         """
-        key = self.key_lookup.predicate_key(*args, **kw)
+        key = self.predicate_key(*args, **kw)
         return self.key_lookup.all(key)
 
     def all_key_dict(self, key_dict):

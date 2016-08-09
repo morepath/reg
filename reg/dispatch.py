@@ -18,7 +18,7 @@ class dispatch(object):
     def __init__(self, *predicates, **kw):
         self.predicates = [self._make_predicate(predicate)
                            for predicate in predicates]
-        self.lookup_factory = kw.pop('lookup_factory', Lookup)
+        self.get_key_lookup = kw.pop('get_key_lookup', identity)
 
     def _make_predicate(self, predicate):
         if isinstance(predicate, string_types):
@@ -26,23 +26,27 @@ class dispatch(object):
         return predicate
 
     def __call__(self, callable):
-        result = Dispatch(self.predicates, callable, self.lookup_factory)
+        result = Dispatch(self.predicates, callable, self.get_key_lookup)
         update_wrapper(result, callable)
         return result
 
 
+def identity(registry):
+    return registry
+
+
 class Dispatch(object):
-    def __init__(self, predicates, callable, lookup_factory=Lookup):
+    def __init__(self, predicates, callable, get_key_lookup):
         self.wrapped_func = callable
-        self.lookup_factory = lookup_factory
+        self.get_key_lookup = get_key_lookup
         self._register_predicates(predicates)
 
     def _register_predicates(self, predicates):
-        self.registry = create_predicates_registry(predicates,
-                                                   self.wrapped_func)
+        self.registry = create_predicates_registry(predicates)
         self.predicates = predicates
         # (re)initialize the lookup and the cache
-        self.lookup = self.lookup_factory(self.registry)
+        self.lookup = Lookup(self.wrapped_func,
+                             self.get_key_lookup(self.registry))
 
     def add_predicates(self, predicates):
         self._register_predicates(self.predicates + predicates)
