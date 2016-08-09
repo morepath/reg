@@ -68,7 +68,7 @@ class Dispatch(object):
         return repr(self.wrapped_func)
 
     def __call__(self, *args, **kw):
-        return self.lookup.call(self.wrapped_func, *args, **kw)
+        return self.lookup.call(*args, **kw)
 
     def component(self, *args, **kw):
         return self.lookup.component(*args, **kw)

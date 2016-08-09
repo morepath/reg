@@ -69,23 +69,23 @@ def test_registry():
             self.request_method = request_method
 
     assert view.lookup.call(
-        view, Foo(), Request('', 'GET')) == 'foo default'
+        Foo(), Request('', 'GET')) == 'foo default'
     assert view.lookup.call(
-        view, FooSub(), Request('', 'GET')) == 'foo default'
+        FooSub(), Request('', 'GET')) == 'foo default'
     assert view.lookup.call(
-        view, FooSub(), Request('edit', 'POST')) == 'foo edit'
+        FooSub(), Request('edit', 'POST')) == 'foo edit'
 
     class Bar(object):
         pass
 
     assert view.lookup.call(
-        view, Bar(), Request('', 'GET')) == 'Model fallback'
+        Bar(), Request('', 'GET')) == 'Model fallback'
     assert view.lookup.call(
-        view, Foo(), Request('dummy', 'GET')) == 'Name fallback'
+        Foo(), Request('dummy', 'GET')) == 'Name fallback'
     assert view.lookup.call(
-        view, Foo(), Request('', 'PUT')) == 'Request method fallback'
+        Foo(), Request('', 'PUT')) == 'Request method fallback'
     assert view.lookup.call(
-        view, FooSub(), Request('dummy', 'GET')) == 'Name fallback'
+        FooSub(), Request('dummy', 'GET')) == 'Name fallback'
 
 
 def test_predicate_registry_class_lookup():
@@ -231,11 +231,11 @@ def test_caching_registry():
             self.name = name
             self.request_method = request_method
 
-    assert view.lookup.call(view, Foo(), Request('', 'GET')) == 'foo default'
+    assert view.lookup.call(Foo(), Request('', 'GET')) == 'foo default'
     assert view.lookup.call(
-        view, FooSub(), Request('', 'GET')) == 'foo default'
+        FooSub(), Request('', 'GET')) == 'foo default'
     assert view.lookup.call(
-        view, FooSub(), Request('edit', 'POST')) == 'foo edit'
+        FooSub(), Request('edit', 'POST')) == 'foo edit'
 
     # use a bit of inside knowledge to check the cache is filled
     assert view.lookup.key_lookup.component_cache.get(

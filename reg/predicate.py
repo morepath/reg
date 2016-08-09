@@ -494,6 +494,7 @@ class Lookup(object):
     """
     def __init__(self, callable, key_lookup):
         self.key_lookup = key_lookup
+        self.callable = callable
         self.arg_extractor = ArgExtractor(callable, self.key_lookup.argnames())
 
     def predicate_key(self, *args, **kw):
@@ -513,14 +514,12 @@ class Lookup(object):
         """
         return self.key_lookup.key(self.arg_extractor(*args, **kw))
 
-    def call(self, callable, *args, **kw):
+    def call(self, *args, **kw):
         """Call with args and kw.
 
         If nothing more specific is registered, call the dispatch
         function as a fallback.
 
-        :callable: the dispatch callable to fall back on if no more
-           specific registered dispatch value can be found.
         :args: varargs for the call. Is also used to extract
            dispatch information to construct predicate_key.
         :kw: keyword arguments for the call. Is also used to extract
@@ -538,14 +537,14 @@ class Lookup(object):
             # were passed the wrong arguments.
             # In both cases, call the fallback. In case the wrong arguments
             # were passed, we get the appropriate TypeError then
-            component = callable
+            component = self.callable
 
         if component is None:
             # try to use the fallback
             component = self.key_lookup.fallback(key)
             if component is None:
                 # if fallback is None use the original callable as fallback
-                component = callable
+                component = self.callable
         return component(*args, **kw)
 
     def component(self, *args, **kw):
