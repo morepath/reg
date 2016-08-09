@@ -97,7 +97,8 @@ class dispatch_method(object):
 
     def __call__(self, callable):
         return MethodDispatchDescriptor(callable,
-                                        self.predicates, self.get_key_lookup)
+                                        self.predicates,
+                                        self.get_key_lookup)
 
 
 class MethodDispatchDescriptor(object):
