@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 from ..predicate import (PredicateRegistry, SingleValueRegistry,
                          class_predicate,
                          match_instance, match_key,
-                         Lookup, CachingKeyLookup)
+                         CachingKeyLookup)
 from ..error import RegistrationError
 from ..dispatch import dispatch
 import pytest
