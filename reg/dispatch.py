@@ -100,7 +100,6 @@ class dispatch_method(object):
                                         self.get_key_lookup)
 
 
-
 class MethodDispatchDescriptor(object):
     def __init__(self, callable, predicates, get_key_lookup):
         self.callable = callable
