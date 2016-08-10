@@ -101,11 +101,13 @@ class dispatch_method(object):
 
 
 class MethodDispatchDescriptor(object):
-    def __init__(self, callable, predicates, get_key_lookup):
+    def __init__(self, callable, predicates, get_key_lookup,
+                 cache_bound_method=True):
         self.callable = callable
         self.name = self.callable.__name__
         self.predicates = predicates
         self.get_key_lookup = get_key_lookup
+        self.cache_bound_method = cache_bound_method
         self._cache = {}
 
     def __get__(self, obj, type=None):
@@ -135,7 +137,8 @@ class MethodDispatchDescriptor(object):
             # we store it on the instance, so that next time we
             # access this, we do not hit the descriptor anymore
             # but return the bound dispatch function directly
-            setattr(obj, self.name, bound)
+            if self.cache_bound_method:
+                setattr(obj, self.name, bound)
             return bound
 
 
