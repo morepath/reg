@@ -108,8 +108,6 @@ class MethodDispatch(Dispatch):
             predicates, callable, get_key_lookup)
         self.auto_argument = auto_argument
 
-    magic_first_argument = 'app'
-
     def register_function(self, value, **key_dict):
         validate_signature_without_first_arg(value, self.wrapped_func)
         predicate_key = self.registry.key_dict_to_predicate_key(key_dict)
@@ -120,7 +118,7 @@ class MethodDispatch(Dispatch):
 
     def register_auto(self, value, **key_dict):
         info = arginfo(value)
-        if info.args and info.args[0] == self.magic_first_argument:
+        if info.args and info.args[0] == self.auto_argument:
             self.register(value, **key_dict)
         else:
             self.register_function(value, **key_dict)
