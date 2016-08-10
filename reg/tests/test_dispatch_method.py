@@ -90,6 +90,37 @@ def test_dispatch_method_class_method_accessed_first():
     assert foo.bar(None) == "default"
 
 
+def test_dispatch_method_accesses_instance():
+    def get_obj(obj):
+        return obj
+
+    def obj_fallback(self, obj):
+        return "Obj fallback"
+
+    class Foo(object):
+        def __init__(self, x):
+            self.x = x
+
+        @dispatch_method(match_instance('obj', get_obj))
+        def bar(self, obj):
+            return "default %s" % self.x
+
+    class Alpha(object):
+        pass
+
+    class Beta(object):
+        pass
+
+    Foo.bar.register(lambda self, obj: "Alpha %s" % self.x, obj=Alpha)
+    Foo.bar.register(lambda self, obj: "Beta %s" % self.x, obj=Beta)
+
+    foo = Foo('hello')
+
+    assert foo.bar(Alpha()) == "Alpha hello"
+    assert foo.bar(Beta()) == "Beta hello"
+    assert foo.bar(None) == "default hello"
+
+
 def test_dispatch_method_inheritance_register_on_subclass():
     def get_obj(obj):
         return obj
