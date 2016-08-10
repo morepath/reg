@@ -100,8 +100,6 @@ class dispatch_method(object):
                                         self.get_key_lookup)
 
 
-_cache = {}
-
 
 class MethodDispatchDescriptor(object):
     def __init__(self, callable, predicates, get_key_lookup):
@@ -109,12 +107,13 @@ class MethodDispatchDescriptor(object):
         self.name = self.callable.__name__
         self.predicates = predicates
         self.get_key_lookup = get_key_lookup
+        self._cache = {}
 
     def __get__(self, obj, type=None):
         # we get the method from the cache
         # this guarantees that we distinguish between dispatches
         # on a per class basis, and on the name of the method
-        method = _cache.get((type, self.name))
+        method = self._cache.get(type)
 
         if method is None:
             # if this is the first time we access the dispatch method,
@@ -122,7 +121,7 @@ class MethodDispatchDescriptor(object):
             method = Dispatch(self.predicates,
                               self.callable,
                               self.get_key_lookup)
-            _cache[(type, self.name)] = method
+            self._cache[type] = method
 
         # we cannot attach the dispatch method to the class
         # directly (skipping the descriptor during next access) here,
