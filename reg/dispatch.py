@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 from functools import update_wrapper, partial
+import inspect
 from .predicate import match_argname
 from .compat import string_types
 from .predicate import create_predicates_registry, Lookup
@@ -100,6 +101,31 @@ class dispatch_method(object):
                                         self.get_key_lookup)
 
 
+class MethodDispatch(Dispatch):
+    def __init__(self, predicates, callable, get_key_lookup,
+                 auto_argument='app'):
+        super(MethodDispatch, self).__init__(
+            predicates, callable, get_key_lookup)
+        self.auto_argument = auto_argument
+
+    magic_first_argument = 'app'
+
+    def register_function(self, value, **key_dict):
+        validate_signature_without_first_arg(value, self.wrapped_func)
+        predicate_key = self.registry.key_dict_to_predicate_key(key_dict)
+
+        def wrapped(self, *args, **kw):
+            return value(*args, **kw)
+        self.register_value(predicate_key, wrapped)
+
+    def register_auto(self, value, **key_dict):
+        info = arginfo(value)
+        if info.args and info.args[0] == self.magic_first_argument:
+            self.register(value, **key_dict)
+        else:
+            self.register_function(value, **key_dict)
+
+
 class MethodDispatchDescriptor(object):
     def __init__(self, callable, predicates, get_key_lookup,
                  cache_bound_method=True):
@@ -119,9 +145,9 @@ class MethodDispatchDescriptor(object):
         if method is None:
             # if this is the first time we access the dispatch method,
             # we create it and store it in the cache
-            method = Dispatch(self.predicates,
-                              self.callable,
-                              self.get_key_lookup)
+            method = MethodDispatch(self.predicates,
+                                    self.callable,
+                                    self.get_key_lookup)
             self._cache[type] = method
 
         # we cannot attach the dispatch method to the class
@@ -147,24 +173,43 @@ def validate_signature(f, dispatch):
     if f_arginfo is None:
         raise RegistrationError(
             "Cannot register non-callable for dispatch "
-            "method %r: %r" % (dispatch, f))
+            "%r: %r" % (dispatch, f))
     if not same_signature(arginfo(dispatch), f_arginfo):
         raise RegistrationError(
             "Signature of callable dispatched to (%r) "
-            "not that of dispatch method (%r)" % (
+            "not that of dispatch (%r)" % (
+                f, dispatch))
+
+
+def validate_signature_without_first_arg(f, dispatch):
+    f_arginfo = arginfo(f)
+    if f_arginfo is None:
+        raise RegistrationError(
+            "Cannot register non-callable for dispatch "
+            "%r: %r" % (dispatch, f))
+
+    dispatch_arginfo = arginfo(dispatch)
+    # strip off first argument (as this is self or cls)
+    dispatch_arginfo = inspect.ArgInfo(
+        dispatch_arginfo.args[1:],
+        dispatch_arginfo.varargs,
+        dispatch_arginfo.keywords,
+        dispatch_arginfo.defaults)
+    if not same_signature(dispatch_arginfo, f_arginfo):
+        raise RegistrationError(
+            "Signature of callable dispatched to (%r) "
+            "not that of dispatch (without self) (%r)" % (
                 f, dispatch))
 
 
 def same_signature(a, b):
     """Check whether a arginfo and b arginfo are the same signature.
 
-    Signature may have an extra 'lookup' argument. Actual names of
-    argument may differ. Default arguments may be different.
+    Actual names of arguments may differ. Default arguments may be
+    different.
     """
     a_args = set(a.args)
     b_args = set(b.args)
-    a_args.discard('lookup')
-    b_args.discard('lookup')
     return (len(a_args) == len(b_args) and
             a.varargs == b.varargs and
             a.keywords == b.keywords)
