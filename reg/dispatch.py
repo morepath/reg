@@ -90,10 +90,9 @@ class Dispatch(object):
         return self.registry.key_dict_to_predicate_key(key_dict)
 
 
-class dispatch_method(object):
+class dispatch_method(dispatch):
     def __init__(self, *predicates, **kw):
-        self.predicates = predicates
-        self.get_key_lookup = kw.pop('get_key_lookup', identity)
+        super(dispatch_method, self).__init__(*predicates, **kw)
 
     def __call__(self, callable):
         return MethodDispatchDescriptor(callable,

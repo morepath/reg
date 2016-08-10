@@ -62,6 +62,68 @@ def test_dispatch_method_without_fallback():
     assert foo.bar(None) == "default"
 
 
+def test_dispatch_method_string_predicates():
+    def get_obj(obj):
+        return obj
+
+    def obj_fallback(self, obj):
+        return "Obj fallback"
+
+    class Foo(object):
+        @dispatch_method('obj')
+        def bar(self, obj):
+            return "default"
+
+    class Alpha(object):
+        pass
+
+    class Beta(object):
+        pass
+
+    foo = Foo()
+
+    assert foo.bar(Alpha()) == "default"
+
+    Foo.bar.register(lambda self, obj: "Alpha", obj=Alpha)
+    Foo.bar.register(lambda self, obj: "Beta", obj=Beta)
+
+    assert foo.bar(Alpha()) == "Alpha"
+    assert foo.bar(Beta()) == "Beta"
+    assert foo.bar(None) == "default"
+
+
+def test_dispatch_method_add_predicates():
+    def get_obj(obj):
+        return obj
+
+    def obj_fallback(self, obj):
+        return "Obj fallback"
+
+    class Foo(object):
+        @dispatch_method()
+        def bar(self, obj):
+            return "default"
+
+    Foo.bar.add_predicates([match_instance('obj', get_obj)])
+
+    class Alpha(object):
+        pass
+
+    class Beta(object):
+        pass
+
+    foo = Foo()
+
+    assert foo.bar(Alpha()) == "default"
+
+    Foo.bar.register(lambda self, obj: "Alpha", obj=Alpha)
+    Foo.bar.register(lambda self, obj: "Beta", obj=Beta)
+
+    assert foo.bar(Alpha()) == "Alpha"
+    assert foo.bar(Beta()) == "Beta"
+    assert foo.bar(None) == "default"
+
+
 def test_dispatch_method_register_function():
     def get_obj(obj):
         return obj
