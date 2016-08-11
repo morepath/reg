@@ -111,22 +111,14 @@ class MethodDispatch(Dispatch):
     def register_function(self, value, **key_dict):
         validate_signature_without_first_arg(value, self.wrapped_func)
         predicate_key = self.registry.key_dict_to_predicate_key(key_dict)
-
-        def wrapped(self, *args, **kw):
-            return value(*args, **kw)
-        # we store this so we can access the original non-wrapped
-        # value again
-        wrapped.value = value
-
-        self.register_value(predicate_key, wrapped)
+        self.register_value(predicate_key, methodify(value))
 
     def register_auto(self, value, **key_dict):
-        info = arginfo(value)
-        if info.args and info.args[0] == self.auto_argument:
-            self.register(value, **key_dict)
+        if is_auto_method(value, self.auto_argument):
             # for symmetry as register_function with a wrapped version
             # is possible, we also set the value
             value.value = value
+            self.register(value, **key_dict)
         else:
             self.register_function(value, **key_dict)
 
@@ -227,3 +219,45 @@ def same_signature(a, b):
     return (len(a_args) == len(b_args) and
             a.varargs == b.varargs and
             a.keywords == b.keywords)
+
+
+def methodify(func):
+    """Turn a function into a method.
+
+    Wraps the function so that it takes a first argument like
+    a method, and ignores it.
+
+    The return value has a ``value`` attribute which is the original
+    function that was wrapped. This way the application can access it.
+    """
+    def wrapped(self, *args, **kw):
+        return func(*args, **kw)
+    wrapped.value = func
+    return wrapped
+
+
+def is_auto_method(func, auto_argument="app"):
+    """Check whether a function is already a method
+    """
+    info = arginfo(func)
+    return info.args and info.args[0] == auto_argument
+
+
+def auto_methodify(func, auto_argument="app"):
+    """Turn a function into a method if needed.
+
+    A function is identified to be a method if its first
+    argument name is ``auto_argument``.
+
+    Otherwise it is assumed to be a plain function, and a wrapper
+    function is created which takes a first argument and ignores it.
+
+    The return value has a ``value`` attribute which is the original
+    function that was wrapped. This way the application can access it.
+    """
+    if is_auto_method(func, auto_argument):
+        # for symmetry make sure value is set
+        func.value = func
+        return func
+    else:
+        return methodify(func)

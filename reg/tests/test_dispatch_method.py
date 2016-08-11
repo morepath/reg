@@ -1,4 +1,4 @@
-from ..dispatch import dispatch_method
+from ..dispatch import dispatch_method, auto_methodify
 from ..predicate import match_instance
 
 
@@ -443,3 +443,20 @@ def test_dispatch_method_with_register_auto_value():
     assert foo.bar.component(Beta()).value is beta_func
     # actually since this is a method this is also unwrapped
     assert foo.bar.component(Beta()) is beta_func
+
+
+def test_auto_methodify():
+    def f(a):
+        return a
+
+    m = auto_methodify(f)
+
+    assert m(None, 'A') == 'A'
+    assert m.value is f
+
+    def g(app, a):
+        return a
+
+    m = auto_methodify(g)
+    assert m(None, 'A') == 'A'
+    assert m.value is g
