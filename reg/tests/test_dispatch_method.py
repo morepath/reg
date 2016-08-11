@@ -1,6 +1,5 @@
 from ..dispatch import dispatch_method
 from ..predicate import match_instance
-from ..sentinel import NOT_FOUND
 
 
 def test_dispatch_method_explicit_fallback():
@@ -379,3 +378,68 @@ def test_dispatch_method_api_available():
     assert foo.bar.component(None) is None
     assert foo.bar.fallback(None) is obj_fallback
     assert list(foo.bar.all(None)) == []
+
+
+def test_dispatch_method_with_register_function_value():
+    def get_obj(obj):
+        return obj
+
+    class Foo(object):
+        @dispatch_method(match_instance('obj', get_obj))
+        def bar(self, obj):
+            return "default"
+
+    class Alpha(object):
+        pass
+
+    class Beta(object):
+        pass
+
+    foo = Foo()
+
+    assert foo.bar(Alpha()) == "default"
+
+    def alpha_func(obj):
+        return "Alpha"
+
+    def beta_func(obj):
+        return "Beta"
+
+    Foo.bar.register_function(alpha_func, obj=Alpha)
+    Foo.bar.register_function(beta_func, obj=Beta)
+
+    assert foo.bar.component(Alpha()).value is alpha_func
+
+
+def test_dispatch_method_with_register_auto_value():
+    def get_obj(obj):
+        return obj
+
+    class Foo(object):
+        @dispatch_method(match_instance('obj', get_obj))
+        def bar(self, obj):
+            return "default"
+
+    class Alpha(object):
+        pass
+
+    class Beta(object):
+        pass
+
+    foo = Foo()
+
+    assert foo.bar(Alpha()) == "default"
+
+    def alpha_func(obj):
+        return "Alpha"
+
+    def beta_func(app, obj):
+        return "Beta"
+
+    Foo.bar.register_auto(alpha_func, obj=Alpha)
+    Foo.bar.register_auto(beta_func, obj=Beta)
+
+    assert foo.bar.component(Alpha()).value is alpha_func
+    assert foo.bar.component(Beta()).value is beta_func
+    # actually since this is a method this is also unwrapped
+    assert foo.bar.component(Beta()) is beta_func

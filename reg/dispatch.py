@@ -114,12 +114,19 @@ class MethodDispatch(Dispatch):
 
         def wrapped(self, *args, **kw):
             return value(*args, **kw)
+        # we store this so we can access the original non-wrapped
+        # value again
+        wrapped.value = value
+
         self.register_value(predicate_key, wrapped)
 
     def register_auto(self, value, **key_dict):
         info = arginfo(value)
         if info.args and info.args[0] == self.auto_argument:
             self.register(value, **key_dict)
+            # for symmetry as register_function with a wrapped version
+            # is possible, we also set the value
+            value.value = value
         else:
             self.register_function(value, **key_dict)
 
