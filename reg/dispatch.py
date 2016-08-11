@@ -1,8 +1,9 @@
 from __future__ import unicode_literals
-from functools import update_wrapper, partial
+from functools import update_wrapper
 import inspect
 from .predicate import match_argname
-from .compat import string_types
+from .compat import (string_types, create_method_for_class,
+                     create_method_for_instance)
 from .predicate import create_predicates_registry, Lookup
 from .arginfo import arginfo
 from .error import RegistrationError
@@ -137,15 +138,15 @@ class MethodDispatchDescriptor(object):
         # we get the method from the cache
         # this guarantees that we distinguish between dispatches
         # on a per class basis, and on the name of the method
-        method = self._cache.get(type)
+        dispatch = self._cache.get(type)
 
-        if method is None:
+        if dispatch is None:
             # if this is the first time we access the dispatch method,
             # we create it and store it in the cache
-            method = MethodDispatch(self.predicates,
-                                    self.callable,
-                                    self.get_key_lookup)
-            self._cache[type] = method
+            dispatch = MethodDispatch(self.predicates,
+                                      self.callable,
+                                      self.get_key_lookup)
+            self._cache[type] = dispatch
 
         # we cannot attach the dispatch method to the class
         # directly (skipping the descriptor during next access) here,
@@ -153,16 +154,16 @@ class MethodDispatchDescriptor(object):
         # class, including subclasses.
         if obj is None:
             # we access it through the class directly, so unbound
-            return method
-        else:
-            # if we access the instance, we simulate binding it
-            bound = partial(method, obj)
-            # we store it on the instance, so that next time we
-            # access this, we do not hit the descriptor anymore
-            # but return the bound dispatch function directly
-            if self.cache_bound_method:
-                setattr(obj, self.name, bound)
-            return bound
+            return create_method_for_class(dispatch, type)
+
+        # if we access the instance, we simulate binding it
+        bound = create_method_for_instance(dispatch, obj)
+        # we store it on the instance, so that next time we
+        # access this, we do not hit the descriptor anymore
+        # but return the bound dispatch function directly
+        if self.cache_bound_method:
+            setattr(obj, self.name, bound)
+        return bound
 
 
 def validate_signature(f, dispatch):
