@@ -1,4 +1,4 @@
-from ..dispatch import dispatch_method, auto_methodify
+from ..dispatch import dispatch_method, auto_methodify, clean_dispatch_methods
 from ..predicate import match_instance
 
 
@@ -460,3 +460,84 @@ def test_auto_methodify():
     m = auto_methodify(g)
     assert m(None, 'A') == 'A'
     assert m.value is g
+
+
+def test_dispatch_method_clean():
+    def get_obj(obj):
+        return obj
+
+    class Foo(object):
+        @dispatch_method(match_instance('obj', get_obj))
+        def bar(self, obj):
+            return "default"
+
+    class Qux(Foo):
+        pass
+
+    class Alpha(object):
+        pass
+
+    class Beta(object):
+        pass
+
+    foo = Foo()
+    qux = Qux()
+
+    Foo.bar.register(lambda self, obj: "Alpha", obj=Alpha)
+    Foo.bar.register(lambda self, obj: "Beta", obj=Beta)
+    Qux.bar.register(lambda self, obj: "Qux Alpha", obj=Alpha)
+    Qux.bar.register(lambda self, obj: "Qux Beta", obj=Beta)
+
+    assert foo.bar(Alpha()) == "Alpha"
+    assert foo.bar(Beta()) == "Beta"
+    assert foo.bar(None) == "default"
+    assert qux.bar(Alpha()) == "Qux Alpha"
+    assert qux.bar(Beta()) == "Qux Beta"
+    assert qux.bar(None) == "default"
+
+    Foo.bar.clean()
+
+    assert foo.bar(Alpha()) == "default"
+
+    # but hasn't affected qux registry
+    assert qux.bar(Alpha()) == "Qux Alpha"
+
+
+def test_clean_dispatch_methods():
+    def get_obj(obj):
+        return obj
+
+    class Foo(object):
+        @dispatch_method(match_instance('obj', get_obj))
+        def bar(self, obj):
+            return "default"
+
+    class Qux(Foo):
+        pass
+
+    class Alpha(object):
+        pass
+
+    class Beta(object):
+        pass
+
+    foo = Foo()
+    qux = Qux()
+
+    Foo.bar.register(lambda self, obj: "Alpha", obj=Alpha)
+    Foo.bar.register(lambda self, obj: "Beta", obj=Beta)
+    Qux.bar.register(lambda self, obj: "Qux Alpha", obj=Alpha)
+    Qux.bar.register(lambda self, obj: "Qux Beta", obj=Beta)
+
+    assert foo.bar(Alpha()) == "Alpha"
+    assert foo.bar(Beta()) == "Beta"
+    assert foo.bar(None) == "default"
+    assert qux.bar(Alpha()) == "Qux Alpha"
+    assert qux.bar(Beta()) == "Qux Beta"
+    assert qux.bar(None) == "default"
+
+    clean_dispatch_methods(Foo)
+
+    assert foo.bar(Alpha()) == "default"
+    # but hasn't affected qux registry
+    assert qux.bar(Alpha()) == "Qux Alpha"

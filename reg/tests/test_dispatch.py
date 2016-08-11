@@ -930,3 +930,69 @@ def test_dict_to_predicate_key_for_no_dispatch():
         pass
 
     assert foo.key_dict_to_predicate_key({}) == ()
+
+
+def test_dispatch_clean():
+    @dispatch('obj')
+    def foo(obj):
+        return "default"
+
+    def for_bar(obj):
+        return obj.method()
+
+    def for_qux(obj):
+        return obj.method()
+
+    class Bar(object):
+        def method(self):
+            return "bar's method"
+
+    class Qux(object):
+        def method(self):
+            return "qux's method"
+
+    foo.register(for_bar, obj=Bar)
+    foo.register(for_qux, obj=Qux)
+
+    assert foo(Bar()) == "bar's method"
+    assert foo(Qux()) == "qux's method"
+
+    foo.clean()
+
+    assert foo(Bar()) == "default"
+    assert foo(Qux()) == "default"
+
+
+def test_dispatch_clean_add_predicates():
+    @dispatch()
+    def foo(obj):
+        return "default"
+
+    def for_bar(obj):
+        return obj.method()
+
+    def for_qux(obj):
+        return obj.method()
+
+    class Bar(object):
+        def method(self):
+            return "bar's method"
+
+    class Qux(object):
+        def method(self):
+            return "qux's method"
+
+    foo.add_predicates([match_instance('obj', lambda obj: obj)])
+    foo.register(for_bar, obj=Bar)
+    foo.register(for_qux, obj=Qux)
+
+    assert foo(Bar()) == "bar's method"
+    assert foo(Qux()) == "qux's method"
+
+    foo.clean()
+
+    foo.register(for_bar)
+
+    # cannot register it for Qux, as this now has no predicates
+    with pytest.raises(RegistrationError):
+        foo.register(for_qux)

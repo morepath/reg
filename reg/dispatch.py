@@ -41,6 +41,7 @@ class Dispatch(object):
     def __init__(self, predicates, callable, get_key_lookup):
         self.wrapped_func = callable
         self.get_key_lookup = get_key_lookup
+        self._original_predicates = predicates
         self._register_predicates(predicates)
 
     def _register_predicates(self, predicates):
@@ -49,6 +50,9 @@ class Dispatch(object):
         # (re)initialize the lookup and the cache
         self.lookup = Lookup(self.wrapped_func,
                              self.get_key_lookup(self.registry))
+
+    def clean(self):
+        self._register_predicates(self._original_predicates)
 
     def add_predicates(self, predicates):
         self._register_predicates(self.predicates + predicates)
@@ -261,3 +265,17 @@ def auto_methodify(func, auto_argument="app"):
         return func
     else:
         return methodify(func)
+
+
+def clean_dispatch_methods(cls):
+    """For a given class clean all dispatch methods.
+
+    This resets their registry to the original state.
+    """
+    for name in dir(cls):
+        attr = getattr(cls, name)
+        im_func = getattr(attr, 'im_func', None)
+        if im_func is None:
+            continue
+        if isinstance(im_func, MethodDispatch):
+            attr.clean()
