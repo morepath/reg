@@ -1,5 +1,6 @@
 from ..dispatch import dispatch_method
 from ..predicate import match_instance
+from ..sentinel import NOT_FOUND
 
 
 def test_dispatch_method_explicit_fallback():
@@ -36,9 +37,6 @@ def test_dispatch_method_without_fallback():
     def get_obj(obj):
         return obj
 
-    def obj_fallback(self, obj):
-        return "Obj fallback"
-
     class Foo(object):
         @dispatch_method(match_instance('obj', get_obj))
         def bar(self, obj):
@@ -66,9 +64,6 @@ def test_dispatch_method_string_predicates():
     def get_obj(obj):
         return obj
 
-    def obj_fallback(self, obj):
-        return "Obj fallback"
-
     class Foo(object):
         @dispatch_method('obj')
         def bar(self, obj):
@@ -95,9 +90,6 @@ def test_dispatch_method_string_predicates():
 def test_dispatch_method_add_predicates():
     def get_obj(obj):
         return obj
-
-    def obj_fallback(self, obj):
-        return "Obj fallback"
 
     class Foo(object):
         @dispatch_method()
@@ -128,9 +120,6 @@ def test_dispatch_method_register_function():
     def get_obj(obj):
         return obj
 
-    def obj_fallback(self, obj):
-        return "Obj fallback"
-
     class Foo(object):
         @dispatch_method(match_instance('obj', get_obj))
         def bar(self, obj):
@@ -157,9 +146,6 @@ def test_dispatch_method_register_function():
 def test_dispatch_method_register_auto():
     def get_obj(obj):
         return obj
-
-    def obj_fallback(self, obj):
-        return "Obj fallback"
 
     class Foo(object):
         x = 'X'
@@ -190,9 +176,6 @@ def test_dispatch_method_class_method_accessed_first():
     def get_obj(obj):
         return obj
 
-    def obj_fallback(self, obj):
-        return "Obj fallback"
-
     class Foo(object):
         @dispatch_method(match_instance('obj', get_obj))
         def bar(self, obj):
@@ -217,9 +200,6 @@ def test_dispatch_method_class_method_accessed_first():
 def test_dispatch_method_accesses_instance():
     def get_obj(obj):
         return obj
-
-    def obj_fallback(self, obj):
-        return "Obj fallback"
 
     class Foo(object):
         def __init__(self, x):
@@ -248,9 +228,6 @@ def test_dispatch_method_accesses_instance():
 def test_dispatch_method_inheritance_register_on_subclass():
     def get_obj(obj):
         return obj
-
-    def obj_fallback(self, obj):
-        return "Obj fallback"
 
     class Foo(object):
         @dispatch_method(match_instance('obj', get_obj))
@@ -281,9 +258,6 @@ def test_dispatch_method_inheritance_register_on_subclass():
 def test_dispatch_method_inheritance_separation():
     def get_obj(obj):
         return obj
-
-    def obj_fallback(self, obj):
-        return "Obj fallback"
 
     class Foo(object):
         @dispatch_method(match_instance('obj', get_obj))
@@ -319,9 +293,6 @@ def test_dispatch_method_inheritance_separation():
 def test_dispatch_method_inheritance_separation_multiple():
     def get_obj(obj):
         return obj
-
-    def obj_fallback(self, obj):
-        return "Obj fallback"
 
     class Foo(object):
         @dispatch_method(match_instance('obj', get_obj))
@@ -369,3 +340,42 @@ def test_dispatch_method_inheritance_separation_multiple():
     assert sub.qux(Alpha()) == "Qux Sub Alpha"
     assert sub.qux(Beta()) == "Qux Sub Beta"
     assert sub.qux(None) == "qux default"
+
+
+def test_dispatch_method_api_available():
+    def get_obj(obj):
+        return obj
+
+    def obj_fallback(self, obj):
+        return "Obj fallback"
+
+    class Foo(object):
+        @dispatch_method(match_instance('obj', get_obj, obj_fallback))
+        def bar(self, obj):
+            return "default"
+
+    class Alpha(object):
+        pass
+
+    class Beta(object):
+        pass
+
+    foo = Foo()
+
+    def alpha_func(self, obj):
+        return "Alpha"
+
+    def beta_func(self, obj):
+        return "Beta"
+
+    Foo.bar.register(alpha_func, obj=Alpha)
+    Foo.bar.register(beta_func, obj=Beta)
+
+    assert foo.bar(Alpha()) == "Alpha"
+    assert Foo.bar.component(Alpha()) == alpha_func
+    assert foo.bar.component(Alpha()) == alpha_func
+    assert list(foo.bar.all(Alpha())) == [alpha_func]
+    assert foo.bar.component(Beta()) == beta_func
+    assert foo.bar.component(None) is None
+    assert foo.bar.fallback(None) is obj_fallback
+    assert list(foo.bar.all(None)) == []

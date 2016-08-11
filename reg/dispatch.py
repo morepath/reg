@@ -123,6 +123,15 @@ class MethodDispatch(Dispatch):
         else:
             self.register_function(value, **key_dict)
 
+    def component(self, *args, **kw):
+        return self.lookup.component(None, *args, **kw)
+
+    def fallback(self, *args, **kw):
+        return self.lookup.fallback(None, *args, **kw)
+
+    def all(self, *args, **kw):
+        return self.lookup.all(None, *args, **kw)
+
 
 class MethodDispatchDescriptor(object):
     def __init__(self, callable, predicates, get_key_lookup,
