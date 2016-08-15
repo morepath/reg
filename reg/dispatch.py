@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 from functools import update_wrapper
+import types
 import inspect
 from .predicate import match_argname
 from .compat import (string_types, create_method_for_class,
@@ -261,7 +262,11 @@ def auto_methodify(func, auto_argument="app"):
     """
     if is_auto_method(func, auto_argument):
         # for symmetry make sure value is set
-        func.value = func
+        if not isinstance(func, types.FunctionType):
+            f = func.__func__
+        else:
+            f = func
+        f.value = func
         return func
     else:
         return methodify(func)

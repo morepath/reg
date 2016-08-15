@@ -445,7 +445,7 @@ def test_dispatch_method_with_register_auto_value():
     assert foo.bar.component(Beta()) is beta_func
 
 
-def test_auto_methodify():
+def test_auto_methodify_function():
     def f(a):
         return a
 
@@ -456,6 +456,28 @@ def test_auto_methodify():
 
     def g(app, a):
         return a
+
+    m = auto_methodify(g)
+    assert m(None, 'A') == 'A'
+    assert m.value is g
+
+
+def test_auto_methodify_method():
+    class Foo(object):
+        def f(self, a):
+            return a
+
+    f = Foo().f
+    m = auto_methodify(f)
+
+    assert m(None, 'A') == 'A'
+    assert m.value is f
+
+    class Bar(object):
+        def g(self, app, a):
+            return a
+
+    g = Bar().g
 
     m = auto_methodify(g)
     assert m(None, 'A') == 'A'
