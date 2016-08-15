@@ -1,6 +1,6 @@
 # flake8: noqa
 from .dispatch import (dispatch, dispatch_method,
-                       auto_methodify, clean_dispatch_methods)
+                       install_auto_method, clean_dispatch_methods)
 from .mapply import mapply
 from .arginfo import arginfo
 from .argextract import KeyExtractor

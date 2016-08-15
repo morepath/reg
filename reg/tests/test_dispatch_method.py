@@ -1,4 +1,6 @@
-from ..dispatch import dispatch_method, auto_methodify, clean_dispatch_methods
+from ..dispatch import (dispatch_method,
+                        install_auto_method,
+                        clean_dispatch_methods)
 from ..predicate import match_instance
 
 
@@ -445,43 +447,71 @@ def test_dispatch_method_with_register_auto_value():
     assert foo.bar.component(Beta()) is beta_func
 
 
-def test_auto_methodify_function():
+def test_install_auto_method_function_no_app_arg():
+    class Target(object):
+        pass
+
     def f(a):
         return a
 
-    m = auto_methodify(f)
+    install_auto_method(Target, 'm', f)
 
-    assert m(None, 'A') == 'A'
-    assert m.value is f
+    t = Target()
+
+    assert t.m('A') == 'A'
+    assert t.m.value is f
+
+
+def test_install_auto_method_function_app_arg():
+    class Target(object):
+        pass
 
     def g(app, a):
+        assert isinstance(app, Target)
         return a
 
-    m = auto_methodify(g)
-    assert m(None, 'A') == 'A'
-    assert m.value is g
+    install_auto_method(Target, 'm', g)
+
+    t = Target()
+    assert t.m('A') == 'A'
+    assert t.m.value is g
 
 
-def test_auto_methodify_method():
+def test_install_auto_method_method_no_app_arg():
+    class Target(object):
+        pass
+
     class Foo(object):
         def f(self, a):
             return a
 
     f = Foo().f
-    m = auto_methodify(f)
 
-    assert m(None, 'A') == 'A'
-    assert m.value is f
+    install_auto_method(Target, 'm', f)
+
+    t = Target()
+
+    assert t.m('A') == 'A'
+    assert t.m.value is f
+
+
+def test_install_auto_method_method_app_arg():
+    class Target(object):
+        pass
 
     class Bar(object):
         def g(self, app, a):
+            assert isinstance(app, Target)
             return a
 
     g = Bar().g
 
-    m = auto_methodify(g)
-    assert m(None, 'A') == 'A'
-    assert m.value is g
+    install_auto_method(Target, 'm', g)
+
+    t = Target()
+
+    assert t.m('A') == 'A'
+    assert t.m.value is g
 
 
 def test_dispatch_method_clean():

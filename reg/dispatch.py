@@ -241,35 +241,40 @@ def methodify(func):
     return wrapped
 
 
+def install_auto_method(klass, name, func, auto_argument="app"):
+    """Install func as method onto klass.
+
+    If func has a first argument that is named as ``auto_argument``,
+    the func is bound as a method to the class.
+
+    If func has no such first argument, a wrapper function is created
+    that does take it, and is bound as a method to the class.
+    """
+    if is_auto_method(func, auto_argument):
+        # for symmetry make sure value is set
+        if not isinstance(func, types.FunctionType):
+            # if this isn't a function, we wrap it first
+            # this is helpful when we set it as a method for
+            # compatibility with Python 2 and Python 3
+            def result(self, *args, **kw):
+                return func(self, *args, **kw)
+            result.value = func
+        else:
+            # otherwise we store the value directly on the function
+            func.value = func
+            result = func
+    else:
+        # we create the function wrapper
+        result = methodify(func)
+
+    setattr(klass, name, result)
+
+
 def is_auto_method(func, auto_argument="app"):
     """Check whether a function is already a method
     """
     info = arginfo(func)
     return info.args and info.args[0] == auto_argument
-
-
-def auto_methodify(func, auto_argument="app"):
-    """Turn a function into a method if needed.
-
-    A function is identified to be a method if its first
-    argument name is ``auto_argument``.
-
-    Otherwise it is assumed to be a plain function, and a wrapper
-    function is created which takes a first argument and ignores it.
-
-    The return value has a ``value`` attribute which is the original
-    function that was wrapped. This way the application can access it.
-    """
-    if is_auto_method(func, auto_argument):
-        # for symmetry make sure value is set
-        if not isinstance(func, types.FunctionType):
-            f = func.__func__
-        else:
-            f = func
-        f.value = func
-        return func
-    else:
-        return methodify(func)
 
 
 def clean_dispatch_methods(cls):
