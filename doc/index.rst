@@ -10,7 +10,6 @@ for your application, library or framework.
 
    usage
    api
-   internals
    developing
    history
    changes
