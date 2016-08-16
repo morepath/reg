@@ -318,23 +318,6 @@ class PredicateRegistry(object):
         """
         return self.predicate.key_by_predicate_name(d)
 
-    def predicate_key(self, *args, **kw):
-        """Construct predicate_key for function arguments.
-
-        For function arguments, construct the appropriate
-        ``predicate_key``. This is used by the dispatch mechanism to
-        dispatch to the right function.
-
-        If the ``predicate_key`` cannot be constructed from ``args``
-        and ``kw``, this raises a :exc:`KeyExtractorError`.
-
-        :param args: the varargs given to the callable.
-        :param kw: the keyword arguments given to the callable.
-        :returns: an immutable ``predicate_key`` based on the predicates
-          the callable was configured with.
-        """
-        return self.key(self.arg_extractor(*args, **kw))
-
     def component(self, key):
         return next(self.all(key), None)
 
@@ -365,23 +348,6 @@ class SingleValueRegistry(object):
         return ()
 
     def key_dict_to_predicate_key(self, d):
-        return ()
-
-    def predicate_key(self, *args, **kw):
-        """Construct predicate_key for function arguments.
-
-        For function arguments, construct the appropriate
-        ``predicate_key``. This is used by the dispatch mechanism to
-        dispatch to the right function.
-
-        If the ``predicate_key`` cannot be constructed from ``args``
-        and ``kw``, this raises a :exc:`KeyExtractorError`.
-
-        :param args: the varargs given to the callable.
-        :param kw: the keyword arguments given to the callable.
-        :returns: an immutable ``predicate_key`` based on the predicates
-          the callable was configured with.
-        """
         return ()
 
     def component(self, key):
@@ -415,7 +381,6 @@ class CachingKeyLookup(object):
     def __init__(self, key_lookup, component_cache_size, all_cache_size,
                  fallback_cache_size):
         self.key_lookup = key_lookup
-        self.predicate_key = key_lookup.predicate_key
         self.key_dict_to_predicate_key = key_lookup.key_dict_to_predicate_key
         self.component_cache = LRUCache(component_cache_size)
         self.all_cache = LRUCache(all_cache_size)
