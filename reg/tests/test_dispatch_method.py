@@ -1,7 +1,9 @@
+import pytest
 from ..dispatch import (dispatch_method,
                         install_auto_method,
                         clean_dispatch_methods)
 from ..predicate import match_instance
+from ..error import RegistrationError
 
 
 def test_dispatch_method_explicit_fallback():
@@ -142,6 +144,45 @@ def test_dispatch_method_register_function():
     assert foo.bar(Alpha()) == "Alpha"
     assert foo.bar(Beta()) == "Beta"
     assert foo.bar(None) == "default"
+
+
+def test_dispatch_method_register_function_wrong_signature_too_long():
+    class Foo(object):
+        @dispatch_method('obj')
+        def bar(self, obj):
+            return "default"
+
+    class Alpha(object):
+        pass
+
+    with pytest.raises(RegistrationError):
+        Foo.bar.register_function(lambda obj, extra: "Alpha", obj=Alpha)
+
+
+def test_dispatch_method_register_function_wrong_signature_too_short():
+    class Foo(object):
+        @dispatch_method('obj')
+        def bar(self, obj):
+            return "default"
+
+    class Alpha(object):
+        pass
+
+    with pytest.raises(RegistrationError):
+        Foo.bar.register_function(lambda: "Alpha", obj=Alpha)
+
+
+def test_dispatch_method_register_function_non_callable():
+    class Foo(object):
+        @dispatch_method('obj')
+        def bar(self, obj):
+            return "default"
+
+    class Alpha(object):
+        pass
+
+    with pytest.raises(RegistrationError):
+        Foo.bar.register_function("cannot call this", obj=Alpha)
 
 
 def test_dispatch_method_register_auto():
