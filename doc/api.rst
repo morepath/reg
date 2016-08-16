@@ -32,9 +32,6 @@ API
 
 .. autofunction:: class_predicate
 
-.. autoclass:: Registry
-   :members:
-
 .. autoclass:: CachingKeyLookup
    :members:
 
