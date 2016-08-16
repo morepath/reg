@@ -1116,3 +1116,12 @@ def test_dispatch_register_value_list_single():
 
     assert foo(Bar()) == "bar"
     assert foo(Qux()) == "qux"
+
+
+def test_dispatch_repr():
+    def foo(obj):
+        return "default"
+
+    dispatch_foo = dispatch('obj')(foo)
+
+    assert repr(dispatch_foo) == repr(foo)
