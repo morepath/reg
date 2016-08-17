@@ -80,10 +80,10 @@ class ArgExtractor(object):
         return result
 
     def extract_arg(self, name, args, kw):
-        i = self.index[name]
         result = kw.get(name, NOT_FOUND)
         if result is not NOT_FOUND:
             return result, -1
+        i = self.index[name]
         try:
             return args[i], i
         except IndexError:
