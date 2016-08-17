@@ -56,7 +56,7 @@ def test_registry():
     view.register_value((Foo, '', 'POST'), foo_post)
     view.register_value((Foo, 'edit', 'POST'), foo_edit)
 
-    key_lookup = view.lookup.key_lookup
+    key_lookup = view.key_lookup
     assert key_lookup.component((Foo, '', 'GET')) is foo_default
     assert key_lookup.component((Foo, '', 'POST')) is foo_post
     assert key_lookup.component((Foo, 'edit', 'POST')) is foo_edit
@@ -68,23 +68,23 @@ def test_registry():
             self.name = name
             self.request_method = request_method
 
-    assert view.lookup.call(
+    assert view(
         Foo(), Request('', 'GET')) == 'foo default'
-    assert view.lookup.call(
+    assert view(
         FooSub(), Request('', 'GET')) == 'foo default'
-    assert view.lookup.call(
+    assert view(
         FooSub(), Request('edit', 'POST')) == 'foo edit'
 
     class Bar(object):
         pass
 
-    assert view.lookup.call(
+    assert view(
         Bar(), Request('', 'GET')) == 'Model fallback'
-    assert view.lookup.call(
+    assert view(
         Foo(), Request('dummy', 'GET')) == 'Name fallback'
-    assert view.lookup.call(
+    assert view(
         Foo(), Request('', 'PUT')) == 'Request method fallback'
-    assert view.lookup.call(
+    assert view(
         FooSub(), Request('dummy', 'GET')) == 'Name fallback'
 
 
@@ -231,18 +231,18 @@ def test_caching_registry():
             self.name = name
             self.request_method = request_method
 
-    assert view.lookup.call(Foo(), Request('', 'GET')) == 'foo default'
-    assert view.lookup.call(
+    assert view(Foo(), Request('', 'GET')) == 'foo default'
+    assert view(
         FooSub(), Request('', 'GET')) == 'foo default'
-    assert view.lookup.call(
+    assert view(
         FooSub(), Request('edit', 'POST')) == 'foo edit'
 
     # use a bit of inside knowledge to check the cache is filled
-    assert view.lookup.key_lookup.component_cache.get(
+    assert view.key_lookup.component_cache.get(
         (Foo, '', 'GET')) is not None
-    assert view.lookup.key_lookup.component_cache.get(
+    assert view.key_lookup.component_cache.get(
         (FooSub, '', 'GET')) is not None
-    assert view.lookup.key_lookup.component_cache.get(
+    assert view.key_lookup.component_cache.get(
         (FooSub, 'edit', 'POST')) is not None
 
     # now let's do this again. this time things come from the component cache
@@ -250,7 +250,7 @@ def test_caching_registry():
     assert view(FooSub(), Request('', 'GET')) == 'foo default'
     assert view(FooSub(), Request('edit', 'POST')) == 'foo edit'
 
-    key_lookup = view.lookup.key_lookup
+    key_lookup = view.key_lookup
     # prime and check the all cache
     assert list(view.all(Foo(), Request('', 'GET'))) == [foo_default]
     assert key_lookup.all_cache.get(

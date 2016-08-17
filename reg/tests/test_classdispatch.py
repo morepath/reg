@@ -114,11 +114,3 @@ def test_classdispatch_fallback():
         return "Fallback"
 
     assert something(DemoClass) == "Fallback"
-
-
-def test_classdispatch_fallback_lowlevel():
-    @dispatch()
-    def something(cls):
-        return "Fallback"
-
-    assert something.lookup.call(DemoClass) == "Fallback"

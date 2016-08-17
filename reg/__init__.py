@@ -9,4 +9,4 @@ from .error import RegistrationError, KeyExtractorError
 from .predicate import (Predicate, PredicateRegistry, KeyIndex, ClassIndex,
                         key_predicate, class_predicate,
                         match_key, match_instance, match_argname,
-                        match_class, CachingKeyLookup, Lookup)
+                        match_class, CachingKeyLookup)
