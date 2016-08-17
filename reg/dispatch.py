@@ -83,8 +83,8 @@ class Dispatch(object):
     def fallback(self, *args, **kw):
         return self.lookup.fallback(*args, **kw)
 
-    def component_key_dict(self, **kw):
-        return self.lookup.component_key_dict(kw)
+    def component_by_keys(self, **kw):
+        return self.lookup.component_by_keys(**kw)
 
     def all(self, *args, **kw):
         return self.lookup.all(*args, **kw)

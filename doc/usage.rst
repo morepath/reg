@@ -883,6 +883,12 @@ function:
   >>> size.component(doc) is document_size
   True
 
+Sometimes it's useful to have more control and go to a lower level by
+specifying the keys that go in directly:
+
+  >>> size.component_by_keys(item=Document) is document_size
+  True
+
 Getting all
 -----------
 
@@ -925,3 +931,22 @@ We can make this more interesting by registering a special
   >>> list(size.all(htmldoc))
   [<function htmldocument_size at ...>, <function document_size at ...>]
 
+Predicate key
+-------------
+
+In some cases it can be useful to get an immutable key that represents
+a dispatch registration. The Morepath web framework uses this for
+instance to determine whether registrations are identical in its
+conflict detection and override system.
+
+Earlier we registered various views for object and request method. We
+can get immutable keys for such registrations:
+
+.. doctest::
+
+   >>> view.key_dict_to_predicate_key(
+   ...  {'request_method': 'GET', 'obj': Document})
+   (<class 'Document'>, 'GET')
+   >>> view.key_dict_to_predicate_key(
+   ...  {'obj': Image, 'request_method': 'POST'})
+   (<class 'Image'>, 'POST')

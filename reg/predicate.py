@@ -540,18 +540,19 @@ class Lookup(object):
         key = self.predicate_key(*args, **kw)
         return self.key_lookup.fallback(key)
 
-    def component_key_dict(self, key_dict):
+    def component_by_keys(self, **kw):
         """Look up function based on key_dict.
 
         Looks up the function to dispatch to using a key_dict,
         mapping predicate name to predicate value. Returns the fallback
         value (default: ``None``) if nothing could be found.
 
-        :key_dict: a dictionary. key is predicate name, value is
-          predicate value. If omitted, predicate default is used.
+        :kw: key is predicate name, value is
+          predicate value under which it was registered.
+          If omitted, predicate default is used.
         :returns: the function being dispatched to, or fallback.
         """
-        key = self.key_lookup.key_dict_to_predicate_key(key_dict)
+        key = self.key_lookup.key_dict_to_predicate_key(kw)
         return self.key_lookup.component(key)
 
     def all(self, *args, **kw):
