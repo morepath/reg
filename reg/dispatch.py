@@ -183,18 +183,18 @@ class Dispatch(object):
         key = self.predicate_key(*args, **kw)
         return self.key_lookup.all(key)
 
-    def all_key_dict(self, **key_dict):
+    def all_key_dict(self, **kw):
         """Look up all functions dispatched to using on key_dict.
 
         Looks up the function to dispatch to using a ``key_dict``,
         mapping predicate name to predicate value. Returns the fallback
         value (default: ``None``) if nothing could be found.
 
-        :key_dict: a dictionary. key is predicate name, value is
+        :kw: a dictionary. key is predicate name, value is
           predicate value. If omitted, predicate default is used.
         :returns: iterable of functions being dispatched to.
         """
-        key = self.key_lookup.key_dict_to_predicate_key(key_dict)
+        key = self.key_lookup.key_dict_to_predicate_key(kw)
         return self.key_lookup.all(key)
 
     def key_dict_to_predicate_key(self, key_dict):
