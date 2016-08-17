@@ -84,9 +84,9 @@ class ArgExtractor(object):
         result = kw.get(name, NOT_FOUND)
         if result is not NOT_FOUND:
             return result, -1
-        elif i < len(args):
+        try:
             return args[i], i
-        else:
+        except IndexError:
             return self.defaults.get(name, NOT_FOUND), i
 
 
