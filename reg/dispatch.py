@@ -51,7 +51,7 @@ class Dispatch(object):
         self.predicates = predicates
         self.key_lookup = self.get_key_lookup(self.registry)
         self.arg_extractor = ArgExtractor(
-            self.wrapped_func, self.key_lookup.argnames())
+            self.wrapped_func, self.registry.argnames())
 
     def clean(self):
         self._register_predicates(self._original_predicates)
@@ -90,7 +90,7 @@ class Dispatch(object):
         :returns: an immutable ``predicate_key`` based on the predicates
           the callable was configured with.
         """
-        return self.key_lookup.key(self.arg_extractor(*args, **kw))
+        return self.registry.key(self.arg_extractor(*args, **kw))
 
     def __call__(self, *args, **kw):
         """Call with args and kw.

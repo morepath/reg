@@ -385,12 +385,6 @@ class CachingKeyLookup(object):
         self.all_cache = LRUCache(all_cache_size)
         self.fallback_cache = LRUCache(fallback_cache_size)
 
-    def argnames(self):
-        return self.key_lookup.argnames()
-
-    def key(self, d):
-        return self.key_lookup.key(d)
-
     def component(self, predicate_key):
         """Lookup value in registry based on predicate_key.
 
