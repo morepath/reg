@@ -8,55 +8,69 @@ Using Reg
 Introduction
 ------------
 
-Reg lets you write `generic functions`_ that dispatch on some of their
-arguments. To support this, Reg provides an implementation of
-`multiple dispatch`_ in Python. Reg goes beyond dispatching on the
-class of the arguments but can also dispatch on other aspects of
-arguments.
+Reg implements *predicate dispatch* and *multiple registries*:
 
-In other words: Reg lets you define methods outside their classes as
-plain Python functions. Reg in its basic use is like the single
-dispatch implementation described in Python `PEP 443`_, but Reg
-provides a lot more flexibility.
+Predicate dispatch
 
-Reg supports loose coupling. You can define a function in your core
-application or framework but provide implementations of this function
-outside of it.
+  We all know about `dynamic dispatch`_: when you call a method on an
+  instance it is dispatched to the implementation in its class, and
+  the class is determined from the first argument (``self``).  This is
+  known as *single dispatch*.
 
-Reg gives developers fine control over how to find implemenations of
-these functions. You can have multiple independent dispatch
-registries. For special use cases you can also register and look up
-other objects instead of functions.
+  Reg implements `multiple dispatch`_. This is a generalization of single
+  dispatch: multiple dispatch allows you to dispatch on the class of
+  *other* arguments besides the first one.
 
-What is Reg for? Reg offers infrastructure that lets you build more
-powerful frameworks -- frameworks that can be extended and overridden
-in a general way. The Morepath_ web framework is built on top of
-Reg. Reg may seem like overkill to you. You may very well be right; it
-depends on what you're building.
+  Reg actually implements `predicate dispatch`_, which is a further
+  generalization that allows dispatch on *arbitrary properties* of
+  arguments, instead of just their class.
 
-.. _`multiple dispatch`: http://en.wikipedia.org/wiki/Multiple_dispatch
+  The Morepath_ web framework is built with Reg. It uses Reg's
+  predicate dispatch system. Its full power can be seen in its view
+  lookup system.
 
-.. _`generic functions`: https://en.wikipedia.org/wiki/Generic_function
+  .. _`dynamic dispatch`: https://en.wikipedia.org/wiki/Dynamic_dispatch
 
-.. _`PEP 443`: http://www.python.org/dev/peps/pep-0443/
+  .. _`multiple dispatch`: http://en.wikipedia.org/wiki/Multiple_dispatch
+
+  .. _`predicate dispatch`: https://en.wikipedia.org/wiki/Predicate_dispatch
+
+Multiple registries
+
+  Reg supports an advanced application architecture pattern where you
+  have multiple predicate dispatch registries in the same
+  runtime. This means that dispatch can behave differently depending
+  on runtime context. You do this by using dispatch *methods* that you
+  associate with a class that represents the application context. When
+  you switch the context class, you switch the behavior.
+
+  Morepath_ uses dispatch methods to support its application
+  composition system, where one application can be mounted into
+  another.
+
+Reg is designed with a caching layer that allows it to support these
+features efficiently.
 
 .. _`Morepath`: http://morepath.readthedocs.io
 
 Example
 -------
 
-Here is an example of Reg. First we define a generic function that
-dispatches based on the class of its ``obj`` argument:
+Let's examine a short example. First we define a dispatch function
+that dispatches based on the class of its ``obj`` argument:
 
 .. testcode::
 
   import reg
+
   @reg.dispatch('obj')
   def title(obj):
      return "we don't know the title"
 
+We want this function to return the title of its ``obj`` argument.
+
 Now we create a few example classes for which we want to be able to use
-the ``title`` function we defined above.
+the ``title`` fuction we defined above.
 
 .. testcode::
 
@@ -68,29 +82,35 @@ the ``title`` function we defined above.
      def __init__(self, label):
         self.label = label
 
-In ``TitledReport`` there's an attribute called ``title`` but in the
-``LabeledReport`` case we have an attribute ``label`` we want to use
-as the title. We will implement this behavior in a few plain python
-functions:
+If we call ``title`` with a ``TitledReport`` instance, want it to return
+its ``title`` attribute:
 
 .. testcode::
 
   def titled_report_title(obj):
       return obj.title
 
+If we call ``title`` with a ``LabeledReport`` instance, we want it to return
+its ``label`` attribute:
+
+.. testcode::
+
   def labeled_report_title(obj):
       return obj.label
 
-We now create a Reg :class:`reg.Registry`, and tell it about a few
-implementations for the ``title`` function:
+We register these functions with the ``title`` dispatch function:
 
 .. testcode::
 
   title.register(titled_report_title, obj=TitledReport)
   title.register(labeled_report_title, obj=LabeledReport)
 
-Once we've done this, our generic ``title`` function works on both
-titled and labeled objects:
+Here we see that when ``obj`` is a ``TitledReport`` instance, we want
+to use ``titled_report_title``, and when it's a ``LabeledReport``
+instance, we want to use the ``labeled_report_title`` function.
+
+Now generic ``title`` function works on both titled and labeled
+objects:
 
 .. doctest::
 
@@ -101,13 +121,11 @@ titled and labeled objects:
   >>> title(labeled)
   'This is also a report'
 
-Why not just use plain functions or methods instead of generic
-functions? Often plain functions or methods will be the right
-solution. But not always -- in this document we will examine a
-situation where generic functions are useful.
+What is going on and why is this useful at all? We present a worked
+out example next.
 
-Generic functions
-=================
+Dispatch functions
+==================
 
 A Hypothetical CMS
 ------------------
@@ -146,8 +164,8 @@ folder is defined as the sum of the size of everything in it.
 .. sidebar:: ``len(text)`` is not in bytes!
 
   Yeah, we're lying here. ``len(text)`` is not in bytes if text is in
-  unicode. Just pretend that text is in ASCII only for the sake of
-  this example, so that it's true.
+  unicode. Just pretend that text is in ASCII for the sake of this
+  example.
 
 If we have control over the implementation of ``Document`` and
 ``Folder`` we can implement this feature easily by adding a ``size``
@@ -183,12 +201,12 @@ And then we can simply call the ``.size()`` method to get the size:
   >>> folder.size()
   22
 
-Note that the ``Folder`` size code is generic; it doesn't care what
-the entries inside it are; if they have a ``size`` method that gives
-the right result, it will work. If a new content item ``Image`` is
-defined and we provide a ``size`` method for this, a ``Folder``
-instance that contains ``Image`` instances will still be able to
-calculate its size. Let's try this:
+The ``Folder`` size code is generic; it doesn't care what the entries
+inside it are; if they have a ``size`` method that gives the right
+result, it will work. If a new content item ``Image`` is defined and
+we provide a ``size`` method for this, a ``Folder`` instance that
+contains ``Image`` instances will still be able to calculate its
+size. Let's try this:
 
 .. testcode::
 
@@ -209,27 +227,31 @@ can still be calculated:
   >>> folder.size()
   25
 
+Cool! So we're done, right?
+
 Adding ``size`` from outside
 ----------------------------
 
 .. sidebar:: Open/Closed Principle
 
   The `Open/Closed principle`_ states software entities should be open
-  for extension, but closed for modification. The idea is you may have
-  a piece of software that you cannot or do not want to change, for
-  instance because it's being developed by a third party, or because
-  the feature you want to add is outside of the scope of that software
-  (separation of concerns). By extending the software without
+  for extension, but closed for modification. The idea is that you may
+  have a piece of software that you cannot or do not want to change,
+  for instance because it's being developed by a third party, or
+  because the feature you want to add is outside of the scope of that
+  software (separation of concerns). By extending the software without
   modifying its source code, you can benefit from the stability of the
   core software and still add new functionality.
 
   .. _`Open/Closed principle`: https://en.wikipedia.org/wiki/Open/closed_principle
 
-So far we didn't need Reg at all. But in the real world things may be
-a lot more complicated. We may be dealing with a content management
-system core where we *cannot* control the implementation of
-``Document`` and ``Folder``. What if we want to add a size calculation
-feature in an extension package?
+So far we didn't need Reg at all. But in a real world CMS we aren't
+always in the position to change the content classes themselves. We
+may be dealing with a content management system core where we *cannot*
+control the implementation of ``Document`` and ``Folder``. Or perhaps
+we can, but we want to keep our code modular, in independent
+packages. So how would we add a size calculation feature in an
+extension package?
 
 We can fall back on good-old Python functions instead. We separate out
 the size logic from our classes:
@@ -260,9 +282,9 @@ Generic size
 
   .. _`monkey patch`: https://en.wikipedia.org/wiki/Monkey_patch
 
-There is a problem with the above implementation however:
-``folder_size`` is not generic anymore, but now depends on
-``document_size``. It would fail when presented with a folder with an
+There is a problem with the above function-based implementation
+however: ``folder_size`` is not generic anymore, but now depends on
+``document_size``. It fails when presented with a folder with an
 ``Image`` in it:
 
 .. doctest::
@@ -300,7 +322,7 @@ With this, we can rewrite ``folder_size`` to use the generic ``size``:
   def folder_size(item):
       return sum([size(entry) for entry in item.entries])
 
-Now our generic ``size`` function will work:
+Now our generic ``size`` function works:
 
 .. doctest::
 
@@ -316,8 +338,8 @@ All a bit complicated and hard-coded, but it works!
 New ``File`` content
 --------------------
 
-What if we now want to write a new extension to our CMS that adds a
-new kind of folder item, the ``File``, with a ``file_size`` function?
+What if we want to write a new extension to our CMS that adds a new
+kind of folder item, the ``File``, with a ``file_size`` function?
 
 .. testcode::
 
@@ -328,17 +350,16 @@ new kind of folder item, the ``File``, with a ``file_size`` function?
   def file_size(item):
       return len(item.bytes)
 
-We would need to remember to adjust the generic ``size`` function so
-we can teach it about ``file_size`` as well. Annoying, tightly
-coupled, but sometimes doable.
+We need to remember to adjust the generic ``size`` function so we can
+teach it about ``file_size`` as well. Annoying, tightly coupled, but
+sometimes doable.
 
-But what if we are actually yet another party, and we have control of
+But what if we are actually another party, and we have control of
 neither the basic CMS *nor* its size extension? We cannot adjust
 ``generic_size`` to teach it about ``File`` now! Uh oh!
 
-Perhaps the implementers of the size extension were wise and
-anticipated this use case. They could have implemented
-``size`` like this:
+Perhaps the implementers of the size extension anticipated this use
+case. They could have implemented ``size`` like this:
 
 .. testcode::
 
@@ -361,16 +382,16 @@ the size of a ``File`` instance:
 
   register_size(File, file_size)
 
-And it would work:
+And it works:
 
 .. doctest::
 
   >>> size(File('xyz'))
   3
 
-This is quite a bit of custom work on the parts of the implementers,
-though. The API to manipulate the size registry is also completely
-custom. But you can do it.
+But this is quite a bit of custom work that the implementers need to
+do, and it involves a new API (``register_size``) to manipulate the
+``size_function_registry``.  But it can be done.
 
 New ``HtmlDocument`` content
 ----------------------------
@@ -393,8 +414,8 @@ Let's try to get its size:
      ...
   KeyError: ...
 
-Uh oh, that doesn't work! There's nothing registered for the
-``HtmlDocument`` class.
+That doesn't work! There's nothing registered for the ``HtmlDocument``
+class.
 
 We need to remember to also call ``register_size`` for
 ``HtmlDocument``. We can reuse ``document_size``:
@@ -414,14 +435,16 @@ This is getting rather complicated, requiring not only foresight and
 extra implementation work for the developers of ``size`` but also
 extra work for the person who wants to subclass a content item.
 
-Hey, we should write a system that generalizes this and automates a
-lot of this, and gives us a more universal registry API, making our
-life easier! And that's Reg.
+Hey, we should write a system that automates a lot of this, and gives
+us a universal registration API, making our life easier! And what if
+we want to switch behavior based on more than just one argument? Maybe
+you even want different dispatch behavior depending on application
+context? This is what Reg is for.
 
 Doing this with Reg
 -------------------
 
-Let's see how we could implement ``size`` using Reg.
+Let's see how we can implement ``size`` using Reg:
 
 First we need our generic ``size`` function:
 
@@ -438,6 +461,7 @@ need to transform the ``size`` function to a generic one:
 .. testcode::
 
   import reg
+
   size = reg.dispatch('item')(size)
 
 We can actually spell these two steps in a single step, as
@@ -449,6 +473,9 @@ We can actually spell these two steps in a single step, as
   def size(item):
       raise NotImplementedError
 
+What this says that when we call ``size``, we want to dispatch based
+on the class of its ``item`` argument.
+
 We can now register the various size functions for the various content
 items in a registry:
 
@@ -459,22 +486,21 @@ items in a registry:
   size.register(image_size, item=Image)
   size.register(file_size, item=File)
 
-We can now use our ``size`` function:
+``size`` now works:
 
 .. doctest::
 
   >>> size(doc)
   12
 
-
-And it will work for folder too:
+It works for folder too:
 
 .. doctest::
 
   >>> size(folder)
   25
 
-It will work for subclasses too:
+It works for subclasses too:
 
 .. doctest::
 
@@ -483,11 +509,11 @@ It will work for subclasses too:
 
 Reg knows that ``HtmlDocument`` is a subclass of ``Document`` and will
 find ``document_size`` automatically for you. We only have to register
-something for ``HtmlDocument`` if we would want to use a special,
-different size function for ``HtmlDocument``.
+something for ``HtmlDocument`` if we want to use a special, different
+size function for ``HtmlDocument``.
 
-Using classes
--------------
+Adapters
+--------
 
 The previous example worked well for a single function to get the
 size, but what if we wanted to add a feature that required multiple
@@ -526,7 +552,7 @@ Let's implement the ``Icon`` API for ``Document``:
 .. testcode::
 
   def load_icon(path):
-      return path # pretend we load the path here and return an image obj
+      return path  # pretend we load the path here and return an image obj
 
   class DocumentIcon(Icon):
      def __init__(self, document):
@@ -559,9 +585,9 @@ manually:
   >>> icon_api.large()
   'document_large.png'
 
-But we want to be able to use the ``Icon`` API in a generic way, so let's
-create a generic function that gives us an implementation of ``Icon`` back for
-any object:
+But we want to be able to use the ``Icon`` API generically, so let's
+create a generic function that gives us an implementation of ``Icon``
+back for any object:
 
 .. testcode::
 
@@ -619,70 +645,123 @@ the system for which an adapter was registered:
   >>> icon(image).large()
   'image_large.png'
 
-Multiple dispatch
-------------------
+Multiple and predicate dispatch
+-------------------------------
 
-Sometimes we want to adapt more than one thing at the time. The
-canonical example for this is a web view lookup system. Given a
-request and a model, we want to find a view that represents these. The
-view needs to get the request, for parameter information, POST body,
-URL information, and so on. The view also needs to get the model, as
-that is what will be represented in the view.
+Let's look at an example where dispatching on multiple arguments is
+useful: a web view lookup system. Given a request object that
+represents a HTTP request, and a model instance ( document, icon,
+etc), we want to find a view function that knows how to make a
+representation of the model given the request. Information in the
+request can influence the representation. In this example we use a
+``request_method`` attribute, which can be ``GET``, ``POST``, ``PUT``,
+etc.
 
-You want to be able to vary the view depending on the type of the request
-as well as the type of the model.
-
-Let's imagine we have a ``Request`` class:
+Let's first define a ``Request`` class with a ``request_method``
+attribute:
 
 .. testcode::
 
   class Request(object):
-      pass
+      def __init__(self, request_method, body=''):
+          self.request_method = request_method
+          self.body = body
 
-We'll use ``Document`` as the model class.
+We've also defined a ``body`` attribute which contains text in case
+the request is a ``POST`` request.
 
-We want a generic ``view`` function that given a request and a model
-generates content for it:
+We use the previously defined ``Document`` as the model class.
+
+Now we define a view function that dispatches on the class of the
+model instance, and the ``request_method`` attribute of the request:
 
 .. testcode::
 
-  @reg.dispatch('request', 'model')
-  def view(request, model):
+  @reg.dispatch(
+    reg.match_instance('obj',
+                       lambda obj: obj),
+    reg.match_key('request_method',
+                  lambda request: request.request_method))
+  def view(obj, request):
       raise NotImplementedError
 
-We now define a concrete view for ``Document``:
+As you can see here we use ``match_instance`` and ``match_key``
+instead of strings to specify how to dispatch.
+
+If you use a string argument, this string names an argument and
+dispatch is based on the class of the instance you pass in. Here we
+use ``match_instance``, which is equivalent to this: we have a ``obj``
+predicate which uses the class of the ``obj`` argument for dispatch.
+
+We also use ``match_key``, which dispatches on the ``request_method``
+attribute of the request; this attribute is a string, so dispatch is
+on string matching, not ``isinstance`` as with ``match_instance``. You
+can use any Python immutable with ``match_key``, not just strings.
+
+We now define concrete views for ``Document`` and ``Image``:
 
 .. testcode::
 
-  def document_view(request, document):
-      return "The document content is: " + document.text
+  def document_get(obj, request):
+      return "Document text is: " + obj.text
 
-Let's register the view in the registry:
+  def document_post(obj, request):
+      obj.text = request.body
+      return "We changed the document"
+
+Let's also define them for ``Image``:
 
 .. testcode::
 
-  view.register(document_view, request=Request, model=Document)
+   def image_get(obj, request):
+       return obj.bytes
 
-We now see why the second argument to ``register()`` is a list; so far
-we only supplied a single entry in it, but here we supply two, as we
-have two parameters on which to do dynamic dispatch.
+   def image_post(obj, request):
+       obj.bytes = request.body
+       return "We changed the image"
 
-Given a request and a document, we can now call ``view``:
+We register the views:
+
+.. testcode::
+
+  view.register(document_get,
+                request_method='GET',
+                obj=Document)
+  view.register(document_post,
+                request_method='POST',
+                obj=Document)
+  view.register(image_get,
+                request_method='GET',
+                obj=Image)
+  view.register(image_post,
+                request_method='POST',
+                obj=Image)
+
+Let's try it out:
 
 .. doctest::
 
-  >>> request = Request()
-  >>> view(request, doc)
-  'The document content is: Hello world!'
+  >>> view(doc, Request('GET'))
+  'Document text is: Hello world!'
+  >>> view(doc, Request('POST', 'New content'))
+  'We changed the document'
+  >>> doc.text
+  'New content'
+  >>> view(image, Request('GET'))
+  'abc'
+  >>> view(image, Request('POST', "new data"))
+  'We changed the image'
+  >>> image.bytes
+  'new data'
 
 Service Discovery
 =================
 
-Sometimes you want your application to have configurable services. The
-application may for instance need a way to send email, but you don't
-want to hardcode any particular way into your app, but instead leave
-this to a particular deployment-specific configuration. You can use the Reg
-infrastructure for this as well.
+Some applications need configurable services. The application may for
+instance need a way to send email, but you don't want to hardcode any
+particular way into your app, but instead leave this to a particular
+deployment-specific configuration. You can use the Reg infrastructure
+for this as well.
 
 The simplest way to do this with Reg is by using a generic service lookup
 function:
@@ -694,8 +773,8 @@ function:
       raise NotImplementedError
 
 Here we've created a generic function that takes no arguments (and
-thus does no dynamic dispatch). But it's still generic, so we can plug
-in its actual implementation elsewhere, into the registry:
+thus does no dynamic dispatch). But you can still plug its actual
+implementation into the registry from elsewhere:
 
 .. testcode::
 
@@ -846,7 +925,3 @@ We can make this more interesting by registering a special
   >>> list(size.all(htmldoc))
   [<function htmldocument_size at ...>, <function document_size at ...>]
 
- TDB lower level access to component, etc
-
- TDB caching lookup
- 
