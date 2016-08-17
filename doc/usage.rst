@@ -580,12 +580,12 @@ Let's also define them for ``Image``:
 
 .. testcode::
 
-   def image_get(obj, request):
-       return obj.bytes
+  def image_get(obj, request):
+      return obj.bytes
 
-   def image_post(obj, request):
-       obj.bytes = request.body
-       return "We changed the image"
+  def image_post(obj, request):
+      obj.bytes = request.body
+      return "We changed the image"
 
 We register the views:
 
