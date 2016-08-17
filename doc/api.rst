@@ -13,9 +13,6 @@ API
 
 .. autofunction:: match_class
 
-.. autoclass:: Lookup
-   :members:
-
 .. autoclass:: PredicateRegistry
    :members:
 
@@ -33,9 +30,6 @@ API
 .. autofunction:: class_predicate
 
 .. autoclass:: CachingKeyLookup
-   :members:
-
-.. autoclass:: Lookup
    :members:
 
 .. autoexception:: RegistrationError
