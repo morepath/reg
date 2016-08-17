@@ -570,7 +570,7 @@ class Lookup(object):
         key = self.predicate_key(*args, **kw)
         return self.key_lookup.all(key)
 
-    def all_key_dict(self, key_dict):
+    def all_key_dict(self, **key_dict):
         """Look up all functions dispatched to using on key_dict.
 
         Looks up the function to dispatch to using a ``key_dict``,

@@ -90,7 +90,7 @@ class Dispatch(object):
         return self.lookup.all(*args, **kw)
 
     def all_key_dict(self, **kw):
-        return self.lookup.all_key_dict(kw)
+        return self.lookup.all_key_dict(**kw)
 
     def key_dict_to_predicate_key(self, key_dict):
         return self.registry.key_dict_to_predicate_key(key_dict)
