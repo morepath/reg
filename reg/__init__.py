@@ -1,5 +1,5 @@
 # flake8: noqa
-from .dispatch import (dispatch, dispatch_method, Dispatch, MethodDispatch,
+from .dispatch import (dispatch, dispatch_method, Dispatch, DispatchMethod,
                        install_auto_method, clean_dispatch_methods)
 from .mapply import mapply
 from .arginfo import arginfo

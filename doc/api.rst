@@ -27,7 +27,7 @@ Context-specific dispatch methods
 
 .. autofunction:: dispatch_method
 
-.. autoclass:: MethodDispatch
+.. autoclass:: DispatchMethod
   :members:
 
 .. autofunction:: install_auto_method

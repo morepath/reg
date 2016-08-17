@@ -24,6 +24,10 @@ class dispatch(object):
 
       You can also pass in plain string argument, which is turned into
       a :func:`reg.match_instance` predicate.
+    :param get_key_lookup: a function that gets a :class:`PredicateRegistry`
+      instance and returns a key lookup. A :class:`PredicateRegistry` instance
+      is itself a key lookup, but you can return :class:`reg.CachingKeyLookup`
+      to make it more efficient.
     :returns: a :class:`reg.Dispatch` instance.
     """
     def __init__(self, *predicates, **kw):
@@ -262,19 +266,38 @@ class Dispatch(object):
 
 
 class dispatch_method(dispatch):
+    """Decorator to make a method on a context class dispatch.
+
+    This takes the predicates to dispatch on as zero or more parameters.
+
+    :param predicates: sequence of :class:`Predicate` instances
+      to do the dispatch on. You create predicates using
+      :func:`reg.match_instance`, :func:`reg.match_key`,
+      :func:`reg.match_class`, or :func:`reg.match_argname`, or with a
+      custom predicate class.
+
+      You can also pass in plain string argument, which is turned into
+      a :func:`reg.match_instance` predicate.
+    :param get_key_lookup: a function that gets a :class:`PredicateRegistry`
+      instance and returns a key lookup. A :class:`PredicateRegistry` instance
+      is itself a key lookup, but you can return :class:`reg.CachingKeyLookup`
+      to make it more efficient.
+    :returns: a :class:`reg.DispatchMethod` instance.
+    """
+
     def __init__(self, *predicates, **kw):
         super(dispatch_method, self).__init__(*predicates, **kw)
 
     def __call__(self, callable):
-        return MethodDispatchDescriptor(callable,
+        return DispatchMethodDescriptor(callable,
                                         self.predicates,
                                         self.get_key_lookup)
 
 
-class MethodDispatch(Dispatch):
+class DispatchMethod(Dispatch):
     def __init__(self, predicates, callable, get_key_lookup,
                  auto_argument='app'):
-        super(MethodDispatch, self).__init__(
+        super(DispatchMethod, self).__init__(
             predicates, callable, get_key_lookup)
         self.auto_argument = auto_argument
 
@@ -296,16 +319,16 @@ class MethodDispatch(Dispatch):
         # pass in a None as the first argument
         # this matches up the bound self that is passed automatically
         # into __call__
-        return super(MethodDispatch, self).component(None, *args, **kw)
+        return super(DispatchMethod, self).component(None, *args, **kw)
 
     def fallback(self, *args, **kw):
-        return super(MethodDispatch, self).fallback(None, *args, **kw)
+        return super(DispatchMethod, self).fallback(None, *args, **kw)
 
     def all(self, *args, **kw):
-        return super(MethodDispatch, self).all(None, *args, **kw)
+        return super(DispatchMethod, self).all(None, *args, **kw)
 
 
-class MethodDispatchDescriptor(object):
+class DispatchMethodDescriptor(object):
     def __init__(self, callable, predicates, get_key_lookup,
                  cache_bound_method=True):
         self.callable = callable
@@ -324,7 +347,7 @@ class MethodDispatchDescriptor(object):
         if dispatch is None:
             # if this is the first time we access the dispatch method,
             # we create it and store it in the cache
-            dispatch = MethodDispatch(self.predicates,
+            dispatch = DispatchMethod(self.predicates,
                                       self.callable,
                                       self.get_key_lookup)
             self._cache[type] = dispatch
@@ -455,5 +478,5 @@ def clean_dispatch_methods(cls):
         im_func = getattr(attr, '__func__', None)
         if im_func is None:
             continue
-        if isinstance(im_func, MethodDispatch):
+        if isinstance(im_func, DispatchMethod):
             attr.clean()
