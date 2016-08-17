@@ -9,6 +9,7 @@ for your application, library or framework.
    :maxdepth: 2
 
    usage
+   patterns
    api
    developing
    history
