@@ -3,8 +3,7 @@ import inspect
 from repoze.lru import LRUCache
 from .sentinel import NOT_FOUND
 from .argextract import KeyExtractor, ClassKeyExtractor, NameKeyExtractor
-from .error import RegistrationError, KeyExtractorError
-from .argextract import ArgExtractor
+from .error import RegistrationError
 
 
 class Predicate(object):
