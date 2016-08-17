@@ -17,7 +17,14 @@ class dispatch(object):
     This takes the predicates to dispatch on as zero or more parameters.
 
     :param predicates: sequence of :class:`Predicate` instances
-      to do the dispatch on.
+      to do the dispatch on. You create predicates using
+      :func:`reg.match_instance`, :func:`reg.match_key`,
+      :func:`reg.match_class`, or :func:`reg.match_argname`, or with a
+      custom predicate class.
+
+      You can also pass in plain string argument, which is turned into
+      a :func:`reg.match_instance` predicate.
+    :returns: a :class:`reg.Dispatch` instance.
     """
     def __init__(self, *predicates, **kw):
         self.predicates = [self._make_predicate(predicate)
@@ -40,6 +47,22 @@ def identity(registry):
 
 
 class Dispatch(object):
+    """Dispatch function.
+
+    You can register implementations based on particular predicates. The
+    dispatch function dispatches to these implementations based on its
+    arguments.
+
+    :param predicates: a list of predicates.
+    :param callable: the Python function object to register dispatch
+      implementations for. The signature of an implementation needs to
+      match that of this function. This function is used as a fallback
+      implementation that is called if no specific implementations match.
+    :param get_key_lookup: a function that gets a :class:`PredicateRegistry`
+      instance and returns a key lookup. A :class:`PredicateRegistry` instance
+      is itself a key lookup, but you can return :class:`reg.CachingKeyLookup`
+      to make it more efficient.
+    """
     def __init__(self, predicates, callable, get_key_lookup):
         self.wrapped_func = callable
         self.get_key_lookup = get_key_lookup
@@ -54,17 +77,46 @@ class Dispatch(object):
             self.wrapped_func, self.registry.argnames())
 
     def clean(self):
+        """Clean up implementations and added predicates.
+
+        This restores the dispatch function to its original state,
+        removing registered implementations and predicates added
+        using :meth:`reg.Dispatch.add_predicates`.
+        """
         self._register_predicates(self._original_predicates)
 
     def add_predicates(self, predicates):
+        """Add new predicates.
+
+        Extend the predicates used by this predicates. This can be
+        used to add predicates that are configured during startup time.
+
+        Note that this clears up any registered implementations.
+
+        :param predicates: a list of predicates to add.
+        """
         self._register_predicates(self.predicates + predicates)
 
-    def register(self, value, **key_dict):
-        validate_signature(value, self.wrapped_func)
+    def register(self, func, **key_dict):
+        """Register an implementation function for a predicate.
+
+        :param func: a function that implements behavior for this
+          dispatch function. It needs to have the same signature
+          as the original dispatch function.
+        :key_dict: keyword arguments describing the registration,
+          with as keys predicate name and as values predicate values.
+        """
+        validate_signature(func, self.wrapped_func)
         predicate_key = self.registry.key_dict_to_predicate_key(key_dict)
-        self.register_value(predicate_key, value)
+        self.register_value(predicate_key, func)
 
     def register_value(self, predicate_key, value):
+        """Low-level function to register a value.
+
+        Can be used to register an arbitrary non-callable Python
+        object. Of course this cannot be called, but you can still
+        look it up using :meth:`reg.Dispatch.component`.
+        """
         if isinstance(predicate_key, list):
             predicate_key = tuple(predicate_key)
         # if we have a 1 tuple, we register the single value inside
@@ -183,8 +235,8 @@ class Dispatch(object):
         key = self.predicate_key(*args, **kw)
         return self.key_lookup.all(key)
 
-    def all_key_dict(self, **kw):
-        """Look up all functions dispatched to using on key_dict.
+    def all_by_keys(self, **kw):
+        """Look up all functions dispatched to using keyword arguments.
 
         Looks up the function to dispatch to using a ``key_dict``,
         mapping predicate name to predicate value. Returns the fallback
@@ -198,6 +250,14 @@ class Dispatch(object):
         return self.key_lookup.all(key)
 
     def key_dict_to_predicate_key(self, key_dict):
+        """Turn a key dict into a predicate key.
+
+        Given a key dict under which an implementation function is
+        registered, return an immutable predicate key.
+
+        :param key_dict: dict with registration information
+        :returns: an immutable predicate key
+        """
         return self.registry.key_dict_to_predicate_key(key_dict)
 
 

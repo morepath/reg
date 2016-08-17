@@ -1,5 +1,5 @@
-dispatch_method: context-based dispatch
-=======================================
+Context-based dispatch
+======================
 
 Introduction
 ------------

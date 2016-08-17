@@ -120,7 +120,7 @@ def test_all():
         registered_for_base]
 
 
-def test_all_key_dict():
+def test_all_by_keys():
     class Base(object):
         pass
 
@@ -140,9 +140,9 @@ def test_all_key_dict():
     target.register(registered_for_sub, obj=Sub)
     target.register(registered_for_base, obj=Base)
 
-    assert list(target.all_key_dict(obj=Sub)) == [
+    assert list(target.all_by_keys(obj=Sub)) == [
         registered_for_sub, registered_for_base]
-    assert list(target.all_key_dict(obj=Base)) == [
+    assert list(target.all_by_keys(obj=Base)) == [
         registered_for_base]
 
 

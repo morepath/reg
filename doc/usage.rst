@@ -29,6 +29,9 @@ Predicate dispatch
   predicate dispatch system. Its full power can be seen in its view
   lookup system.
 
+  This document explains how to use Reg. Various specific patterns are
+  documented in :doc:`patterns`.
+
   .. _`dynamic dispatch`: https://en.wikipedia.org/wiki/Dynamic_dispatch
 
   .. _`multiple dispatch`: http://en.wikipedia.org/wiki/Multiple_dispatch
@@ -44,9 +47,11 @@ Multiple registries
   associate with a class that represents the application context. When
   you switch the context class, you switch the behavior.
 
-  Morepath_ uses dispatch methods to support its application
+  Morepath_ uses context-based dispatch to support its application
   composition system, where one application can be mounted into
   another.
+
+  See :doc:`context` for this advanced application pattern.
 
 Reg is designed with a caching layer that allows it to support these
 features efficiently.
@@ -56,8 +61,9 @@ features efficiently.
 Example
 -------
 
-Let's examine a short example. First we define a dispatch function
-that dispatches based on the class of its ``obj`` argument:
+Let's examine a short example. First we use the :meth:`reg.dispatch`
+decorator to define a function that dispatches based on the
+class of its ``obj`` argument:
 
 .. testcode::
 
@@ -628,8 +634,8 @@ Component lookup
 ~~~~~~~~~~~~~~~~
 
 You can look up the function that a function would dispatch to without
-calling it. You do this using the ``component`` method on the dispatch
-function:
+calling it. You do this using the :meth:`reg.Dispatch.component`
+method on the dispatch function:
 
 .. doctest::
 
@@ -637,7 +643,8 @@ function:
   True
 
 Sometimes it's useful to have more control and go to a lower level by
-specifying the keys that go in directly:
+specifying the keys that go in directly. We can use
+:meth:`reg.Dispatch.component_by_keys` for that:
 
   >>> size.component_by_keys(item=Document) is document_size
   True
@@ -656,10 +663,10 @@ of instances of its subclass, ``HtmlDocument``:
   >>> size.component(htmldoc) is document_size
   True
 
-Using the special ``all`` function we can also get an iterable of
-*all* the components registered for a particular instance, including
-those of base classes. Right now this is pretty boring as there's
-only one of them:
+Using the special :meth:`reg.Dispatch.all` method we can also get an
+iterable of *all* the components registered for a particular instance,
+including those of base classes. Right now this is pretty boring as
+there's only one of them:
 
 .. doctest::
 
@@ -693,7 +700,8 @@ instance to determine whether registrations are identical in its
 conflict detection and override system.
 
 Earlier we registered various views for object and request method. We
-can get immutable keys for such registrations:
+can get immutable keys for such registrations using
+:meth:`reg.Dispatch.key_dict_to_predicate_key`:
 
 .. doctest::
 
