@@ -233,6 +233,9 @@ class MethodDispatch(Dispatch):
             self.register_function(value, **key_dict)
 
     def component(self, *args, **kw):
+        # pass in a None as the first argument
+        # this matches up the bound self that is passed automatically
+        # into __call__
         return super(MethodDispatch, self).component(None, *args, **kw)
 
     def fallback(self, *args, **kw):
