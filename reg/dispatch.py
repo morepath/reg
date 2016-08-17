@@ -5,7 +5,7 @@ import inspect
 from .predicate import match_argname
 from .compat import (string_types, create_method_for_class,
                      create_method_for_instance)
-from argextract import ArgExtractor
+from .argextract import ArgExtractor
 from .predicate import create_predicates_registry
 from .arginfo import arginfo
 from .error import RegistrationError, KeyExtractorError
