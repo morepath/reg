@@ -102,11 +102,13 @@ class Dispatch(object):
         self._register_predicates(self.predicates + predicates)
 
     def register(self, func, **key_dict):
-        """Register an implementation function for a predicate.
+        """Register an implementation.
 
         :param func: a function that implements behavior for this
-          dispatch function. It needs to have the same signature
-          as the original dispatch function.
+          dispatch function. It needs to have the same signature as
+          the original dispatch function. If this is a
+          :class:`reg.DispatchMethod`, then this means it needs to
+          take a first context argument.
         :key_dict: keyword arguments describing the registration,
           with as keys predicate name and as values predicate values.
         """
@@ -282,9 +284,14 @@ class dispatch_method(dispatch):
       instance and returns a key lookup. A :class:`PredicateRegistry` instance
       is itself a key lookup, but you can return :class:`reg.CachingKeyLookup`
       to make it more efficient.
+    :param auto_argument: argument name. if the first argument
+      (context instance) registered with
+      :meth:`reg.DispatchMethod.register_auto` has this name, it is
+      registered as a method using :meth:`reg.Dispatch.register`,
+      otherwise it is registered as a function using
+      :meth:`reg.DispatchMethod.register_function`.
     :returns: a :class:`reg.DispatchMethod` instance.
     """
-
     def __init__(self, *predicates, **kw):
         super(dispatch_method, self).__init__(*predicates, **kw)
 
@@ -301,19 +308,46 @@ class DispatchMethod(Dispatch):
             predicates, callable, get_key_lookup)
         self.auto_argument = auto_argument
 
-    def register_function(self, value, **key_dict):
-        validate_signature_without_first_arg(value, self.wrapped_func)
-        predicate_key = self.registry.key_dict_to_predicate_key(key_dict)
-        self.register_value(predicate_key, methodify(value))
+    def register_function(self, func, **key_dict):
+        """Register an implementation function.
 
-    def register_auto(self, value, **key_dict):
-        if is_auto_method(value, self.auto_argument):
+        You can register a function that does not get the context
+        instance as the first argument. This automatically wraps this
+        function as a method, discarding its first (context) argument.
+
+        :param func: a function that implements behavior for this
+          dispatch function. It needs to have the same signature
+          as the original dispatch method, without the first argument.
+        :key_dict: keyword arguments describing the registration,
+          with as keys predicate name and as values predicate values.
+        """
+        validate_signature_without_first_arg(func, self.wrapped_func)
+        predicate_key = self.registry.key_dict_to_predicate_key(key_dict)
+        self.register_value(predicate_key, methodify(func))
+
+    def register_auto(self, func, **key_dict):
+        """Register an implementation function or method.
+
+        If the function you register has a first (context) argument
+        with the same name as the ``auto_argument`` value you passed to
+        :func:`reg.dispatch_method`, it is registered as a method
+        using :meth:`reg.Dispatch.register`. Otherwise, it is registered
+        as a function using :meth:`reg.DispatchMethod.register_function`.
+
+        :param func: a function that implements behavior for this
+          dispatch function. It needs to have the same signature
+          as the original dispatch method, with optionally a first
+          argument with name indicated by ``auto_argument``.
+        :key_dict: keyword arguments describing the registration,
+          with as keys predicate name and as values predicate values.
+        """
+        if is_auto_method(func, self.auto_argument):
             # for symmetry as register_function with a wrapped version
             # is possible, we also set the value
-            value.value = value
-            self.register(value, **key_dict)
+            func.value = func
+            self.register(func, **key_dict)
         else:
-            self.register_function(value, **key_dict)
+            self.register_function(func, **key_dict)
 
     def component(self, *args, **kw):
         # pass in a None as the first argument
@@ -435,11 +469,29 @@ def methodify(func):
 def install_auto_method(klass, name, func, auto_argument="app"):
     """Install func as method onto klass.
 
+    Sometimes you don't need a full fledged dispatch method on a
+    class, but setting up a simple function will do. This helps you
+    set up this function with special respect for an automatic context
+    argument along the lines of
+    :meth:`reg.DispatchMethod.register_auto`.
+
     If func has a first argument that is named as ``auto_argument``,
     the func is bound as a method to the class.
 
     If func has no such first argument, a wrapper function is created
     that does take it, and is bound as a method to the class.
+
+    :param klass: class to install the method on.
+    :param name: method name.
+    :param func: the callable to install as a method. If its first
+      argument name is *not* ``auto_argument``, it is first wrapped
+      into an object that does take a first argument, so that it can
+      be installed as a method.
+    :param auto_argument: the name of the first argument that indicates
+      we want to install this directly as a method. If the first argument
+      does not has this name, wrap the callable so that it does take
+      that argument before installing it.
+
     """
     if is_auto_method(func, auto_argument):
         # for symmetry make sure value is set
@@ -471,7 +523,10 @@ def is_auto_method(func, auto_argument="app"):
 def clean_dispatch_methods(cls):
     """For a given class clean all dispatch methods.
 
-    This resets their registry to the original state.
+    This resets their registry to the original state using
+    :meth:`reg.DispatchMethod.clean`.
+
+    :param cls: a class that has :class:`reg.DispatchMethod` methods on it.
     """
     for name in dir(cls):
         attr = getattr(cls, name)

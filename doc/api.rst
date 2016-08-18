@@ -29,10 +29,11 @@ Context-specific dispatch methods
 
 .. autoclass:: DispatchMethod
   :members:
-
-.. autofunction:: install_auto_method
+  :inherited-members:
 
 .. autofunction:: clean_dispatch_methods
+
+.. autofunction:: install_auto_method
 
 Errors
 ------
