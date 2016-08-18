@@ -1,7 +1,7 @@
 import pytest
-from ..dispatch import (dispatch_method,
-                        install_auto_method,
-                        clean_dispatch_methods)
+from ..context import (dispatch_method,
+                       install_auto_method,
+                       clean_dispatch_methods)
 from ..predicate import match_instance
 from ..error import RegistrationError
 
