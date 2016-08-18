@@ -6,12 +6,12 @@ Development
 
 * Martijn Faassen
 
+* Stefano Taschini
+
 With contributions by
 ---------------------
 
 * Thomas Lotze (co-authored original core mapping code)
-
-* Stefano Taschini
 
 Special contributions
 ---------------------
