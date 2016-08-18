@@ -56,11 +56,17 @@ class DispatchMethod(Dispatch):
         instance as the first argument. This automatically wraps this
         function as a method, discarding its first (context) argument.
 
+        You get this wrapper if you look up what is registered using
+        :meth:`reg.Dispatch.component` or :meth:`reg.Dispatch.all`. You
+        can get the underlying value that was really registered by
+        accessing the ``value`` attribute on the wrapper.
+
         :param func: a function that implements behavior for this
           dispatch function. It needs to have the same signature
           as the original dispatch method, without the first argument.
         :key_dict: keyword arguments describing the registration,
           with as keys predicate name and as values predicate values.
+
         """
         validate_signature_without_first_arg(func, self.wrapped_func)
         predicate_key = self.registry.key_dict_to_predicate_key(key_dict)
@@ -75,12 +81,21 @@ class DispatchMethod(Dispatch):
         using :meth:`reg.Dispatch.register`. Otherwise, it is registered
         as a function using :meth:`reg.DispatchMethod.register_function`.
 
+        If the implementation is registered as a function, what is
+        registered is a wrapper. You get this wrapper if you look up
+        what is registered using :meth:`reg.Dispatch.component` or
+        :meth:`reg.Dispatch.all`. You can get the underlying value
+        that was really registered by accessing the ``value``
+        attribute on the wrapper. For consistency even methods that
+        *aren't* wrapped have this ``value`` attribute.
+
         :param func: a function that implements behavior for this
           dispatch function. It needs to have the same signature
           as the original dispatch method, with optionally a first
           argument with name indicated by ``auto_argument``.
         :key_dict: keyword arguments describing the registration,
           with as keys predicate name and as values predicate values.
+
         """
         if is_auto_method(func, self.auto_argument):
             # for symmetry as register_function with a wrapped version
