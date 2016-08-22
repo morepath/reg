@@ -1,14 +1,116 @@
 CHANGES
 *******
 
-0.9.4 (unreleased)
-==================
+0.10 (unreleased)
+=================
+
+- **Breaking changes**
+
+  Reg has undergone another breaking API change. The goals of this change
+  were:
+
+  * Make everything explicit.
+
+  * A simpler implementation structure -- dispatch functions maintain
+    their own registries, which allows for less interacting objects.
+
+  * Make the advanced context-dependent dispatch more Pythonic by
+    using classes with special dispatch methods.
+
+  Detailed changes:
+
+  * ``reg.Registry`` is gone. Instead you register directly on the
+    dispatch function::
+
+      @reg.dispatch('a')
+      def foo(a):
+        ...
+
+      def foo_implementation(a):
+        ...
+
+      foo.register(foo_implementation, a=Document)
+
+  * Caching is now per dispatch function, not globally per lookup. You
+    can pass a ``get_key_lookup`` function that wraps
+    ``reg.PredicateRegistry`` instance inside a
+    ``reg.CachingKeyLookup`` cache.
+
+  * The whole concept of a "lookup" is gone:
+
+    * ``reg.implicit`` is gone: everything is explicit. There is no more
+      implicit lookup.
+
+    * ``reg.Lookup`` itself is gone -- its now implemented directly in the
+      dispatch object, but was already how you accessed it.
+
+    * The special ``lookup`` argument to pass through the current
+      ``Lookup`` is gone. If you need context-dependent dispatch, you
+      use dispatch methods.
+
+    * If you need context dependent dispatch, where the functions
+      being dispatched to depend on application context (such as
+      Morepath's application mounting), you use
+      ``reg.dispatch_method`` to create a dispatch method. A dispatch
+      method maintains an entirely separate dispatch registry for each
+      subclass. You use ``DispatchMethod.register_function`` to
+      register a dispatch function that does not take the context as
+      the first argument.
+
+  If you do not use the context-dependent dispatch feature, then to
+  upgrade your code:
+
+  * remove any ``reg.set_implicit`` from your code, setup of
+    ``Lookup`` and the like.
+
+  * If you use an explicit ``lookup`` argument you can just remove them.
+
+  * You also need to change your registration code: no more
+    ``reg.Registry`` setup.
+
+  * Change your registrations to be on the dispatch objects itself
+    using ``Dispatch.register``.
+
+  * To enable caching you need to set up ``get_key_lookup`` on the
+    dispatch functions. You can create a partially applied version of
+    ``dispatch`` to make this less verbose::
+
+       import reg
+       from functools import partial
+
+       def get_caching_key_lookup(r):
+           return reg.CachingKeyLookup(r, 5000, 5000, 5000)
+
+       dispatch = partial(reg.dispatch, get_key_lookup=get_caching_key_lookup)
+
+  If you do use the context-dependent dispatch feature, then you also
+  need to:
+
+  * identify the context class in your application (or create one).
+
+  * move the dispatch functions to this class, marking them with
+    ``@reg.dispatch_method`` instead of ``@reg.dispatch``.
+
+  * Registration is now using ``<context_class>.<method>.register``. Functions
+    you register this way behave as methods to ``context_class``, so
+    get an instance of this class as the first argument.
+
+  * You can also use ``<context_class>.<method>.register_function`` to
+    register implementation functions that do not take the context as
+    the first argument -- this is useful when upgrading existing
+    code. Finally you can use ``register_auto``, which determines
+    whether to use ``register_function`` or ``register`` using the
+    name of the first argument of what you register.
+
+  * Call your context-dependent methods as methods on the context
+    instance.  This way you can indicate what context you are calling
+    your dispatch methods in, instead of using the `lookup`` argument.
+
+- The second argument for ``match_class`` is now optional; if you
+  don't supply it ``match_class`` will generate a predicate function
+  that extracts that name by default.
 
 - Include doctests in Tox and Travis.
-
-- Have the ``match_class`` predicate use the class of the argument
-  with the given name by default.
-
 
 0.9.3 (2016-07-18)
 ==================
