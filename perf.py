@@ -84,17 +84,33 @@ def docall4():
     args4(Foo(), Foo(), Foo(), Foo())
 
 
-print "0 args"
+def plain_docall0():
+    myargs0()
+
+
+def plain_docall4():
+    myargs4(Foo(), Foo(), Foo(), Foo())
+
+
+print "dispatch 0 args"
 print timeit.timeit("docall0()", setup="from __main__ import docall0")
 
-print "1 args"
+print "dispatch 1 args"
 print timeit.timeit("docall1()", setup="from __main__ import docall1")
 
-print "2 args"
+print "dispatch 2 args"
 print timeit.timeit("docall2()", setup="from __main__ import docall2")
 
-print "3 args"
+print "dispatch 3 args"
 print timeit.timeit("docall3()", setup="from __main__ import docall3")
 
-print "4 args"
+print "dispatch 4 args"
 print timeit.timeit("docall4()", setup="from __main__ import docall4")
+
+print "Plain func 0 args"
+print timeit.timeit("plain_docall0()",
+                    setup="from __main__ import plain_docall0")
+
+print "Plain func 4 args"
+print timeit.timeit("plain_docall4()",
+                    setup="from __main__ import plain_docall4")
