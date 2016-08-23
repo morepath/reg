@@ -9,5 +9,6 @@ doc/build
 .cache
 eggs/
 *.pyc
+*.so
 *.pyo
 *.egg-info

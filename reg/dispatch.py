@@ -2,9 +2,10 @@ from __future__ import unicode_literals
 from functools import update_wrapper
 from .predicate import match_argname
 from .compat import string_types
-from .argextract import ArgExtractor
+from .argextract import ArgExtractor, NOT_FOUND
 from .predicate import create_predicates_registry
 from .arginfo import arginfo
+from .fastargextract import argextract
 from .error import RegistrationError, KeyExtractorError
 
 
@@ -74,6 +75,7 @@ class Dispatch(object):
         self.registry = create_predicates_registry(predicates)
         self.predicates = predicates
         self.key_lookup = self.get_key_lookup(self.registry)
+        self.argnames = tuple(self.registry.argnames())
         self.arg_extractor = ArgExtractor(
             self.wrapped_func, self.registry.argnames())
 
@@ -145,7 +147,8 @@ class Dispatch(object):
         :returns: an immutable ``predicate_key`` based on the predicates
           the callable was configured with.
         """
-        return self.registry.key(self.arg_extractor(*args, **kw))
+        return self.registry.key(argextract(
+            self.wrapped_func, self.argnames, NOT_FOUND, *args, **kw))
 
     def __call__(self, *args, **kw):
         """Call with args and kw.
