@@ -587,25 +587,6 @@ def test_install_instance_method():
     assert t.m.value is g
 
 
-def test_install_instance_method_app_argument():
-    class Target(object):
-        pass
-
-    class Bar(object):
-        def g(self, app, a):
-            assert isinstance(app, Target)
-            return a
-
-    g = Bar().g
-
-    Target.m = methodify_auto(g)
-
-    t = Target()
-
-    assert t.m('A') == 'A'
-    assert t.m.value is g
-
-
 def test_dispatch_method_clean():
     def get_obj(obj):
         return obj
