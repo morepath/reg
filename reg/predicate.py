@@ -1,5 +1,7 @@
-from .sentinel import NOT_FOUND
 import inspect
+
+from repoze.lru import LRUCache
+from .sentinel import NOT_FOUND
 from .argextract import KeyExtractor, ClassKeyExtractor, NameKeyExtractor
 from .error import RegistrationError
 
@@ -270,6 +272,17 @@ class MultiIndex(object):
         return NOT_FOUND
 
 
+def create_predicates_registry(predicates):
+    if len(predicates) == 0:
+        return SingleValueRegistry()
+    if len(predicates) == 1:
+        # an optimization in case just one predicate in use
+        predicate = predicates[0]
+    else:
+        predicate = MultiPredicate(predicates)
+    return PredicateRegistry(predicate)
+
+
 class PredicateRegistry(object):
     def __init__(self, predicate):
         self.known_keys = set()
@@ -283,14 +296,26 @@ class PredicateRegistry(object):
         self.index.add(key, value)
         self.known_keys.add(key)
 
+    def argnames(self):
+        return self.predicate.argnames()
+
     def key(self, d):
         return self.predicate.get_key(d)
 
-    def key_by_predicate_name(self, d):
-        return self.predicate.key_by_predicate_name(d)
+    def key_dict_to_predicate_key(self, d):
+        """Construct predicate key from key dictionary.
 
-    def argnames(self):
-        return self.predicate.argnames()
+        Uses ``name`` and ``default`` attributes of predicate to
+        construct the predicate key. If the key cannot be constructed
+        then a ``KeyError`` is raised.
+
+        :param key_dict: dictionary with predicate name keys and predicate
+          values. For omitted keys, the predicate default is used.
+        :returns: an immutable predicate_key based on the dictionary
+          and the names and defaults of the predicates the callable
+          was configured with.
+        """
+        return self.predicate.key_by_predicate_name(d)
 
     def component(self, key):
         return next(self.all(key), None)
@@ -315,14 +340,14 @@ class SingleValueRegistry(object):
                 "Already have registration for key: %s" % (key,))
         self.value = value
 
+    def argnames(self):
+        return []
+
     def key(self, d):
         return ()
 
-    def key_by_predicate_name(self, d):
+    def key_dict_to_predicate_key(self, d):
         return ()
-
-    def argnames(self):
-        return set()
 
     def component(self, key):
         return self.value
@@ -332,6 +357,86 @@ class SingleValueRegistry(object):
 
     def all(self, key):
         yield self.value
+
+
+class CachingKeyLookup(object):
+    """
+    A key lookup that caches.
+
+    Implements the read-only API of :class:`PredicateRegistry`, using
+    a cache to speed up access.
+
+    The cache is LRU.
+
+    :param: key_lookup - the :class:`PredicateRegistry` to cache.
+    :param component_cache_size: how many cache entries to store for
+      the :meth:`component` method. This is also used by dispatch
+      calls.
+    :param all_cache_size: how many cache entries to store for the
+      the :meth:`all` method.
+    :param fallback_cache_size: how many cache entries to store for
+      the :meth:`fallback` method.
+    """
+    def __init__(self, key_lookup, component_cache_size, all_cache_size,
+                 fallback_cache_size):
+        self.key_lookup = key_lookup
+        self.key_dict_to_predicate_key = key_lookup.key_dict_to_predicate_key
+        self.component_cache = LRUCache(component_cache_size)
+        self.all_cache = LRUCache(all_cache_size)
+        self.fallback_cache = LRUCache(fallback_cache_size)
+
+    def component(self, predicate_key):
+        """Lookup value in registry based on predicate_key.
+
+        If value for predicate_key cannot be found, looks up first
+        permutation of predicate_key for which there is a value. Permutations
+        are made according to the predicates registered for the key.
+
+        :param predicate_key: an immutable predicate key, constructed
+          for predicates given for this key.
+        :returns: a registered value, or ``None``.
+        """
+        result = self.component_cache.get(predicate_key, NOT_FOUND)
+        if result is not NOT_FOUND:
+            return result
+        result = self.key_lookup.component(predicate_key)
+        self.component_cache.put(predicate_key, result)
+        return result
+
+    def fallback(self, predicate_key):
+        """Lookup fallback based on predicate_key.
+
+        This finds the fallback for the most specific predicate
+        that fails to match.
+
+        :param predicate_key: an immutable predicate key, constructed
+          for predicates given for this key.
+        :returns: the fallback value for the most specific predicate
+          the failed to match.
+        """
+        result = self.fallback_cache.get(predicate_key, NOT_FOUND)
+        if result is not NOT_FOUND:
+            return result
+        result = self.key_lookup.fallback(predicate_key)
+        self.fallback_cache.put(predicate_key, result)
+        return result
+
+    def all(self, predicate_key):
+        """Lookup iterable of values registered for predicate_key.
+
+        Looks up values registered for all permutations of
+        predicate_key, the most specific first.
+
+        :param predicate_key: an immutable predicate key, constructed for
+          the predicates given for this key.
+        :returns: An iterable of registered values.
+        """
+        result = self.all_cache.get(predicate_key, NOT_FOUND)
+        if result is not NOT_FOUND:
+            return result
+        result = list(self.key_lookup.all(predicate_key))
+        self.all_cache.put(predicate_key, result)
+        return result
 
 
 # XXX transform to non-recursive version

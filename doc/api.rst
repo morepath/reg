@@ -3,7 +3,13 @@ API
 
 .. py:module:: reg
 
+Dispatch functions
+------------------
+
 .. autofunction:: dispatch
+
+.. autoclass:: Dispatch
+  :members:
 
 .. autofunction:: match_key
 
@@ -13,8 +19,40 @@ API
 
 .. autofunction:: match_class
 
-.. autoclass:: Lookup
+.. autoclass:: CachingKeyLookup
    :members:
+
+Context-specific dispatch methods
+---------------------------------
+
+.. autofunction:: dispatch_method
+
+.. autoclass:: DispatchMethod
+  :members:
+  :inherited-members:
+
+.. autofunction:: clean_dispatch_methods
+
+.. autofunction:: methodify
+
+.. autofunction:: methodify_auto
+
+Errors
+------
+
+.. autoexception:: RegistrationError
+
+.. autoexception:: KeyExtractorError
+
+Argument introspection
+----------------------
+
+.. autofunction:: mapply
+
+.. autofunction:: arginfo
+
+Predicate Registry
+------------------
 
 .. autoclass:: PredicateRegistry
    :members:
@@ -31,25 +69,3 @@ API
 .. autofunction:: key_predicate
 
 .. autofunction:: class_predicate
-
-.. autoclass:: Registry
-   :members:
-
-.. autoclass:: CachingKeyLookup
-   :members:
-
-.. autoclass:: Lookup
-   :members:
-
-.. autoexception:: RegistrationError
-
-.. autoexception:: KeyExtractorError
-
-.. autoclass:: reg.implicit.Implicit
-   :members:
-
-.. autoexception:: NoImplicitLookupError
-
-.. autofunction:: mapply
-
-.. autofunction:: arginfo

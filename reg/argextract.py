@@ -80,13 +80,15 @@ class ArgExtractor(object):
         return result
 
     def extract_arg(self, name, args, kw):
-        i = self.index[name]
+        # a get is faster here than checking for KeyError
         result = kw.get(name, NOT_FOUND)
         if result is not NOT_FOUND:
             return result, -1
-        elif i < len(args):
+        i = self.index[name]
+        # checking for IndexError is faster here than doing a len check
+        try:
             return args[i], i
-        else:
+        except IndexError:
             return self.defaults.get(name, NOT_FOUND), i
 
 

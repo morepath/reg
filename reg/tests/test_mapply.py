@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 import pytest
-from reg.mapply import mapply
-from reg.arginfo import arginfo
+from ..mapply import mapply
+from ..arginfo import arginfo
 
 
 def test_mapply():
