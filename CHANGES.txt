@@ -91,9 +91,10 @@ CHANGES
   * move the dispatch functions to this class, marking them with
     ``@reg.dispatch_method`` instead of ``@reg.dispatch``.
 
-  * Registration is now using ``<context_class>.<method>.register``. Functions
-    you register this way behave as methods to ``context_class``, so
-    get an instance of this class as the first argument.
+  * Registration is now using
+    ``<context_class>.<method>.register``. Functions you register this
+    way behave as methods to ``context_class``, so get an instance of
+    this class as the first argument.
 
   * You can also use ``<context_class>.<method>.register_function`` to
     register implementation functions that do not take the context as
@@ -105,6 +106,24 @@ CHANGES
   * Call your context-dependent methods as methods on the context
     instance.  This way you can indicate what context you are calling
     your dispatch methods in, instead of using the `lookup`` argument.
+
+  In some cases you want a context-dependent method that actually does
+  not dispatch on any of its arguments. To support this use case you
+  can simply set function (that takes an app argument) as a the method
+  on the context class directly::
+
+     Context.my_method = some_function
+
+  If you want to set up a function that doesn't take an ``app`` argument,
+  you can use ``reg.methodify`` to turn it into a method that ignores its
+  first argument::
+
+     Context.my_method = reg.methodify(some_function)
+
+  If you want it register it with an optional ``app`` argument similar to
+  ``register_auto``, you can use ``methodify_auto``::
+
+     Context.my_method = reg.methodify_auto(some_function)
 
 - The second argument for ``match_class`` is now optional; if you
   don't supply it ``match_class`` will generate a predicate function
