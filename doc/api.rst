@@ -33,7 +33,9 @@ Context-specific dispatch methods
 
 .. autofunction:: clean_dispatch_methods
 
-.. autofunction:: install_auto_method
+.. autofunction:: methodify
+
+.. autofunction:: methodify_auto
 
 Errors
 ------

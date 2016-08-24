@@ -1,6 +1,5 @@
 import pytest
-from ..context import (dispatch_method,
-                       install_auto_method,
+from ..context import (dispatch_method, methodify, methodify_auto,
                        clean_dispatch_methods)
 from ..predicate import match_instance
 from ..error import RegistrationError
@@ -488,6 +487,20 @@ def test_dispatch_method_with_register_auto_value():
     assert foo.bar.component(Beta()) is beta_func
 
 
+def test_install_method():
+    class Target(object):
+        pass
+
+    def f(self, a):
+        return a
+
+    Target.m = f
+
+    t = Target()
+
+    assert t.m('A') == 'A'
+
+
 def test_install_auto_method_function_no_app_arg():
     class Target(object):
         pass
@@ -495,7 +508,7 @@ def test_install_auto_method_function_no_app_arg():
     def f(a):
         return a
 
-    install_auto_method(Target, 'm', f)
+    Target.m = methodify_auto(f)
 
     t = Target()
 
@@ -511,7 +524,7 @@ def test_install_auto_method_function_app_arg():
         assert isinstance(app, Target)
         return a
 
-    install_auto_method(Target, 'm', g)
+    Target.m = methodify_auto(g)
 
     t = Target()
     assert t.m('A') == 'A'
@@ -528,7 +541,7 @@ def test_install_auto_method_method_no_app_arg():
 
     f = Foo().f
 
-    install_auto_method(Target, 'm', f)
+    Target.m = methodify_auto(f)
 
     t = Target()
 
@@ -547,7 +560,45 @@ def test_install_auto_method_method_app_arg():
 
     g = Bar().g
 
-    install_auto_method(Target, 'm', g)
+    Target.m = methodify_auto(g)
+
+    t = Target()
+
+    assert t.m('A') == 'A'
+    assert t.m.value is g
+
+
+def test_install_instance_method():
+    class Target(object):
+        pass
+
+    class Bar(object):
+        def g(self, a):
+            assert isinstance(self, Bar)
+            return a
+
+    g = Bar().g
+
+    Target.m = methodify(g)
+
+    t = Target()
+
+    assert t.m('A') == 'A'
+    assert t.m.value is g
+
+
+def test_install_instance_method_app_argument():
+    class Target(object):
+        pass
+
+    class Bar(object):
+        def g(self, app, a):
+            assert isinstance(app, Target)
+            return a
+
+    g = Bar().g
+
+    Target.m = methodify_auto(g)
 
     t = Target()
 
