@@ -17,7 +17,7 @@ if PY3:
 
     def create_method_for_instance(callable, obj):
         return MethodType(callable, obj)
-else:
+else:  # pragma: no cover
     def create_method_for_class(callable, type):
         return MethodType(callable, None, type)
 
