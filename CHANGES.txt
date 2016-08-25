@@ -87,6 +87,10 @@ CHANGES
 
        dispatch = partial(reg.dispatch, get_key_lookup=get_caching_key_lookup)
 
+  * ``dispatch_external_predicates`` is gone. Just use ``dispatch``
+    directly.  You can add predicates to an existing Dispatch object
+    using the ``add_predicates`` method.
+
   If you do use the context-dependent dispatch feature, then you also
   need to:
 
