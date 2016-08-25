@@ -30,15 +30,22 @@ class dispatch_method(dispatch):
       registered as a method using :meth:`reg.Dispatch.register`,
       otherwise it is registered as a function using
       :meth:`reg.DispatchMethod.register_function`.
+    :param first_invocation_hook: a callable that accepts an instance of the
+      class in which this decorator is used. It is invoked the first
+      time the method is invoked.
     :returns: a :class:`reg.DispatchMethod` instance.
+
     """
     def __init__(self, *predicates, **kw):
+        self.first_invocation_hook = kw.pop(
+            'first_invocation_hook', lambda x: None)
         super(dispatch_method, self).__init__(*predicates, **kw)
 
     def __call__(self, callable):
         return DispatchMethodDescriptor(callable,
                                         self.predicates,
-                                        self.get_key_lookup)
+                                        self.get_key_lookup,
+                                        self.first_invocation_hook)
 
 
 class DispatchMethod(Dispatch):
@@ -119,18 +126,20 @@ class DispatchMethod(Dispatch):
 
 class DispatchMethodDescriptor(object):
     def __init__(self, callable, predicates, get_key_lookup,
-                 cache_bound_method=True):
+                 first_invocation_hook, cache_bound_method=True):
         self.callable = callable
         self.name = self.callable.__name__
         self.predicates = predicates
         self.get_key_lookup = get_key_lookup
         self.cache_bound_method = cache_bound_method
         self._cache = {}
+        self.first_invocation_hook = first_invocation_hook
 
     def __get__(self, obj, type=None):
         # we get the method from the cache
         # this guarantees that we distinguish between dispatches
         # on a per class basis, and on the name of the method
+
         dispatch = self._cache.get(type)
 
         if dispatch is None:
@@ -148,6 +157,8 @@ class DispatchMethodDescriptor(object):
         if obj is None:
             # we access it through the class directly, so unbound
             return create_method_for_class(dispatch, type)
+
+        self.first_invocation_hook(obj)
 
         # if we access the instance, we simulate binding it
         bound = create_method_for_instance(dispatch, obj)
