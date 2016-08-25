@@ -1,0 +1,6 @@
+# development
+-e '.[test,coverage,pep8,docs]'
+radon
+
+# releaser
+zest.releaser[recommended]
