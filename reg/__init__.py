@@ -2,7 +2,6 @@
 from .dispatch import dispatch, Dispatch
 from .context import (dispatch_method, DispatchMethod,
                       methodify, methodify_auto, clean_dispatch_methods)
-from .mapply import mapply
 from .arginfo import arginfo
 from .argextract import KeyExtractor
 from .sentinel import Sentinel, NOT_FOUND

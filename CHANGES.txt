@@ -4,6 +4,10 @@ CHANGES
 0.10 (unreleased)
 =================
 
+- **Breaking change**
+
+  * Removed the helper function ``mapply`` from the API.
+
 - **Breaking changes**
 
   Reg has undergone another breaking API change. The goals of this change

@@ -47,8 +47,6 @@ Errors
 Argument introspection
 ----------------------
 
-.. autofunction:: mapply
-
 .. autofunction:: arginfo
 
 Predicate Registry
