@@ -6,24 +6,19 @@ long_description = '\n'.join((
     io.open('CHANGES.txt', encoding='utf-8').read()
 ))
 
-tests_require = [
-    'pytest >= 2.0',
-    'pytest-cov',
-    'pytest-remove-stale-bytecode',
-    ]
-
-setup(name='reg',
-      version='0.10.dev0',
-      description="Generic functions. Clever registries and lookups",
-      long_description=long_description,
-      author="Martijn Faassen",
-      author_email="faassen@startifact.com",
-      license="BSD",
-      url='http://reg.readthedocs.io',
-      packages=find_packages(),
-      include_package_data=True,
-      zip_safe=False,
-      classifiers=[
+setup(
+    name='reg',
+    version='0.10.dev0',
+    description="Generic functions. Clever registries and lookups",
+    long_description=long_description,
+    author="Martijn Faassen",
+    author_email="faassen@startifact.com",
+    license="BSD",
+    url='http://reg.readthedocs.io',
+    packages=find_packages(),
+    include_package_data=True,
+    zip_safe=False,
+    classifiers=[
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Topic :: Software Development :: Libraries :: Python Modules',
@@ -33,13 +28,24 @@ setup(name='reg',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: Implementation :: PyPy',
         'Development Status :: 5 - Production/Stable'
-        ],
-      install_requires=[
+    ],
+    install_requires=[
         'setuptools',
         'repoze.lru',
+    ],
+    extras_require=dict(
+        test=[
+            'pytest >= 2.9.0',
+            'pytest-remove-stale-bytecode',
         ],
-      tests_require=tests_require,
-      extras_require=dict(
-        test=tests_require,
-        )
-      )
+        pep8=[
+            'flake8',
+        ],
+        coverage=[
+            'pytest-cov',
+        ],
+        docs=[
+            'sphinx',
+        ],
+    ),
+)

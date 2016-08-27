@@ -139,6 +139,10 @@ CHANGES
 
 - Include doctests in Tox and Travis.
 
+- We now use virtualenv and pip instead of buildout to set up the
+  development environment. The development documentation has been
+  updated accordingly.
+
 0.9.3 (2016-07-18)
 ==================
 
