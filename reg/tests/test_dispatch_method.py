@@ -587,6 +587,18 @@ def test_install_instance_method():
     assert t.m.value is g
 
 
+def test_dispatch_method_introspection():
+    class Foo(object):
+        @dispatch_method('obj')
+        def bar(self, obj):
+            "Return the bar of an object."
+            return "default"
+
+    assert Foo.bar.__name__ == 'bar'
+    assert Foo.bar.__doc__ == "Return the bar of an object."
+    assert Foo.bar.__module__ == __name__
+
+
 def test_dispatch_method_clean():
     def get_obj(obj):
         return obj

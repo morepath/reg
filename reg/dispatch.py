@@ -38,9 +38,7 @@ class dispatch(object):
         return predicate
 
     def __call__(self, callable):
-        result = Dispatch(self.predicates, callable, self.get_key_lookup)
-        update_wrapper(result, callable)
-        return result
+        return Dispatch(self.predicates, callable, self.get_key_lookup)
 
 
 def identity(registry):
@@ -69,6 +67,7 @@ class Dispatch(object):
         self.get_key_lookup = get_key_lookup
         self._original_predicates = predicates
         self._register_predicates(predicates)
+        update_wrapper(self, callable)
 
     def _register_predicates(self, predicates):
         self.registry = create_predicates_registry(predicates)

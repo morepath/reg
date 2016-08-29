@@ -1118,6 +1118,17 @@ def test_dispatch_register_value_list_single():
     assert foo(Qux()) == "qux"
 
 
+def test_dispatch_introspection():
+    @dispatch('obj')
+    def foo(obj):
+        "return the foo of an object."
+        return "default"
+
+    assert foo.__name__ == 'foo'
+    assert foo.__doc__ == "return the foo of an object."
+    assert foo.__module__ == __name__
+
+
 def test_dispatch_repr():
     def foo(obj):
         return "default"
