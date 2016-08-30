@@ -6,14 +6,11 @@ from ..error import RegistrationError
 
 
 def test_dispatch_method_explicit_fallback():
-    def get_obj(obj):
-        return obj
-
     def obj_fallback(self, obj):
         return "Obj fallback"
 
     class Foo(object):
-        @dispatch_method(match_instance('obj', get_obj, obj_fallback))
+        @dispatch_method(match_instance('obj', fallback=obj_fallback))
         def bar(self, obj):
             return "default"
 
@@ -36,11 +33,8 @@ def test_dispatch_method_explicit_fallback():
 
 
 def test_dispatch_method_without_fallback():
-    def get_obj(obj):
-        return obj
-
     class Foo(object):
-        @dispatch_method(match_instance('obj', get_obj))
+        @dispatch_method(match_instance('obj'))
         def bar(self, obj):
             return "default"
 
@@ -63,9 +57,6 @@ def test_dispatch_method_without_fallback():
 
 
 def test_dispatch_method_string_predicates():
-    def get_obj(obj):
-        return obj
-
     class Foo(object):
         @dispatch_method('obj')
         def bar(self, obj):
@@ -90,15 +81,12 @@ def test_dispatch_method_string_predicates():
 
 
 def test_dispatch_method_add_predicates():
-    def get_obj(obj):
-        return obj
-
     class Foo(object):
         @dispatch_method()
         def bar(self, obj):
             return "default"
 
-    Foo.bar.add_predicates([match_instance('obj', get_obj)])
+    Foo.bar.add_predicates([match_instance('obj')])
 
     class Alpha(object):
         pass
@@ -119,11 +107,8 @@ def test_dispatch_method_add_predicates():
 
 
 def test_dispatch_method_register_function():
-    def get_obj(obj):
-        return obj
-
     class Foo(object):
-        @dispatch_method(match_instance('obj', get_obj))
+        @dispatch_method(match_instance('obj'))
         def bar(self, obj):
             return "default"
 
@@ -185,13 +170,10 @@ def test_dispatch_method_register_function_non_callable():
 
 
 def test_dispatch_method_register_auto():
-    def get_obj(obj):
-        return obj
-
     class Foo(object):
         x = 'X'
 
-        @dispatch_method(match_instance('obj', get_obj))
+        @dispatch_method(match_instance('obj'))
         def bar(self, obj):
             return "default"
 
@@ -214,11 +196,8 @@ def test_dispatch_method_register_auto():
 
 
 def test_dispatch_method_class_method_accessed_first():
-    def get_obj(obj):
-        return obj
-
     class Foo(object):
-        @dispatch_method(match_instance('obj', get_obj))
+        @dispatch_method(match_instance('obj'))
         def bar(self, obj):
             return "default"
 
@@ -239,14 +218,11 @@ def test_dispatch_method_class_method_accessed_first():
 
 
 def test_dispatch_method_accesses_instance():
-    def get_obj(obj):
-        return obj
-
     class Foo(object):
         def __init__(self, x):
             self.x = x
 
-        @dispatch_method(match_instance('obj', get_obj))
+        @dispatch_method(match_instance('obj'))
         def bar(self, obj):
             return "default %s" % self.x
 
@@ -267,11 +243,8 @@ def test_dispatch_method_accesses_instance():
 
 
 def test_dispatch_method_inheritance_register_on_subclass():
-    def get_obj(obj):
-        return obj
-
     class Foo(object):
-        @dispatch_method(match_instance('obj', get_obj))
+        @dispatch_method(match_instance('obj'))
         def bar(self, obj):
             return "default"
 
@@ -297,11 +270,8 @@ def test_dispatch_method_inheritance_register_on_subclass():
 
 
 def test_dispatch_method_inheritance_separation():
-    def get_obj(obj):
-        return obj
-
     class Foo(object):
-        @dispatch_method(match_instance('obj', get_obj))
+        @dispatch_method(match_instance('obj'))
         def bar(self, obj):
             return "default"
 
@@ -332,15 +302,12 @@ def test_dispatch_method_inheritance_separation():
 
 
 def test_dispatch_method_inheritance_separation_multiple():
-    def get_obj(obj):
-        return obj
-
     class Foo(object):
-        @dispatch_method(match_instance('obj', get_obj))
+        @dispatch_method(match_instance('obj'))
         def bar(self, obj):
             return "bar default"
 
-        @dispatch_method(match_instance('obj', get_obj))
+        @dispatch_method(match_instance('obj'))
         def qux(self, obj):
             return "qux default"
 
@@ -384,14 +351,11 @@ def test_dispatch_method_inheritance_separation_multiple():
 
 
 def test_dispatch_method_api_available():
-    def get_obj(obj):
-        return obj
-
     def obj_fallback(self, obj):
         return "Obj fallback"
 
     class Foo(object):
-        @dispatch_method(match_instance('obj', get_obj, obj_fallback))
+        @dispatch_method(match_instance('obj', fallback=obj_fallback))
         def bar(self, obj):
             return "default"
 
@@ -423,11 +387,8 @@ def test_dispatch_method_api_available():
 
 
 def test_dispatch_method_with_register_function_value():
-    def get_obj(obj):
-        return obj
-
     class Foo(object):
-        @dispatch_method(match_instance('obj', get_obj))
+        @dispatch_method(match_instance('obj'))
         def bar(self, obj):
             return "default"
 
@@ -454,11 +415,8 @@ def test_dispatch_method_with_register_function_value():
 
 
 def test_dispatch_method_with_register_auto_value():
-    def get_obj(obj):
-        return obj
-
     class Foo(object):
-        @dispatch_method(match_instance('obj', get_obj))
+        @dispatch_method(match_instance('obj'))
         def bar(self, obj):
             return "default"
 
@@ -600,11 +558,8 @@ def test_dispatch_method_introspection():
 
 
 def test_dispatch_method_clean():
-    def get_obj(obj):
-        return obj
-
     class Foo(object):
-        @dispatch_method(match_instance('obj', get_obj))
+        @dispatch_method(match_instance('obj'))
         def bar(self, obj):
             return "default"
 
@@ -641,11 +596,8 @@ def test_dispatch_method_clean():
 
 
 def test_clean_dispatch_methods():
-    def get_obj(obj):
-        return obj
-
     class Foo(object):
-        @dispatch_method(match_instance('obj', get_obj))
+        @dispatch_method(match_instance('obj'))
         def bar(self, obj):
             return "default"
 

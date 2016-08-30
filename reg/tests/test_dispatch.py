@@ -50,7 +50,7 @@ def test_dispatch_argname():
 
 
 def test_dispatch_match_instance():
-    @dispatch(match_instance('obj', lambda obj: obj))
+    @dispatch(match_instance('obj'))
     def foo(obj):
         pass
 
@@ -442,8 +442,7 @@ def test_fallback_to_fallback():
     def fallback(obj):
         return 'fallback!'
 
-    @dispatch(match_instance('obj', lambda obj: obj,
-                             fallback=fallback))
+    @dispatch(match_instance('obj', fallback=fallback))
     def target(obj):
         return 'not the fallback we want'
 
@@ -913,11 +912,9 @@ def test_register_dispatch_predicates_twice():
     class Qux(object):
         pass
 
-    foo.add_predicates(
-        [match_instance('a', lambda a: a)])
+    foo.add_predicates([match_instance('a')])
     # second time adds another one
-    foo.add_predicates(
-        [match_instance('b', lambda b: b)])
+    foo.add_predicates([match_instance('b')])
     foo.register(for_bar, a=Bar, b=Bar)
     foo.register(for_qux, a=Qux, b=Qux)
     assert foo(Bar(), Bar()) == "for bar"
@@ -982,7 +979,7 @@ def test_dispatch_clean_add_predicates():
         def method(self):
             return "qux's method"
 
-    foo.add_predicates([match_instance('obj', lambda obj: obj)])
+    foo.add_predicates([match_instance('obj')])
     foo.register(for_bar, obj=Bar)
     foo.register(for_qux, obj=Qux)
 

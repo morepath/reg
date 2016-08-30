@@ -83,18 +83,22 @@ def match_key(name, func, fallback=None, default=None):
     return key_predicate(name, KeyExtractor(func), fallback, default)
 
 
-def match_instance(name, func, fallback=None, default=None):
+def match_instance(name, func=None, fallback=None, default=None):
     """Predicate that extracts class of instance returned by func.
 
     :name: predicate name.
     :func: argument that takes arguments. These arguments are
       extracted from the arguments given to the dispatch function.
-      This function should return an instance; dispatching is done
-      on the class of that instance.
+      This function should return an instance; dispatching is done on
+      the class of that instance. If ``None`` use the argument having
+      the same name as the predicate.
     :fallback: the fallback value. By default it is ``None``.
     :default: optional default value.
     :returns: a :class:`Predicate`.
+
     """
+    if func is None:
+        func = eval('lambda {0}: {0}'.format(name))
     return class_predicate(name, ClassKeyExtractor(func), fallback, default)
 
 

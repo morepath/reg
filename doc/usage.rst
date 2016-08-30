@@ -551,8 +551,7 @@ model instance, and the ``request_method`` attribute of the request:
 .. testcode::
 
   @reg.dispatch(
-    reg.match_instance('obj',
-                       lambda obj: obj),
+    reg.match_instance('obj'),
     reg.match_key('request_method',
                   lambda request: request.request_method))
   def view(obj, request):

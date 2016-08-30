@@ -30,8 +30,7 @@ Here is a concrete example. First we define a context class we call
 
   class A(object):
       @reg.dispatch_method(
-        reg.match_instance('obj',
-                           lambda obj: obj),
+        reg.match_instance('obj'),
         reg.match_key('request_method',
                       lambda request: request.request_method))
       def view(self, obj, request):
