@@ -376,7 +376,7 @@ def test_non_callable_registered():
     def target(obj):
         pass
 
-    non_callable = None
+    non_callable = 42
 
     with pytest.raises(RegistrationError):
         target.register(non_callable, a=Alpha)
@@ -1133,3 +1133,31 @@ def test_dispatch_repr():
     dispatch_foo = dispatch('obj')(foo)
 
     assert repr(dispatch_foo) == repr(foo)
+
+
+def test_dispatch_argname_with_decorator():
+    @dispatch('obj')
+    def foo(obj):
+        pass
+
+    class Bar(object):
+        def method(self):
+            return "bar's method"
+
+    class Qux(object):
+        def method(self):
+            return "qux's method"
+
+    @foo.register(obj=Bar)
+    def for_bar(obj):
+        return obj.method()
+
+    @foo.register(obj=Qux)
+    def for_qux(obj):
+        return obj.method()
+
+    assert foo(Bar()) == "bar's method"
+    assert foo(Qux()) == "qux's method"
+
+    assert foo(Bar()) == for_bar(Bar())
+    assert foo(Qux()) == for_qux(Qux())

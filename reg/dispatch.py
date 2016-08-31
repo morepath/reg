@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from functools import update_wrapper
+from functools import update_wrapper, partial
 from .predicate import match_argname
 from .compat import string_types
 from .argextract import ArgExtractor
@@ -97,20 +97,28 @@ class Dispatch(object):
         """
         self._register_predicates(self.predicates + predicates)
 
-    def register(self, func, **key_dict):
+    def register(self, func=None, **key_dict):
         """Register an implementation.
+
+        If ``func`` is not specified, this method can be used as a
+        decorator and the decorated function will be used as the
+        actual ``func`` argument.
 
         :param func: a function that implements behavior for this
           dispatch function. It needs to have the same signature as
           the original dispatch function. If this is a
           :class:`reg.DispatchMethod`, then this means it needs to
           take a first context argument.
-        :key_dict: keyword arguments describing the registration,
+        :param key_dict: keyword arguments describing the registration,
           with as keys predicate name and as values predicate values.
+        :returns: ``func``.
         """
+        if func is None:
+            return partial(self.register, **key_dict)
         validate_signature(func, self.wrapped_func)
         predicate_key = self.registry.key_dict_to_predicate_key(key_dict)
         self.register_value(predicate_key, func)
+        return func
 
     def register_value(self, predicate_key, value):
         """Low-level function to register a value.

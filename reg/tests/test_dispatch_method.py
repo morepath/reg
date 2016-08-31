@@ -284,10 +284,14 @@ def test_dispatch_method_inheritance_separation():
     class Beta(object):
         pass
 
+    # programmatic style:
     Foo.bar.register(lambda self, obj: "Foo Alpha", obj=Alpha)
-    Foo.bar.register(lambda self, obj: "Foo Beta", obj=Beta)
+    # decorator style:
+    Foo.bar.register(obj=Beta)(lambda self, obj: "Foo Beta")
+    # programmatic style:
     Sub.bar.register(lambda self, obj: "Sub Alpha", obj=Alpha)
-    Sub.bar.register(lambda self, obj: "Sub Beta", obj=Beta)
+    # decorator style:
+    Sub.bar.register(obj=Beta)(lambda self, obj: "Sub Beta")
 
     foo = Foo()
     sub = Sub()

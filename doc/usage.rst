@@ -88,32 +88,33 @@ the ``title`` fuction we defined above.
      def __init__(self, label):
         self.label = label
 
-If we call ``title`` with a ``TitledReport`` instance, want it to return
+If we call ``title`` with a ``TitledReport`` instance, we want it to return
 its ``title`` attribute:
 
 .. testcode::
 
+  @title.register(obj=TitledReport)
   def titled_report_title(obj):
       return obj.title
 
-If we call ``title`` with a ``LabeledReport`` instance, we want it to return
-its ``label`` attribute:
+The ``title.register`` decorator registers the function
+``titled_report_title`` as an implementation of ``title`` when ``obj``
+is an instance of ``TitleReport``.
+
+There is also a more programmatic way to register implementations.
+Take for example, the implementation of ``title`` with a ``LabeledReport``
+instance, where we want it to return its ``label`` attribute:
 
 .. testcode::
 
   def labeled_report_title(obj):
       return obj.label
 
-We register these functions with the ``title`` dispatch function:
+We can register it by explicitely invoking ``title.register``:
 
 .. testcode::
 
-  title.register(titled_report_title, obj=TitledReport)
   title.register(labeled_report_title, obj=LabeledReport)
-
-Here we see that when ``obj`` is a ``TitledReport`` instance, we want
-to use ``titled_report_title``, and when it's a ``LabeledReport``
-instance, we want to use the ``labeled_report_title`` function.
 
 Now the generic ``title`` function works on both titled and labeled
 objects:
@@ -483,7 +484,7 @@ What this says that when we call ``size``, we want to dispatch based
 on the class of its ``item`` argument.
 
 We can now register the various size functions for the various content
-items in a registry:
+items as implementations of ``size``:
 
 .. testcode::
 
@@ -574,9 +575,11 @@ We now define concrete views for ``Document`` and ``Image``:
 
 .. testcode::
 
+  @view.register(request_method='GET', obj=Document)
   def document_get(obj, request):
       return "Document text is: " + obj.text
 
+  @view.register(request_method='POST', obj=Document)
   def document_post(obj, request):
       obj.text = request.body
       return "We changed the document"
@@ -585,29 +588,14 @@ Let's also define them for ``Image``:
 
 .. testcode::
 
+  @view.register(request_method='GET', obj=Image)
   def image_get(obj, request):
       return obj.bytes
 
+  @view.register(request_method='POST', obj=Image)
   def image_post(obj, request):
       obj.bytes = request.body
       return "We changed the image"
-
-We register the views:
-
-.. testcode::
-
-  view.register(document_get,
-                request_method='GET',
-                obj=Document)
-  view.register(document_post,
-                request_method='POST',
-                obj=Document)
-  view.register(image_get,
-                request_method='GET',
-                obj=Image)
-  view.register(image_post,
-                request_method='POST',
-                obj=Image)
 
 Let's try it out:
 
@@ -625,6 +613,107 @@ Let's try it out:
   'We changed the image'
   >>> image.bytes
   'new data'
+
+
+Dispatch methods
+----------------
+
+Rather than having a ``size`` function and a ``view`` function, we'd
+like now to define a CMS class with ``size`` and ``view`` as a
+methods. To do so, in place of :class:`reg.dispatch` we'll use
+:class:`reg.dispatch_method`:
+
+.. testcode::
+
+  class CMS(object):
+
+      @reg.dispatch_method('item')
+      def size(self, item):
+          raise NotImplementedError
+
+      @reg.dispatch_method(
+          reg.match_instance('obj'),
+          reg.match_key('request_method',
+                        lambda request: request.request_method))
+      def view(self, obj, request):
+          return "Generic content of {} bytes.".format(self.size(obj))
+
+You can now register an implementation of ``CMS.size`` for a
+``Document`` object:
+
+.. testcode::
+
+  @CMS.size.register(item=Document)
+  def document_size_as_method(self, item):
+      return len(item.text)
+
+.. sidebar:: ``register_function`` vs. ``register``
+
+  ``register`` expects the implementation to have the same number of
+  arguments as the dispatch method, including a reference to the class
+  instance as its first argument. Typically, but not necessarily, this
+  first argument is called ``self``.
+
+  In some circumstances you might already have a suitable function
+  that implements the method, but that lacks the initial reference to
+  the class instance.  In our case, the signature of the dispatch
+  method is::
+
+    CMS.size(self, item)
+
+  However, the signature of the existing implementation is ::
+
+    document_size(item)
+
+  You could register it using a wrapper that drops the first argument::
+
+    @CMS.size.register(item=Document)
+    def document_size_wrapper(self, item):
+        return document_size(item)
+
+  ``register_function`` does that for you, so that you can simply
+  write::
+
+    CMS.size.register_function(
+        document_size, item=Document)
+
+  NB: since the purpose of ``register_function`` is to register
+  existing functions, you cannot use it as a decorator.
+
+Note that this is almost the same as the function ``document_size`` we
+defined before: the only difference is the signature, with the
+additional ``self`` as the first argument.  In such situations you
+can register an existing function using ``register_function``:
+
+.. testcode::
+
+  CMS.size.register_function(folder_size, item=Folder)
+  CMS.size.register_function(image_size, item=Image)
+  CMS.size.register_function(file_size, item=File)
+
+We can now verify that ``CMS.size`` behaves as expected:
+
+  >>> cms = CMS()
+  >>> cms.size(Image("123"))
+  3
+  >>> cms.size(Document("12345"))
+  5
+
+Similarly for the ``view`` method we can define:
+
+.. testcode::
+
+  @CMS.view.register(request_method='GET', obj=Document)
+  def document_get(self, obj, request):
+      return "{}-byte-long text is: {}".format(
+          self.size(obj), obj.text)
+
+which we can easily verify together with the fallback implementation:
+
+  >>> cms.view(Document("12345"), Request("GET"))
+  '5-byte-long text is: 12345'
+  >>> cms.view(Image("123"), Request("GET"))
+  'Generic content of 3 bytes.'
 
 Lower level API
 ---------------
