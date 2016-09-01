@@ -5,7 +5,7 @@ from .compat import string_types
 from .argextract import ArgExtractor
 from .predicate import create_predicates_registry
 from .arginfo import arginfo
-from .error import RegistrationError, KeyExtractorError
+from .error import RegistrationError
 
 
 class dispatch(object):
@@ -65,6 +65,7 @@ class Dispatch(object):
     def __init__(self, predicates, callable, get_key_lookup):
         self.wrapped_func = callable
         self.get_key_lookup = get_key_lookup
+        self._original_class = type(self)
         self._original_predicates = predicates
         self._register_predicates(predicates)
         update_wrapper(self, callable)
@@ -75,6 +76,54 @@ class Dispatch(object):
         self.key_lookup = self.get_key_lookup(self.registry)
         self.arg_extractor = ArgExtractor(
             self.wrapped_func, self.registry.argnames())
+
+        # We build the __call__ method on the fly. The body of
+        # __call__ uses the identifiers defined in the following
+        # namespace:
+        namespace = {
+            '_registry_key': self.registry.key,
+            '_component_lookup': self.key_lookup.component,
+            '_fallback_lookup': self.key_lookup.fallback,
+            '_fallback': self.wrapped_func,
+            }
+
+        # The definition of __call__ requires the signature of the
+        # wrapped function and the arguments needed by the registered
+        # predicates (predicate_args):
+        code_template = """\
+def {name}(_self, {signature}):
+    _key = _registry_key(dict({predicate_args}))
+    return (_component_lookup(_key) or
+            _fallback_lookup(_key) or
+            _fallback)({signature})
+"""
+
+        args = arginfo(self.wrapped_func)
+        name = self.wrapped_func.__name__
+        signature = ', '.join(
+            args.args +
+            (['*' + args.varargs] if args.varargs else []) +
+            (['**' + args.keywords] if args.keywords else []))
+        code_source = code_template.format(
+            name=name,
+            signature=signature,
+            predicate_args=', '.join(
+                '{0}={0}'.format(x) for x in self.registry.argnames()))
+
+        # We now compile __call__ to byte-code:
+        exec(code_source, namespace)
+        call = namespace[name]
+
+        # We copy over the defaults from the wrapped function.
+        call.__defaults__ = args.defaults
+
+        # Unfortunately __call__ must be a method, we cannot simply
+        # assign it to self.__call__.  So we have to create a one-off
+        # class and set it as the new type of self:
+        self.__class__ = type(
+            self._original_class.__name__,
+            (self._original_class,),
+            {'__call__': call})
 
     def clean(self):
         """Clean up implementations and added predicates.
@@ -153,39 +202,6 @@ class Dispatch(object):
           the callable was configured with.
         """
         return self.registry.key(self.arg_extractor(*args, **kw))
-
-    def __call__(self, *args, **kw):
-        """Call with args and kw.
-
-        If nothing more specific is registered, call the dispatch
-        function as a fallback.
-
-        :args: varargs for the call. Is also used to extract
-           dispatch information to construct predicate_key.
-        :kw: keyword arguments for the call. Is also used to extract
-           dispatch information to construct predicate_key.
-        :returns: the result of the call.
-        """
-        try:
-            key = self.predicate_key(*args, **kw)
-            component = self.key_lookup.component(key)
-        except KeyExtractorError:
-            # if we cannot extract the key this could be because the
-            # dispatch was never initialized, as register_function
-            # was not called. In this case we want the fallback.
-            # Alternatively we cannot construct the key because we
-            # were passed the wrong arguments.
-            # In both cases, call the fallback. In case the wrong arguments
-            # were passed, we get the appropriate TypeError then
-            component = self.wrapped_func
-
-        if component is None:
-            # try to use the fallback
-            component = self.key_lookup.fallback(key)
-            if component is None:
-                # if fallback is None use the original callable as fallback
-                component = self.wrapped_func
-        return component(*args, **kw)
 
     def component(self, *args, **kw):
         """Lookup function dispatched to with args and kw.

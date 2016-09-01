@@ -504,7 +504,7 @@ def test_different_defaults_in_specific_non_dispatch_arg():
 
     target.register(a, obj=Alpha)
 
-    assert target(Alpha()) == 'a: default 2'
+    assert target(Alpha()) == 'a: default'
 
 
 def test_different_defaults_in_specific_dispatch_arg():
@@ -534,7 +534,7 @@ def test_different_defaults_in_specific_dispatch_arg_causes_dispatch():
 
     assert target('foo') == 'a: foo'
     assert target('bar') == 'fallback: bar'
-    assert target() == 'a: default 2'
+    assert target() == 'a: foo'
 
 
 def test_add_predicates_no_defaults():
