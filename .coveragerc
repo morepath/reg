@@ -1,2 +1,6 @@
 [run]
 omit = reg/tests/*
+source = reg
+
+[report]
+show_missing = True
