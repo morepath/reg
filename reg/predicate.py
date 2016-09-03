@@ -160,20 +160,6 @@ class MultiPredicate(object):
         return tuple(result)
 
 
-class Index(object):
-    def add(self, key, value):
-        raise NotImplementedError  # pragma: nocoverage
-
-    def get(self, key, default=None):
-        raise NotImplementedError  # pragma: nocoverage
-
-    def permutations(self, key):
-        raise NotImplementedError  # pragma: nocoverage
-
-    def fallback(self, key):
-        raise NotImplementedError  # pragma: nocoverage
-
-
 class KeyIndex(object):
     def __init__(self, fallback=None):
         self.d = {}
