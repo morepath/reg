@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 import inspect
-from .compat import (create_method_for_class,
-                     create_method_for_instance)
+from types import MethodType
+from .compat import create_method_for_class
 from .dispatch import dispatch, Dispatch, same_signature
 from .arginfo import arginfo
 from .error import RegistrationError
@@ -161,7 +161,7 @@ class DispatchMethodDescriptor(object):
         self.first_invocation_hook(obj)
 
         # if we access the instance, we simulate binding it
-        bound = create_method_for_instance(dispatch, obj)
+        bound = MethodType(dispatch, obj)
         # we store it on the instance, so that next time we
         # access this, we do not hit the descriptor anymore
         # but return the bound dispatch function directly
