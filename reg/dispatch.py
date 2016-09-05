@@ -77,21 +77,12 @@ class Dispatch(object):
         self.arg_extractor = ArgExtractor(
             self.wrapped_func, self.registry.argnames())
 
-        # We build the __call__ method on the fly. The body of
-        # __call__ uses the identifiers defined in the following
-        # namespace:
-        namespace = {
-            '_registry_key': self.registry.key,
-            '_component_lookup': self.key_lookup.component,
-            '_fallback_lookup': self.key_lookup.fallback,
-            '_fallback': self.wrapped_func,
-            }
-
-        # The definition of __call__ requires the signature of the
-        # wrapped function and the arguments needed by the registered
-        # predicates (predicate_args):
+        # We build the __call__ method on the fly. Its definition
+        # requires the signature of the wrapped function and the
+        # arguments needed by the registered predicates
+        # (predicate_args):
         code_template = """\
-def {name}(_self, {signature}):
+def __call__(_self, {signature}):
     _key = _registry_key(dict({predicate_args}))
     return (_component_lookup(_key) or
             _fallback_lookup(_key) or
@@ -99,20 +90,18 @@ def {name}(_self, {signature}):
 """
 
         args = arginfo(self.wrapped_func)
-        name = self.wrapped_func.__name__
-        signature = ', '.join(
-            args.args +
-            (['*' + args.varargs] if args.varargs else []) +
-            (['**' + args.keywords] if args.keywords else []))
         code_source = code_template.format(
-            name=name,
-            signature=signature,
+            signature=format_signature(args),
             predicate_args=', '.join(
                 '{0}={0}'.format(x) for x in self.registry.argnames()))
 
         # We now compile __call__ to byte-code:
-        exec(code_source, namespace)
-        call = namespace[name]
+        call = execute(
+            code_source,
+            _registry_key=self.registry.key,
+            _component_lookup=self.key_lookup.component,
+            _fallback_lookup=self.key_lookup.fallback,
+            _fallback=self.wrapped_func)['__call__']
 
         # We copy over the defaults from the wrapped function.
         call.__defaults__ = args.defaults
@@ -300,6 +289,13 @@ def validate_signature(f, dispatch):
                 f, dispatch))
 
 
+def format_signature(args):
+    return ', '.join(
+        args.args +
+        (['*' + args.varargs] if args.varargs else []) +
+        (['**' + args.keywords] if args.keywords else []))
+
+
 def same_signature(a, b):
     """Check whether a arginfo and b arginfo are the same signature.
 
@@ -311,3 +307,9 @@ def same_signature(a, b):
     return (len(a_args) == len(b_args) and
             a.varargs == b.varargs and
             a.keywords == b.keywords)
+
+
+def execute(code_source, **namespace):
+    """Execute code in a namespace, returning the namespace."""
+    exec(code_source, namespace)
+    return namespace
