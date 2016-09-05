@@ -278,6 +278,7 @@ class PredicateRegistry(object):
         self.known_keys = set()
         self.predicate = predicate
         self.index = self.predicate.create_index()
+        self.key = lambda **kw: self.predicate.get_key(kw)
 
     def register(self, key, value):
         if key in self.known_keys:
@@ -288,9 +289,6 @@ class PredicateRegistry(object):
 
     def argnames(self):
         return self.predicate.argnames()
-
-    def key(self, d):
-        return self.predicate.get_key(d)
 
     def key_dict_to_predicate_key(self, d):
         """Construct predicate key from key dictionary.
@@ -323,6 +321,7 @@ class PredicateRegistry(object):
 class SingleValueRegistry(object):
     def __init__(self):
         self.value = None
+        self.key = lambda **kw: ()
 
     def register(self, key, value):
         if self.value is not None:
@@ -332,9 +331,6 @@ class SingleValueRegistry(object):
 
     def argnames(self):
         return []
-
-    def key(self, d):
-        return ()
 
     def key_dict_to_predicate_key(self, d):
         return ()

@@ -83,7 +83,7 @@ class Dispatch(object):
         # (predicate_args):
         code_template = """\
 def __call__(_self, {signature}):
-    _key = _registry_key(dict({predicate_args}))
+    _key = _registry_key({predicate_args})
     return (_component_lookup(_key) or
             _fallback_lookup(_key) or
             _fallback)({signature})
@@ -93,7 +93,7 @@ def __call__(_self, {signature}):
         code_source = code_template.format(
             signature=format_signature(args),
             predicate_args=', '.join(
-                '{0}={0}'.format(x) for x in self.registry.argnames()))
+                '{0}={0}'.format(x) for x in args.args))
 
         # We now compile __call__ to byte-code:
         call = execute(
@@ -190,7 +190,7 @@ def __call__(_self, {signature}):
         :returns: an immutable ``predicate_key`` based on the predicates
           the callable was configured with.
         """
-        return self.registry.key(self.arg_extractor(*args, **kw))
+        return self.registry.key(**self.arg_extractor(*args, **kw))
 
     def component(self, *args, **kw):
         """Lookup function dispatched to with args and kw.
