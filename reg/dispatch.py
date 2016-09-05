@@ -67,6 +67,7 @@ class Dispatch(object):
         self.get_key_lookup = get_key_lookup
         self._original_class = type(self)
         self._original_predicates = predicates
+        self._define_call()
         self._register_predicates(predicates)
         update_wrapper(self, callable)
 
@@ -76,7 +77,13 @@ class Dispatch(object):
         self.key_lookup = self.get_key_lookup(self.registry)
         self.arg_extractor = ArgExtractor(
             self.wrapped_func, self.registry.argnames())
+        self.__call__.__globals__.update(
+            _registry_key=self.registry.key,
+            _component_lookup=self.key_lookup.component,
+            _fallback_lookup=self.key_lookup.fallback,
+        )
 
+    def _define_call(self):
         # We build the __call__ method on the fly. Its definition
         # requires the signature of the wrapped function and the
         # arguments needed by the registered predicates
@@ -98,9 +105,9 @@ def __call__(_self, {signature}):
         # We now compile __call__ to byte-code:
         call = execute(
             code_source,
-            _registry_key=self.registry.key,
-            _component_lookup=self.key_lookup.component,
-            _fallback_lookup=self.key_lookup.fallback,
+            _registry_key=None,
+            _component_lookup=None,
+            _fallback_lookup=None,
             _fallback=self.wrapped_func)['__call__']
 
         # We copy over the defaults from the wrapped function.
