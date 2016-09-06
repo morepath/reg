@@ -6,12 +6,8 @@ CHANGES
 
 - **Breaking change**
 
-  * Removed the helper function ``mapply`` from the API.
-
-- **Breaking changes**
-
-  Reg has undergone another breaking API change. The goals of this change
-  were:
+  Reg has undergone another API breaking change. The goals of this
+  change were:
 
   * Make everything explicit.
 
@@ -57,9 +53,8 @@ CHANGES
       Morepath's application mounting), you use
       ``reg.dispatch_method`` to create a dispatch method. A dispatch
       method maintains an entirely separate dispatch registry for each
-      subclass. You use ``DispatchMethod.register_function`` to
-      register a dispatch function that does not take the context as
-      the first argument.
+      subclass. You use ``reg.methodify`` to register a dispatch
+      function that takes an optional context first argument.
 
   If you do not use the context-dependent dispatch feature, then to
   upgrade your code:
@@ -104,15 +99,14 @@ CHANGES
     way behave as methods to ``context_class``, so get an instance of
     this class as the first argument.
 
-  * You can also use ``<context_class>.<method>.register_function`` to
-    register implementation functions that do not take the context as
-    the first argument -- this is useful when upgrading existing
-    code. Finally you can use ``register_auto``, which determines
-    whether to use ``register_function`` or ``register`` using the
-    name of the first argument of what you register.
+  * You can also use ``reg.methodify`` to register implementation
+    functions that do not take the context as the first argument --
+    this is useful when upgrading existing code. ``reg.methodify``
+    determines whether to use ``register_function`` or ``register``
+    using the name of the first argument of what you register.
 
   * Call your context-dependent methods as methods on the context
-    instance.  This way you can indicate what context you are calling
+    instance. This way you can indicate what context you are calling
     your dispatch methods in, instead of using the `lookup`` argument.
 
   In some cases you want a context-dependent method that actually does
@@ -132,6 +126,10 @@ CHANGES
   ``register_auto``, you can use ``methodify_auto``::
 
      Context.my_method = reg.methodify_auto(some_function)
+
+- **Breaking change**
+
+  Removed the helper function ``mapply`` from the API.
 
 - The second argument for ``match_class`` is now optional; if you
   don't supply it ``match_class`` will generate a predicate function
