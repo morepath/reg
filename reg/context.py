@@ -40,24 +40,6 @@ class dispatch_method(dispatch):
                                         self.first_invocation_hook)
 
 
-class DispatchMethod(Dispatch):
-    def __init__(self, predicates, callable, get_key_lookup):
-        super(DispatchMethod, self).__init__(
-            predicates, callable, get_key_lookup)
-
-    def component(self, *args, **kw):
-        # pass in a None as the first argument
-        # this matches up the bound self that is passed automatically
-        # into __call__
-        return super(DispatchMethod, self).component(None, *args, **kw)
-
-    def fallback(self, *args, **kw):
-        return super(DispatchMethod, self).fallback(None, *args, **kw)
-
-    def all(self, *args, **kw):
-        return super(DispatchMethod, self).all(None, *args, **kw)
-
-
 class DispatchMethodDescriptor(object):
     def __init__(self, callable, predicates, get_key_lookup,
                  first_invocation_hook, cache_bound_method=True):
@@ -102,6 +84,15 @@ class DispatchMethodDescriptor(object):
         if self.cache_bound_method:
             setattr(obj, self.name, bound)
         return bound
+
+
+class DispatchMethod(Dispatch):
+
+    def predicate_key(self, *args, **kw):
+        # pass in a None as the first argument
+        # this matches up the bound self that is passed automatically
+        # into __call__
+        return super(DispatchMethod, self).predicate_key(None, *args, **kw)
 
 
 def methodify(func, selfname=None):
