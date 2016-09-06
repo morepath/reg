@@ -192,8 +192,10 @@ def test_dispatch_method_register_auto():
 
     assert foo.bar(Alpha()) == "default"
 
-    Foo.bar.register(methodify(lambda obj: "Alpha"), obj=Alpha)
-    Foo.bar.register(methodify(lambda app, obj: "Beta %s" % app.x), obj=Beta)
+    Foo.bar.register(methodify(lambda obj: "Alpha", 'app'), obj=Alpha)
+    Foo.bar.register(
+        methodify(lambda app, obj: "Beta %s" % app.x, 'app'),
+        obj=Beta)
 
     assert foo.bar(Alpha()) == "Alpha"
     assert foo.bar(Beta()) == "Beta X"
@@ -445,8 +447,8 @@ def test_dispatch_method_with_register_auto_value():
     def beta_func(app, obj):
         return "Beta"
 
-    Foo.bar.register(methodify(alpha_func), obj=Alpha)
-    Foo.bar.register(methodify(beta_func), obj=Beta)
+    Foo.bar.register(methodify(alpha_func, 'app'), obj=Alpha)
+    Foo.bar.register(methodify(beta_func, 'app'), obj=Beta)
 
     assert unmethodify(foo.bar.component(Alpha())) is alpha_func
     assert unmethodify(foo.bar.component(Beta())) is beta_func
@@ -475,7 +477,7 @@ def test_install_auto_method_function_no_app_arg():
     def f(a):
         return a
 
-    Target.m = methodify(f)
+    Target.m = methodify(f, 'app')
 
     t = Target()
 
@@ -491,7 +493,7 @@ def test_install_auto_method_function_app_arg():
         assert isinstance(app, Target)
         return a
 
-    Target.m = methodify(g)
+    Target.m = methodify(g, 'app')
 
     t = Target()
     assert t.m('A') == 'A'
@@ -508,7 +510,7 @@ def test_install_auto_method_method_no_app_arg():
 
     f = Foo().f
 
-    Target.m = methodify(f)
+    Target.m = methodify(f, 'app')
 
     t = Target()
 
@@ -527,7 +529,7 @@ def test_install_auto_method_method_app_arg():
 
     g = Bar().g
 
-    Target.m = methodify(g)
+    Target.m = methodify(g, 'app')
 
     t = Target()
 

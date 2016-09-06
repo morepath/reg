@@ -1,9 +1,8 @@
 from __future__ import unicode_literals
-from functools import update_wrapper
+import inspect
 from types import MethodType
 from .compat import create_method_for_class
-from .dispatch import (dispatch, Dispatch,
-                       format_signature, execute)
+from .dispatch import dispatch, Dispatch, format_signature, execute
 from .arginfo import arginfo
 
 
@@ -105,65 +104,50 @@ class DispatchMethodDescriptor(object):
         return bound
 
 
-def _wrap(func, prefix_signature=''):
-    """Wrap a function potentially with some additional prefix arguments.
+def methodify(func, selfname=None):
+    """Turn a function into a method, if needed.
+
+    If ``selfname`` is not specified, wrap the function so that it
+    takes an additional first argument, like a method.
+
+    If ``selfname`` is specified, check whether it is the same as the
+    name of the first argument of ``func``. If itsn't, wrap the
+    function so that it takes an additional first argument, with the
+    name specified by ``selfname``.
+
+    If it is, the signature of ``func`` needn't be amended, but
+    wrapping might still be necessary.
+
+    In all cases, :func:`inspect_methodified` lets you retrieve the wrapped
+    function.
 
     :param func: the function to turn into method.
-    :param prefix_signature: extra text to prepend to signature.
-    :returns: wrapped function.
+
+    :param selfname: if specified, the name of the argument
+      referencing the class instance.  Typically, ``"self"``.
+
+    :returns: function that can be used as a method when assigned to a
+      class.
+
     """
     args = arginfo(func)
-    code_template = """\
-def wrapper({prefix_signature} {signature}):
-    return _wrapped({signature})
-"""
-
-    code_source = code_template.format(signature=format_signature(args),
-                                       prefix_signature=prefix_signature)
-
-    wrapper = execute(
-        code_source,
-        _wrapped=func)['wrapper']
-    wrapper._wrapped_func = func
-    update_wrapper(wrapper, func)
-    return wrapper
-
-
-def methodify(func, auto_argument='app'):
-    """Turn a function into a method only if it isn't one already.
-
-    Wraps the function so that it takes a first argument like
-    a method, and ignores it. The return value can be attached to
-    a class as a method. It can also be turned back into the original
-    function using :func:`reg.unmethodify`.
-
-    If the name of the first argument is ``auto_argument``, func is
-    returned. If it isn't, then the function is wrapped so that it
-    takes a first argument like a method (and ignores it).
-
-    The return value has a ``value`` attribute which is the original
-    function that was wrapped. This way the application can access it.
-
-    :param func: the function to install as a method. If its first
-      argument name is *not* ``auto_argument``, it is first wrapped
-      into an object that does take a first argument, so that it can
-      be installed as a method.
-    :param auto_argument: the name of the first argument that indicates
-      we want to install this directly as a method. If the first argument
-      does not have this name, wrap the callable so that it does take
-      that argument before installing it.
-    :returns: function that can be attached to a class as a method.
-    """
-    info = arginfo(func)
-    if info is None:
+    if args is None:
         raise TypeError("methodify must take a callable")
-    # if we already have the proper first argument
-    if info.args and info.args[0] == auto_argument:
-        # we still need to wrap it if it's an instance method
-        if isinstance(func, MethodType):
-            return _wrap(func)
+    if args.args[:1] != [selfname]:
+        # Add missing self to the signature:
+        code_template = (
+            "def wrapper({selfname}, {signature}): return _func({signature})")
+    elif inspect.ismethod(func):
+        # Bound method: must be wrapped despite same signature:
+        code_template = (
+            "def wrapper({signature}): return _func({signature})")
+    else:
+        # No wrapping needed:
         return func
-    return _wrap(func, '_self, ')
+    code_source = code_template.format(
+        signature=format_signature(args),
+        selfname=selfname or '_')
+    return execute(code_source, _func=func)['wrapper']
 
 
 def unmethodify(func):
@@ -177,10 +161,8 @@ def unmethodify(func):
     :param func: the methodified function.
     :returns: the original function.
     """
-    wrapped_func = getattr(func, '_wrapped_func', None)
-    if wrapped_func is not None:
-        return wrapped_func
-    return getattr(func, '__func__', func)
+    func = getattr(func, '__func__', func)
+    return func.__globals__.get('_func', func)
 
 
 def clean_dispatch_methods(cls):
