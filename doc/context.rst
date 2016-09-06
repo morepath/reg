@@ -103,24 +103,25 @@ access the dispatch function through its class (``A``), not its
 instance (``a``). All instances of ``A`` (but not instances of its
 subclasses as we will see later) share the same registrations.
 
-We use ``register_function`` to do the registration, to keep our view
-functions similar to the one where methods are not in use. We will see
-an example where you use ``register`` later:
+We use :func:`reg.methodify` to do the registration, to keep our view
+functions the same as when context is not in use. We will see an
+example without :func:`reg.methodify` later:
 
 .. testcode::
 
-  A.view.register_function(document_get,
-                           request_method='GET',
-                           obj=Document)
-  A.view.register_function(document_post,
-                           request_method='POST',
-                           obj=Document)
-  A.view.register_function(image_get,
-                           request_method='GET',
-                           obj=Image)
-  A.view.register_function(image_post,
-                           request_method='POST',
-                           obj=Image)
+  from reg import methodify
+  A.view.register(methodify(document_get),
+                  request_method='GET',
+                  obj=Document)
+  A.view.register(methodify(document_post),
+                  request_method='POST',
+                  obj=Document)
+  A.view.register(methodify(image_get),
+                  request_method='GET',
+                  obj=Image)
+  A.view.register(methodify(image_post),
+                  request_method='POST',
+                  obj=Image)
 
 Now that we've registered some functions, we get the expected behavior
 when we call ``a.view``:
@@ -172,12 +173,12 @@ behavior for documents as we did for ``Context``:
 
 .. testcode::
 
-  B.view.register_function(document_get,
-                           request_method='GET',
-                           obj=Document)
-  B.view.register_function(document_post,
-                           request_method='POST',
-                           obj=Document)
+  B.view.register(methodify(document_get),
+                  request_method='GET',
+                  obj=Document)
+  B.view.register(methodify(document_post),
+                  request_method='POST',
+                  obj=Document)
 
 But we install *different* behavior for ``Image``:
 
@@ -189,12 +190,12 @@ But we install *different* behavior for ``Image``:
   def b_image_post(obj, request):
       return 'New image POST'
 
-  B.view.register_function(b_image_get,
-                           request_method='GET',
-                           obj=Image)
-  B.view.register_function(b_image_post,
-                           request_method='POST',
-                           obj=Image)
+  B.view.register(methodify(b_image_get),
+                  request_method='GET',
+                  obj=Image)
+  B.view.register(methodify(b_image_post),
+                  request_method='POST',
+                  obj=Image)
 
 Calling ``view`` for ``Document`` works as before:
 
@@ -246,8 +247,10 @@ uses the other:
       return "Changed: " + context.view(obj, Request('GET'))
 
 Now ``c_document_post`` uses the ``view`` dispatch method on the
-context. We need to register these methods using ``register``, not
-``register_function``. Let's create a new context and do so:
+context. We need to register these methods using
+:meth:`reg.Dispatch.register` without :func:`reg.methodify`. This way
+they get the context as the first argument. Let's create a new context
+and do so:
 
 .. testcode::
 
@@ -270,3 +273,29 @@ We now get the expected behavior:
   'Document text is: New content'
   >>> c.view(doc, Request('POST', 'Very new content'))
   'Changed: Document text is: Very new content'
+
+You could have used :func:`reg.methodify` for this too, as
+``methodify`` inspects the first argument and if it's identical to the
+second argument to ``methodify``, it will pass in the context as that
+argument.
+
+.. testcode::
+
+  class D(A):
+      pass
+
+  D.view.register(methodify(c_document_get, 'context'),
+                  request_method='GET',
+                  obj=Document)
+  D.view.register(methodify(c_document_post, 'context'),
+                  request_method='POST',
+                  obj=Document)
+.. doctest::
+
+  >>> d = D()
+  >>> d.view(doc, Request('GET'))
+  'Document text is: Very new content'
+  >>> d.view(doc, Request('POST', 'Even newer content'))
+  'Changed: Document text is: Even newer content'
+
+The default value for the second argument to ``methodify`` is ``app``.

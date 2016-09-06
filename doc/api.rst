@@ -35,7 +35,7 @@ Context-specific dispatch methods
 
 .. autofunction:: methodify
 
-.. autofunction:: methodify_auto
+.. autofunction:: unmethodify
 
 Errors
 ------

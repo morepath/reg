@@ -1,5 +1,5 @@
 import pytest
-from ..context import (dispatch_method, methodify, methodify_auto,
+from ..context import (dispatch_method, methodify, unmethodify,
                        clean_dispatch_methods)
 from ..predicate import match_instance
 from ..error import RegistrationError
@@ -122,8 +122,8 @@ def test_dispatch_method_register_function():
 
     assert foo.bar(Alpha()) == "default"
 
-    Foo.bar.register_function(lambda obj: "Alpha", obj=Alpha)
-    Foo.bar.register_function(lambda obj: "Beta", obj=Beta)
+    Foo.bar.register(methodify(lambda obj: "Alpha"), obj=Alpha)
+    Foo.bar.register(methodify(lambda obj: "Beta"), obj=Beta)
 
     assert foo.bar(Alpha()) == "Alpha"
     assert foo.bar(Beta()) == "Beta"
@@ -140,7 +140,7 @@ def test_dispatch_method_register_function_wrong_signature_too_long():
         pass
 
     with pytest.raises(RegistrationError):
-        Foo.bar.register_function(lambda obj, extra: "Alpha", obj=Alpha)
+        Foo.bar.register(methodify(lambda obj, extra: "Alpha"), obj=Alpha)
 
 
 def test_dispatch_method_register_function_wrong_signature_too_short():
@@ -153,10 +153,10 @@ def test_dispatch_method_register_function_wrong_signature_too_short():
         pass
 
     with pytest.raises(RegistrationError):
-        Foo.bar.register_function(lambda: "Alpha", obj=Alpha)
+        Foo.bar.register(methodify(lambda: "Alpha"), obj=Alpha)
 
 
-def test_dispatch_method_register_function_non_callable():
+def test_dispatch_method_register_non_callable():
     class Foo(object):
         @dispatch_method('obj')
         def bar(self, obj):
@@ -166,7 +166,12 @@ def test_dispatch_method_register_function_non_callable():
         pass
 
     with pytest.raises(RegistrationError):
-        Foo.bar.register_function("cannot call this", obj=Alpha)
+        Foo.bar.register("cannot call this", obj=Alpha)
+
+
+def test_dispatch_method_methodify_non_callable():
+    with pytest.raises(TypeError):
+        methodify("cannot call this")
 
 
 def test_dispatch_method_register_auto():
@@ -187,8 +192,8 @@ def test_dispatch_method_register_auto():
 
     assert foo.bar(Alpha()) == "default"
 
-    Foo.bar.register_auto(lambda obj: "Alpha", obj=Alpha)
-    Foo.bar.register_auto(lambda app, obj: "Beta %s" % app.x, obj=Beta)
+    Foo.bar.register(methodify(lambda obj: "Alpha"), obj=Alpha)
+    Foo.bar.register(methodify(lambda app, obj: "Beta %s" % app.x), obj=Beta)
 
     assert foo.bar(Alpha()) == "Alpha"
     assert foo.bar(Beta()) == "Beta X"
@@ -412,10 +417,10 @@ def test_dispatch_method_with_register_function_value():
     def beta_func(obj):
         return "Beta"
 
-    Foo.bar.register_function(alpha_func, obj=Alpha)
-    Foo.bar.register_function(beta_func, obj=Beta)
+    Foo.bar.register(methodify(alpha_func), obj=Alpha)
+    Foo.bar.register(methodify(beta_func), obj=Beta)
 
-    assert foo.bar.component(Alpha()).value is alpha_func
+    assert unmethodify(foo.bar.component(Alpha())) is alpha_func
 
 
 def test_dispatch_method_with_register_auto_value():
@@ -440,11 +445,11 @@ def test_dispatch_method_with_register_auto_value():
     def beta_func(app, obj):
         return "Beta"
 
-    Foo.bar.register_auto(alpha_func, obj=Alpha)
-    Foo.bar.register_auto(beta_func, obj=Beta)
+    Foo.bar.register(methodify(alpha_func), obj=Alpha)
+    Foo.bar.register(methodify(beta_func), obj=Beta)
 
-    assert foo.bar.component(Alpha()).value is alpha_func
-    assert foo.bar.component(Beta()).value is beta_func
+    assert unmethodify(foo.bar.component(Alpha())) is alpha_func
+    assert unmethodify(foo.bar.component(Beta())) is beta_func
     # actually since this is a method this is also unwrapped
     assert foo.bar.component(Beta()) is beta_func
 
@@ -470,12 +475,12 @@ def test_install_auto_method_function_no_app_arg():
     def f(a):
         return a
 
-    Target.m = methodify_auto(f)
+    Target.m = methodify(f)
 
     t = Target()
 
     assert t.m('A') == 'A'
-    assert t.m.value is f
+    assert unmethodify(t.m) is f
 
 
 def test_install_auto_method_function_app_arg():
@@ -486,11 +491,11 @@ def test_install_auto_method_function_app_arg():
         assert isinstance(app, Target)
         return a
 
-    Target.m = methodify_auto(g)
+    Target.m = methodify(g)
 
     t = Target()
     assert t.m('A') == 'A'
-    assert t.m.value is g
+    assert unmethodify(t.m) is g
 
 
 def test_install_auto_method_method_no_app_arg():
@@ -503,12 +508,12 @@ def test_install_auto_method_method_no_app_arg():
 
     f = Foo().f
 
-    Target.m = methodify_auto(f)
+    Target.m = methodify(f)
 
     t = Target()
 
     assert t.m('A') == 'A'
-    assert t.m.value is f
+    assert unmethodify(t.m) is f
 
 
 def test_install_auto_method_method_app_arg():
@@ -522,12 +527,12 @@ def test_install_auto_method_method_app_arg():
 
     g = Bar().g
 
-    Target.m = methodify_auto(g)
+    Target.m = methodify(g)
 
     t = Target()
 
     assert t.m('A') == 'A'
-    assert t.m.value is g
+    assert unmethodify(t.m) is g
 
 
 def test_install_instance_method():
@@ -546,7 +551,7 @@ def test_install_instance_method():
     t = Target()
 
     assert t.m('A') == 'A'
-    assert t.m.value is g
+    assert unmethodify(t.m) is g
 
 
 def test_dispatch_method_introspection():

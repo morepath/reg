@@ -614,14 +614,13 @@ Let's try it out:
   >>> image.bytes
   'new data'
 
-
 Dispatch methods
 ----------------
 
-Rather than having a ``size`` function and a ``view`` function, we'd
-like now to define a CMS class with ``size`` and ``view`` as a
-methods. To do so, in place of :class:`reg.dispatch` we'll use
-:class:`reg.dispatch_method`:
+Rather than having a ``size`` function and a ``view`` function, we can
+also have a context class with ``size`` and ``view`` as methods. We
+need to use :class:`reg.dispatch_method` instead of
+:class:`reg.dispatch` to do this.
 
 .. testcode::
 
@@ -638,7 +637,7 @@ methods. To do so, in place of :class:`reg.dispatch` we'll use
       def view(self, obj, request):
           return "Generic content of {} bytes.".format(self.size(obj))
 
-You can now register an implementation of ``CMS.size`` for a
+We can now register an implementation of ``CMS.size`` for a
 ``Document`` object:
 
 .. testcode::
@@ -647,51 +646,23 @@ You can now register an implementation of ``CMS.size`` for a
   def document_size_as_method(self, item):
       return len(item.text)
 
-.. sidebar:: ``register_function`` vs. ``register``
-
-  ``register`` expects the implementation to have the same number of
-  arguments as the dispatch method, including a reference to the class
-  instance as its first argument. Typically, but not necessarily, this
-  first argument is called ``self``.
-
-  In some circumstances you might already have a suitable function
-  that implements the method, but that lacks the initial reference to
-  the class instance.  In our case, the signature of the dispatch
-  method is::
-
-    CMS.size(self, item)
-
-  However, the signature of the existing implementation is ::
-
-    document_size(item)
-
-  You could register it using a wrapper that drops the first argument::
-
-    @CMS.size.register(item=Document)
-    def document_size_wrapper(self, item):
-        return document_size(item)
-
-  ``register_function`` does that for you, so that you can simply
-  write::
-
-    CMS.size.register_function(
-        document_size, item=Document)
-
-  NB: since the purpose of ``register_function`` is to register
-  existing functions, you cannot use it as a decorator.
-
 Note that this is almost the same as the function ``document_size`` we
 defined before: the only difference is the signature, with the
-additional ``self`` as the first argument.  In such situations you
-can register an existing function using ``register_function``:
+additional ``self`` as the first argument. We can in fact use
+:func:`reg.methodify` to reuse such functions without an initial
+context argument:
 
 .. testcode::
 
-  CMS.size.register_function(folder_size, item=Folder)
-  CMS.size.register_function(image_size, item=Image)
-  CMS.size.register_function(file_size, item=File)
+  from reg import methodify
 
-We can now verify that ``CMS.size`` behaves as expected:
+  CMS.size.register(methodify(folder_size), item=Folder)
+  CMS.size.register(methodify(image_size), item=Image)
+  CMS.size.register(methodify(file_size), item=File)
+
+``CMS.size`` now behaves as expected:
+
+.. doctest::
 
   >>> cms = CMS()
   >>> cms.size(Image("123"))
@@ -708,12 +679,17 @@ Similarly for the ``view`` method we can define:
       return "{}-byte-long text is: {}".format(
           self.size(obj), obj.text)
 
-which we can easily verify together with the fallback implementation:
+This works as expected as well:
+
+.. doctest::
 
   >>> cms.view(Document("12345"), Request("GET"))
   '5-byte-long text is: 12345'
   >>> cms.view(Image("123"), Request("GET"))
   'Generic content of 3 bytes.'
+
+For more about how you can use dispatch methods and class-based context,
+see :doc:`context`.
 
 Lower level API
 ---------------

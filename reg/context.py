@@ -1,10 +1,10 @@
 from __future__ import unicode_literals
-import inspect
+from functools import update_wrapper
 from types import MethodType
 from .compat import create_method_for_class
-from .dispatch import dispatch, Dispatch, same_signature
+from .dispatch import (dispatch, Dispatch,
+                       format_signature, execute)
 from .arginfo import arginfo
-from .error import RegistrationError
 
 
 class dispatch_method(dispatch):
@@ -24,17 +24,10 @@ class dispatch_method(dispatch):
       instance and returns a key lookup. A :class:`PredicateRegistry` instance
       is itself a key lookup, but you can return :class:`reg.CachingKeyLookup`
       to make it more efficient.
-    :param auto_argument: argument name. if the first argument
-      (context instance) registered with
-      :meth:`reg.DispatchMethod.register_auto` has this name, it is
-      registered as a method using :meth:`reg.Dispatch.register`,
-      otherwise it is registered as a function using
-      :meth:`reg.DispatchMethod.register_function`.
     :param first_invocation_hook: a callable that accepts an instance of the
       class in which this decorator is used. It is invoked the first
       time the method is invoked.
     :returns: a :class:`reg.DispatchMethod` instance.
-
     """
     def __init__(self, *predicates, **kw):
         self.first_invocation_hook = kw.pop(
@@ -49,67 +42,9 @@ class dispatch_method(dispatch):
 
 
 class DispatchMethod(Dispatch):
-    def __init__(self, predicates, callable, get_key_lookup,
-                 auto_argument='app'):
+    def __init__(self, predicates, callable, get_key_lookup):
         super(DispatchMethod, self).__init__(
             predicates, callable, get_key_lookup)
-        self.auto_argument = auto_argument
-
-    def register_function(self, func, **key_dict):
-        """Register an implementation function.
-
-        You can register a function that does not get the context
-        instance as the first argument. This automatically wraps this
-        function as a method, discarding its first (context) argument.
-
-        You get this wrapper if you look up what is registered using
-        :meth:`reg.Dispatch.component` or :meth:`reg.Dispatch.all`. You
-        can get the underlying value that was really registered by
-        accessing the ``value`` attribute on the wrapper.
-
-        :param func: a function that implements behavior for this
-          dispatch function. It needs to have the same signature
-          as the original dispatch method, without the first argument.
-        :key_dict: keyword arguments describing the registration,
-          with as keys predicate name and as values predicate values.
-
-        """
-        validate_signature_without_first_arg(func, self.wrapped_func)
-        predicate_key = self.registry.key_dict_to_predicate_key(key_dict)
-        self.register_value(predicate_key, methodify(func))
-
-    def register_auto(self, func, **key_dict):
-        """Register an implementation function or method.
-
-        If the function you register has a first (context) argument
-        with the same name as the ``auto_argument`` value you passed to
-        :func:`reg.dispatch_method`, it is registered as a method
-        using :meth:`reg.Dispatch.register`. Otherwise, it is registered
-        as a function using :meth:`reg.DispatchMethod.register_function`.
-
-        If the implementation is registered as a function, what is
-        registered is a wrapper. You get this wrapper if you look up
-        what is registered using :meth:`reg.Dispatch.component` or
-        :meth:`reg.Dispatch.all`. You can get the underlying value
-        that was really registered by accessing the ``value``
-        attribute on the wrapper. For consistency even methods that
-        *aren't* wrapped have this ``value`` attribute.
-
-        :param func: a function that implements behavior for this
-          dispatch function. It needs to have the same signature
-          as the original dispatch method, with optionally a first
-          argument with name indicated by ``auto_argument``.
-        :key_dict: keyword arguments describing the registration,
-          with as keys predicate name and as values predicate values.
-
-        """
-        if is_auto_method(func, self.auto_argument):
-            # for symmetry as register_function with a wrapped version
-            # is possible, we also set the value
-            func.value = func
-            self.register(func, **key_dict)
-        else:
-            self.register_function(func, **key_dict)
 
     def component(self, *args, **kw):
         # pass in a None as the first argument
@@ -170,48 +105,37 @@ class DispatchMethodDescriptor(object):
         return bound
 
 
-def validate_signature_without_first_arg(f, dispatch):
-    f_arginfo = arginfo(f)
-    if f_arginfo is None:
-        raise RegistrationError(
-            "Cannot register non-callable for dispatch "
-            "%r: %r" % (dispatch, f))
-
-    dispatch_arginfo = arginfo(dispatch)
-    # strip off first argument (as this is self or cls)
-    dispatch_arginfo = inspect.ArgInfo(
-        dispatch_arginfo.args[1:],
-        dispatch_arginfo.varargs,
-        dispatch_arginfo.keywords,
-        dispatch_arginfo.defaults)
-    if not same_signature(dispatch_arginfo, f_arginfo):
-        raise RegistrationError(
-            "Signature of callable dispatched to (%r) "
-            "not that of dispatch (without self) (%r)" % (
-                f, dispatch))
-
-
-def methodify(func):
-    """Turn a function into a method.
-
-    Wraps the function so that it takes a first argument like
-    a method, and ignores it.
-
-    The return value has a ``value`` attribute which is the original
-    function that was wrapped. This way the application can access it.
+def _wrap(func, prefix_signature=''):
+    """Wrap a function potentially with some additional prefix arguments.
 
     :param func: the function to turn into method.
-    :returns: function that takes a self argument which it ignores.
-      Has original function as ``value`` attribute.
+    :param prefix_signature: extra text to prepend to signature.
+    :returns: wrapped function.
     """
-    def wrapped(self, *args, **kw):
-        return func(*args, **kw)
-    wrapped.value = func
-    return wrapped
+    args = arginfo(func)
+    code_template = """\
+def wrapper({prefix_signature} {signature}):
+    return _wrapped({signature})
+"""
+
+    code_source = code_template.format(signature=format_signature(args),
+                                       prefix_signature=prefix_signature)
+
+    wrapper = execute(
+        code_source,
+        _wrapped=func)['wrapper']
+    wrapper._wrapped_func = func
+    update_wrapper(wrapper, func)
+    return wrapper
 
 
-def methodify_auto(func, auto_argument='app'):
+def methodify(func, auto_argument='app'):
     """Turn a function into a method only if it isn't one already.
+
+    Wraps the function so that it takes a first argument like
+    a method, and ignores it. The return value can be attached to
+    a class as a method. It can also be turned back into the original
+    function using :func:`reg.unmethodify`.
 
     If the name of the first argument is ``auto_argument``, func is
     returned. If it isn't, then the function is wrapped so that it
@@ -228,21 +152,35 @@ def methodify_auto(func, auto_argument='app'):
       we want to install this directly as a method. If the first argument
       does not have this name, wrap the callable so that it does take
       that argument before installing it.
-    """
-    if is_auto_method(func, auto_argument):
-        # wrap in function so we can set value consistently
-        def wrapper(*args, **kw):
-            return func(*args, **kw)
-        wrapper.value = func
-        return wrapper
-    return methodify(func)
-
-
-def is_auto_method(func, auto_argument="app"):
-    """Check whether a function is already a method
+    :returns: function that can be attached to a class as a method.
     """
     info = arginfo(func)
-    return info.args and info.args[0] == auto_argument
+    if info is None:
+        raise TypeError("methodify must take a callable")
+    # if we already have the proper first argument
+    if info.args and info.args[0] == auto_argument:
+        # we still need to wrap it if it's an instance method
+        if isinstance(func, MethodType):
+            return _wrap(func)
+        return func
+    return _wrap(func, '_self, ')
+
+
+def unmethodify(func):
+    """Reverses methodify operation.
+
+    Given an object that is returned from a call to
+    :func:`reg.methodify` return the original object. This can be used to
+    discover the original object that was registered. You can apply
+    this to a function after it was attached as a method.
+
+    :param func: the methodified function.
+    :returns: the original function.
+    """
+    wrapped_func = getattr(func, '_wrapped_func', None)
+    if wrapped_func is not None:
+        return wrapped_func
+    return getattr(func, '__func__', func)
 
 
 def clean_dispatch_methods(cls):
