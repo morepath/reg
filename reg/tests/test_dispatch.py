@@ -1161,3 +1161,14 @@ def test_dispatch_argname_with_decorator():
 
     assert foo(Bar()) == for_bar(Bar())
     assert foo(Qux()) == for_qux(Qux())
+
+
+def test_component_lookup_before_call_and_no_registrations():
+    @dispatch('obj')
+    def foo(obj):
+        pass
+
+    class Bar(object):
+        pass
+
+    assert foo.component(Bar()) is None
