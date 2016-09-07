@@ -141,21 +141,6 @@ def methodify(func, selfname=None):
     return execute(code_source, _func=func)['wrapper']
 
 
-def unmethodify(func):
-    """Reverses methodify operation.
-
-    Given an object that is returned from a call to
-    :func:`reg.methodify` return the original object. This can be used to
-    discover the original object that was registered. You can apply
-    this to a function after it was attached as a method.
-
-    :param func: the methodified function.
-    :returns: the original function.
-    """
-    func = getattr(func, '__func__', func)
-    return func.__globals__.get('_func', func)
-
-
 def clean_dispatch_methods(cls):
     """For a given class clean all dispatch methods.
 

@@ -1,7 +1,7 @@
 # flake8: noqa
 from .dispatch import dispatch, Dispatch
 from .context import (dispatch_method, DispatchMethod,
-                      methodify, unmethodify, clean_dispatch_methods)
+                      methodify, clean_dispatch_methods)
 from .arginfo import arginfo
 from .argextract import KeyExtractor
 from .sentinel import Sentinel, NOT_FOUND

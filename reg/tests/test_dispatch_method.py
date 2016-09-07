@@ -1,6 +1,5 @@
 import pytest
-from ..context import (dispatch_method, methodify, unmethodify,
-                       clean_dispatch_methods)
+from ..context import dispatch_method, methodify, clean_dispatch_methods
 from ..predicate import match_instance
 from ..error import RegistrationError
 
@@ -641,3 +640,18 @@ def test_clean_dispatch_methods():
     assert foo.bar(Alpha()) == "default"
     # but hasn't affected qux registry
     assert qux.bar(Alpha()) == "Qux Alpha"
+
+
+def unmethodify(func):
+    """Reverses methodify operation.
+
+    Given an object that is returned from a call to
+    :func:`reg.methodify` return the original object. This can be used to
+    discover the original object that was registered. You can apply
+    this to a function after it was attached as a method.
+
+    :param func: the methodified function.
+    :returns: the original function.
+    """
+    func = getattr(func, '__func__', func)
+    return func.__globals__.get('_func', func)
