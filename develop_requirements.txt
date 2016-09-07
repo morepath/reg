@@ -1,5 +1,6 @@
 # development
 -e '.[test,coverage,pep8,docs]'
+tox
 radon
 
 # releaser
