@@ -11,6 +11,8 @@ Development
 With contributions by
 ---------------------
 
+* Henri Hulski (build environment)
+
 * Thomas Lotze (co-authored original core mapping code)
 
 Special contributions
