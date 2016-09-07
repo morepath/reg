@@ -141,6 +141,10 @@ CHANGES
   development environment. The development documentation has been
   updated accordingly.
 
+- As we reached 100% code coverage for pytest, coveralls integration
+  was replaced by the ``--fail-under=100`` argument of ``coverage
+  report`` in the tox coverage test.
+  
 0.9.3 (2016-07-18)
 ==================
 
