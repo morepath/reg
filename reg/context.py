@@ -26,30 +26,16 @@ class dispatch_method(dispatch):
     :param first_invocation_hook: a callable that accepts an instance of the
       class in which this decorator is used. It is invoked the first
       time the method is invoked.
-    :returns: a :class:`reg.DispatchMethod` instance.
     """
     def __init__(self, *predicates, **kw):
         self.first_invocation_hook = kw.pop(
             'first_invocation_hook', lambda x: None)
         super(dispatch_method, self).__init__(*predicates, **kw)
+        self._cache = {}
 
     def __call__(self, callable):
-        return DispatchMethodDescriptor(callable,
-                                        self.predicates,
-                                        self.get_key_lookup,
-                                        self.first_invocation_hook)
-
-
-class DispatchMethodDescriptor(object):
-    def __init__(self, callable, predicates, get_key_lookup,
-                 first_invocation_hook, cache_bound_method=True):
         self.callable = callable
-        self.name = self.callable.__name__
-        self.predicates = predicates
-        self.get_key_lookup = get_key_lookup
-        self.cache_bound_method = cache_bound_method
-        self._cache = {}
-        self.first_invocation_hook = first_invocation_hook
+        return self
 
     def __get__(self, obj, type=None):
         # we get the method from the cache
@@ -81,8 +67,7 @@ class DispatchMethodDescriptor(object):
         # we store it on the instance, so that next time we
         # access this, we do not hit the descriptor anymore
         # but return the bound dispatch function directly
-        if self.cache_bound_method:
-            setattr(obj, self.name, bound)
+        setattr(obj, self.callable.__name__, bound)
         return bound
 
 
