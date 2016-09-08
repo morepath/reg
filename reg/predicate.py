@@ -2,7 +2,7 @@ import inspect
 
 from repoze.lru import LRUCache
 from .sentinel import NOT_FOUND
-from .argextract import KeyExtractor, ClassKeyExtractor, NameKeyExtractor
+from .argextract import KeyExtractor, ClassKeyExtractor
 from .error import RegistrationError
 
 
@@ -33,13 +33,6 @@ class Predicate(object):
 
     def create_index(self):
         return self.index(self.fallback)
-
-    def argnames(self):
-        """argnames that this predicate needs to dispatch on.
-        """
-        if self.get_key is None:
-            return set()
-        return set(self.get_key.names)
 
     def key_by_predicate_name(self, d):
         return d.get(self.name, self.default)
@@ -112,7 +105,7 @@ def match_argname(argname, fallback=None, default=None):
     :default: optional default value.
     :returns: a :class:`Predicate`.
     """
-    return class_predicate(argname, NameKeyExtractor(argname),
+    return class_predicate(argname, lambda argdict: argdict[argname].__class__,
                            fallback, default)
 
 
@@ -146,12 +139,6 @@ class MultiPredicate(object):
 
     def get_key(self, d):
         return tuple([predicate.get_key(d) for predicate in self.predicates])
-
-    def argnames(self):
-        result = set()
-        for predicate in self.predicates:
-            result.update(predicate.argnames())
-        return result
 
     def key_by_predicate_name(self, d):
         result = []
@@ -287,9 +274,6 @@ class PredicateRegistry(object):
         self.index.add(key, value)
         self.known_keys.add(key)
 
-    def argnames(self):
-        return self.predicate.argnames()
-
     def key_dict_to_predicate_key(self, d):
         """Construct predicate key from key dictionary.
 
@@ -328,9 +312,6 @@ class SingleValueRegistry(object):
             raise RegistrationError(
                 "Already have registration for key: %s" % (key,))
         self.value = value
-
-    def argnames(self):
-        return []
 
     def key_dict_to_predicate_key(self, d):
         return ()

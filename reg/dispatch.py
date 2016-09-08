@@ -2,10 +2,9 @@ from __future__ import unicode_literals
 from functools import update_wrapper, partial
 from .predicate import match_argname
 from .compat import string_types
-from .argextract import ArgExtractor
 from .predicate import create_predicates_registry
 from .arginfo import arginfo
-from .error import RegistrationError
+from .error import RegistrationError, KeyExtractorError
 
 
 class dispatch(object):
@@ -75,12 +74,13 @@ class Dispatch(object):
         self.registry = create_predicates_registry(predicates)
         self.predicates = predicates
         self.key_lookup = self.get_key_lookup(self.registry)
-        self.arg_extractor = ArgExtractor(
-            self.wrapped_func, self.registry.argnames())
         self.__call__.__globals__.update(
             _registry_key=self.registry.key,
             _component_lookup=self.key_lookup.component,
             _fallback_lookup=self.key_lookup.fallback,
+        )
+        self._predicate_key.__globals__.update(
+            _registry_key=self.registry.key,
         )
 
     def _define_call(self):
@@ -97,10 +97,11 @@ def __call__(_self, {signature}):
 """
 
         args = arginfo(self.wrapped_func)
+        signature = format_signature(args)
+        predicate_args = ', '.join('{0}={0}'.format(x) for x in args.args)
         code_source = code_template.format(
-            signature=format_signature(args),
-            predicate_args=', '.join(
-                '{0}={0}'.format(x) for x in args.args))
+            signature=signature,
+            predicate_args=predicate_args)
 
         # We now compile __call__ to byte-code:
         call = execute(
@@ -120,6 +121,14 @@ def __call__(_self, {signature}):
             self._original_class.__name__,
             (self._original_class,),
             {'__call__': call})
+
+        # We now build the implementation for the predicate_key method
+        self._predicate_key = execute(
+            "def predicate_key({signature}):\n"
+            "    return _registry_key({predicate_args})".format(
+                signature=format_signature(args),
+                predicate_args=predicate_args),
+            _registry_key=None)['predicate_key']
 
     def clean(self):
         """Clean up implementations and added predicates.
@@ -197,7 +206,10 @@ def __call__(_self, {signature}):
         :returns: an immutable ``predicate_key`` based on the predicates
           the callable was configured with.
         """
-        return self.registry.key(**self.arg_extractor(*args, **kw))
+        try:
+            return self._predicate_key(*args, **kw)
+        except TypeError as ex:
+            raise KeyExtractorError(str(ex))
 
     def component(self, *args, **kw):
         """Lookup function dispatched to with args and kw.

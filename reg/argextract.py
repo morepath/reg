@@ -124,17 +124,3 @@ class ClassKeyExtractor(KeyExtractor):
     """
     def __call__(self, argdict):
         return super(ClassKeyExtractor, self).__call__(argdict).__class__
-
-
-class NameKeyExtractor(object):
-    """Extract name's class from argdict.
-    """
-    def __init__(self, name):
-        self.name = name
-        self.names = set([name])
-
-    def __call__(self, argdict):
-        value = argdict[self.name]
-        if value is NOT_FOUND:
-            raise KeyExtractorError(self.name)
-        return value.__class__
