@@ -19,7 +19,7 @@ class dispatch(object):
       custom predicate class.
 
       You can also pass in plain string argument, which is turned into
-      a :func:`reg.match_instance` predicate.
+      a :func:`reg.match_argname` predicate.
     :param get_key_lookup: a function that gets a :class:`PredicateRegistry`
       instance and returns a key lookup. A :class:`PredicateRegistry` instance
       is itself a key lookup, but you can return :class:`reg.CachingKeyLookup`
