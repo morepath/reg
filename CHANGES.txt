@@ -101,9 +101,7 @@ CHANGES
 
   * You can also use ``reg.methodify`` to register implementation
     functions that do not take the context as the first argument --
-    this is useful when upgrading existing code. ``reg.methodify``
-    determines whether to use ``register_function`` or ``register``
-    using the name of the first argument of what you register.
+    this is useful when upgrading existing code.
 
   * Call your context-dependent methods as methods on the context
     instance. This way you can indicate what context you are calling
@@ -125,14 +123,27 @@ CHANGES
   If you want it register it with an optional ``app`` argument similar to
   ``register_auto``, you can use ``methodify_auto``::
 
-     Context.my_method = reg.methodify_auto(some_function)
+     Context.my_method = reg.methodify(some_function, selfname='app')
 
 - **Breaking change**
 
   Removed the helper function ``mapply`` from the API.
 
+- **Breaking change**
+
+  Removed the ``info`` attribute from ``KeyExtractor``.
+
+- **Breaking change**
+
+  Removed the ``argnames`` attribute from ``Predicate`` and its
+  descendant.
+
 - The second argument for ``match_class`` is now optional; if you
   don't supply it ``match_class`` will generate a predicate function
+  that extracts that name by default.
+
+- The second argument for ``match_instance`` is now optional; if you
+  don't supply it ``match_instance`` will generate a predicate function
   that extracts that name by default.
 
 - Include doctests in Tox and Travis.
@@ -144,7 +155,7 @@ CHANGES
 - As we reached 100% code coverage for pytest, coveralls integration
   was replaced by the ``--fail-under=100`` argument of ``coverage
   report`` in the tox coverage test.
-  
+
 0.9.3 (2016-07-18)
 ==================
 
