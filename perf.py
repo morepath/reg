@@ -1,12 +1,15 @@
 import timeit
 
 from reg import dispatch
-from reg import CachingKeyLookup
+from reg import DictCachingKeyLookup, LruCachingKeyLookup
 
+
+# def get_key_lookup(r):
+#     return LruCachingKeyLookup(r, component_cache_size=5000,
+#                                all_cache_size=5000, fallback_cache_size=5000)
 
 def get_key_lookup(r):
-    return CachingKeyLookup(r, component_cache_size=5000,
-                            all_cache_size=5000, fallback_cache_size=5000)
+    return DictCachingKeyLookup(r)
 
 
 @dispatch(get_key_lookup=get_key_lookup)

@@ -19,7 +19,10 @@ Dispatch functions
 
 .. autofunction:: match_class
 
-.. autoclass:: CachingKeyLookup
+.. autoclass:: DictCachingKeyLookup
+   :members:
+
+.. autoclass:: LruCachingKeyLookup
    :members:
 
 Context-specific dispatch methods

@@ -10,20 +10,22 @@ from .error import RegistrationError, KeyExtractorError
 class dispatch(object):
     """Decorator to make a function dispatch based on its arguments.
 
-    This takes the predicates to dispatch on as zero or more parameters.
+    This takes the predicates to dispatch on as zero or more
+    parameters.
 
-    :param predicates: sequence of :class:`Predicate` instances
-      to do the dispatch on. You create predicates using
+    :param predicates: sequence of :class:`reg.Predicate` instances to do
+      the dispatch on. You create predicates using
       :func:`reg.match_instance`, :func:`reg.match_key`,
       :func:`reg.match_class`, or :func:`reg.match_argname`, or with a
-      custom predicate class.
-
-      You can also pass in plain string argument, which is turned into
-      a :func:`reg.match_argname` predicate.
-    :param get_key_lookup: a function that gets a :class:`PredicateRegistry`
-      instance and returns a key lookup. A :class:`PredicateRegistry` instance
-      is itself a key lookup, but you can return :class:`reg.CachingKeyLookup`
-      to make it more efficient.
+      custom predicate class. You can also pass in plain string
+      argument, which is turned into a :func:`reg.match_argname`
+      predicate.
+    :param get_key_lookup: a function that gets a
+      :class:`PredicateRegistry` instance and returns a key lookup. A
+      :class:`PredicateRegistry` instance is itself a key lookup, but
+      you can return a caching key lookup (such as
+      :class:`reg.DictCachingKeyLookup` or
+      :class:`reg.LruCachingKeyLookup`) to make it more efficient.
     :returns: a :class:`reg.Dispatch` instance.
     """
     def __init__(self, *predicates, **kw):
@@ -56,10 +58,12 @@ class Dispatch(object):
       implementations for. The signature of an implementation needs to
       match that of this function. This function is used as a fallback
       implementation that is called if no specific implementations match.
-    :param get_key_lookup: a function that gets a :class:`PredicateRegistry`
-      instance and returns a key lookup. A :class:`PredicateRegistry` instance
-      is itself a key lookup, but you can return :class:`reg.CachingKeyLookup`
-      to make it more efficient.
+    :param get_key_lookup: a function that gets a
+      :class:`PredicateRegistry` instance and returns a key lookup. A
+      :class:`PredicateRegistry` instance is itself a key lookup, but
+      you can return a caching key lookup (such as
+      :class:`reg.DictCachingKeyLookup` or
+      :class:`reg.LruCachingKeyLookup`) to make it more efficient.
     """
     def __init__(self, predicates, callable, get_key_lookup):
         self.wrapped_func = callable

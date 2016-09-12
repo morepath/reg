@@ -34,7 +34,10 @@ CHANGES
   * Caching is now per dispatch function, not globally per lookup. You
     can pass a ``get_key_lookup`` function that wraps
     ``reg.PredicateRegistry`` instance inside a
-    ``reg.CachingKeyLookup`` cache.
+    ``reg.DictCachingKeyLookup`` cache. You can also use a
+    ``reg.LruCachingKeyLookup`` if you expect a dispatch to be called
+    with a large amount of possible predicate combinations, to
+    preserve memory.
 
   * The whole concept of a "lookup" is gone:
 

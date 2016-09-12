@@ -19,13 +19,16 @@ class dispatch_method(dispatch):
 
       You can also pass in plain string argument, which is turned into
       a :func:`reg.match_instance` predicate.
-    :param get_key_lookup: a function that gets a :class:`PredicateRegistry`
-      instance and returns a key lookup. A :class:`PredicateRegistry` instance
-      is itself a key lookup, but you can return :class:`reg.CachingKeyLookup`
-      to make it more efficient.
+    :param get_key_lookup: a function that gets a
+      :class:`PredicateRegistry` instance and returns a key lookup. A
+      :class:`PredicateRegistry` instance is itself a key lookup, but
+      you can return a caching key lookup (such as
+      :class:`reg.DictCachingKeyLookup` or
+      :class:`reg.LruCachingKeyLookup`) to make it more efficient.
     :param first_invocation_hook: a callable that accepts an instance of the
       class in which this decorator is used. It is invoked the first
       time the method is invoked.
+
     """
     def __init__(self, *predicates, **kw):
         self.first_invocation_hook = kw.pop(
