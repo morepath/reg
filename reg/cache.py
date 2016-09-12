@@ -20,6 +20,7 @@ class DictCachingKeyLookup(object):
     """
     def __init__(self, key_lookup):
         self.key_lookup = key_lookup
+        self.key_dict_to_predicate_key = key_lookup.key_dict_to_predicate_key
         self.component_cache = {}
         self.all_cache = {}
         self.fallback_cache = {}

@@ -236,6 +236,10 @@ def test_dict_caching_registry():
         FooSub(), Request('', 'GET')) == 'foo default'
     assert view(
         FooSub(), Request('edit', 'POST')) == 'foo edit'
+    assert view.key_dict_to_predicate_key(
+        {'model': Foo,
+         'name': '',
+         'request_method': 'GET'}) == (Foo, '', 'GET')
 
     # use a bit of inside knowledge to check the cache is filled
     assert view.key_lookup.component_cache.get(
@@ -336,6 +340,10 @@ def test_lru_caching_registry():
         FooSub(), Request('', 'GET')) == 'foo default'
     assert view(
         FooSub(), Request('edit', 'POST')) == 'foo edit'
+    assert view.key_dict_to_predicate_key(
+        {'model': Foo,
+         'name': '',
+         'request_method': 'GET'}) == (Foo, '', 'GET')
 
     # use a bit of inside knowledge to check the cache is filled
     assert view.key_lookup.component_cache.get(
