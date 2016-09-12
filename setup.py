@@ -36,6 +36,7 @@ setup(
     extras_require=dict(
         test=[
             'pytest >= 2.9.0',
+            'sphinx',
             'pytest-remove-stale-bytecode',
         ],
         pep8=[
