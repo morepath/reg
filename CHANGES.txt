@@ -114,14 +114,16 @@ CHANGES
 
      Context.my_method = some_function
 
-  If you want to set up a function that doesn't take an ``app`` argument,
-  you can use ``reg.methodify`` to turn it into a method that ignores its
-  first argument::
+  If you want to set up a function that doesn't take a reference to a
+  ``Context`` instance as its first argument, you can use
+  ``reg.methodify`` to turn it into a method that ignores its first
+  argument::
 
      Context.my_method = reg.methodify(some_function)
 
-  If you want it register it with an optional ``app`` argument similar to
-  ``register_auto``, you can use ``methodify_auto``::
+  If you want to register a function that might or might not have a
+  reference to a ``Context`` instance as its first argument, called,
+  e.g., ``app``, you can use the following::
 
      Context.my_method = reg.methodify(some_function, selfname='app')
 
