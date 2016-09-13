@@ -242,11 +242,11 @@ def test_dict_caching_registry():
          'request_method': 'GET'}) == (Foo, '', 'GET')
 
     # use a bit of inside knowledge to check the cache is filled
-    assert view.key_lookup.component_cache.get(
+    assert view.key_lookup.component.__self__.get(
         (Foo, '', 'GET')) is not None
-    assert view.key_lookup.component_cache.get(
+    assert view.key_lookup.component.__self__.get(
         (FooSub, '', 'GET')) is not None
-    assert view.key_lookup.component_cache.get(
+    assert view.key_lookup.component.__self__.get(
         (FooSub, 'edit', 'POST')) is not None
 
     # now let's do this again. this time things come from the component cache
@@ -257,8 +257,7 @@ def test_dict_caching_registry():
     key_lookup = view.key_lookup
     # prime and check the all cache
     assert list(view.all(Foo(), Request('', 'GET'))) == [foo_default]
-    assert key_lookup.all_cache.get(
-        (Foo, '', 'GET')) is not None
+    assert key_lookup.all.__self__.get((Foo, '', 'GET')) is not None
     # should be coming from cache now
     assert list(view.all(Foo(), Request('', 'GET'))) == [foo_default]
 
@@ -270,8 +269,7 @@ def test_dict_caching_registry():
     assert view(FooSub(), Request('dummy', 'GET')) == 'Name fallback'
 
     # fallbacks get cached too
-    assert key_lookup.fallback_cache.get(
-        (Bar, '', 'GET')) is model_fallback
+    assert key_lookup.fallback.__self__.get((Bar, '', 'GET')) is model_fallback
 
     # these come from the fallback cache now
     assert view(Bar(), Request('', 'GET')) == 'Model fallback'
@@ -361,8 +359,7 @@ def test_lru_caching_registry():
     key_lookup = view.key_lookup
     # prime and check the all cache
     assert list(view.all(Foo(), Request('', 'GET'))) == [foo_default]
-    assert key_lookup.all_cache.get(
-        (Foo, '', 'GET')) is not None
+    assert key_lookup.all_cache.get((Foo, '', 'GET')) is not None
     # should be coming from cache now
     assert list(view.all(Foo(), Request('', 'GET'))) == [foo_default]
 
@@ -374,8 +371,7 @@ def test_lru_caching_registry():
     assert view(FooSub(), Request('dummy', 'GET')) == 'Name fallback'
 
     # fallbacks get cached too
-    assert key_lookup.fallback_cache.get(
-        (Bar, '', 'GET')) is model_fallback
+    assert key_lookup.fallback_cache.get((Bar, '', 'GET')) is model_fallback
 
     # these come from the fallback cache now
     assert view(Bar(), Request('', 'GET')) == 'Model fallback'
