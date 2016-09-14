@@ -1,4 +1,3 @@
-import pytest
 import pydoc
 from sphinx.application import Sphinx
 from .fixtures.module import Foo, foo
@@ -9,7 +8,6 @@ def rstrip_lines(s):
     return '\n'.join(l.rstrip() for l in s.splitlines())
 
 
-@pytest.mark.xfail()
 def test_dispatch_method_class_help(capsys):
     pydoc.help(Foo)
     out, err = capsys.readouterr()
@@ -38,7 +36,6 @@ class Foo({builtins}.object)
 """.format(builtins=object.__module__)
 
 
-@pytest.mark.xfail()
 def test_dispatch_method_help(capsys):
     pydoc.help(Foo.bar)
     out, err = capsys.readouterr()
@@ -50,7 +47,6 @@ bar(self, obj)
 """
 
 
-@pytest.mark.xfail()
 def test_dispatch_help(capsys):
     pydoc.help(foo)
     out, err = capsys.readouterr()
@@ -62,7 +58,6 @@ foo(obj)
 """
 
 
-@pytest.mark.xfail()
 def test_autodoc(tmpdir):
     root = str(tmpdir)
     tmpdir.join('conf.py').write("extensions = ['sphinx.ext.autodoc']\n")

@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 import inspect
 from types import MethodType
-from .compat import create_method_for_class
 from .dispatch import dispatch, Dispatch, format_signature, execute
 from .arginfo import arginfo
 
@@ -52,7 +51,7 @@ class dispatch_method(dispatch):
             # we create it and store it in the cache
             dispatch = DispatchMethod(self.predicates,
                                       self.callable,
-                                      self.get_key_lookup)
+                                      self.get_key_lookup).call
             self._cache[type] = dispatch
 
         # we cannot attach the dispatch method to the class
@@ -61,7 +60,7 @@ class dispatch_method(dispatch):
         # class, including subclasses.
         if obj is None:
             # we access it through the class directly, so unbound
-            return create_method_for_class(dispatch, type)
+            return dispatch
 
         self.first_invocation_hook(obj)
 
@@ -139,8 +138,5 @@ def clean_dispatch_methods(cls):
     """
     for name in dir(cls):
         attr = getattr(cls, name)
-        im_func = getattr(attr, '__func__', None)
-        if im_func is None:
-            continue
-        if isinstance(im_func, DispatchMethod):
+        if inspect.isfunction(attr) and hasattr(attr, 'clean'):
             attr.clean()

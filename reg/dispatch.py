@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from functools import update_wrapper, partial
+from functools import update_wrapper, partial, wraps
 from .predicate import match_argname
 from .compat import string_types
 from .predicate import create_predicates_registry
@@ -26,7 +26,8 @@ class dispatch(object):
       you can return a caching key lookup (such as
       :class:`reg.DictCachingKeyLookup` or
       :class:`reg.LruCachingKeyLookup`) to make it more efficient.
-    :returns: a :class:`reg.Dispatch` instance.
+    :returns: a function that you can use as if it were a
+      :class:`reg.Dispatch` instance.
     """
     def __init__(self, *predicates, **kw):
         self.predicates = [self._make_predicate(predicate)
@@ -39,7 +40,7 @@ class dispatch(object):
         return predicate
 
     def __call__(self, callable):
-        return Dispatch(self.predicates, callable, self.get_key_lookup)
+        return Dispatch(self.predicates, callable, self.get_key_lookup).call
 
 
 def identity(registry):
@@ -68,7 +69,6 @@ class Dispatch(object):
     def __init__(self, predicates, callable, get_key_lookup):
         self.wrapped_func = callable
         self.get_key_lookup = get_key_lookup
-        self._original_class = type(self)
         self._original_predicates = predicates
         self._define_call()
         self._register_predicates(predicates)
@@ -77,8 +77,9 @@ class Dispatch(object):
     def _register_predicates(self, predicates):
         self.registry = create_predicates_registry(predicates)
         self.predicates = predicates
-        self.key_lookup = self.get_key_lookup(self.registry)
-        self.__call__.__globals__.update(
+        self.call.key_lookup = self.key_lookup = \
+            self.get_key_lookup(self.registry)
+        self.call.__globals__.update(
             _registry_key=self.registry.key,
             _component_lookup=self.key_lookup.component,
             _fallback_lookup=self.key_lookup.fallback,
@@ -88,12 +89,12 @@ class Dispatch(object):
         )
 
     def _define_call(self):
-        # We build the __call__ method on the fly. Its definition
+        # We build the generic function on the fly. Its definition
         # requires the signature of the wrapped function and the
         # arguments needed by the registered predicates
         # (predicate_args):
         code_template = """\
-def __call__(_self, {signature}):
+def call({signature}):
     _key = _registry_key({predicate_args})
     return (_component_lookup(_key) or
             _fallback_lookup(_key) or
@@ -107,24 +108,22 @@ def __call__(_self, {signature}):
             signature=signature,
             predicate_args=predicate_args)
 
-        # We now compile __call__ to byte-code:
-        call = execute(
+        # We now compile call to byte-code:
+        self.call = call = wraps(self.wrapped_func)(execute(
             code_source,
             _registry_key=None,
             _component_lookup=None,
             _fallback_lookup=None,
-            _fallback=self.wrapped_func)['__call__']
+            _fallback=self.wrapped_func)['call'])
 
         # We copy over the defaults from the wrapped function.
         call.__defaults__ = args.defaults
 
-        # Unfortunately __call__ must be a method, we cannot simply
-        # assign it to self.__call__.  So we have to create a one-off
-        # class and set it as the new type of self:
-        self.__class__ = type(
-            self._original_class.__name__,
-            (self._original_class,),
-            {'__call__': call})
+        # Make the methods available as attributes of call
+        for k in dir(type(self)):
+            if not k.startswith('_'):
+                setattr(call, k, getattr(self, k))
+        call.wrapped_func = self.wrapped_func
 
         # We now build the implementation for the predicate_key method
         self._predicate_key = execute(
@@ -191,9 +190,6 @@ def __call__(_self, {signature}):
         if isinstance(predicate_key, tuple) and len(predicate_key) == 1:
             predicate_key = predicate_key[0]
         self.registry.register(predicate_key, value)
-
-    def __repr__(self):
-        return repr(self.wrapped_func)
 
     def predicate_key(self, *args, **kw):
         """Construct predicate_key for function arguments.

@@ -1126,15 +1126,6 @@ def test_dispatch_introspection():
     assert foo.__module__ == __name__
 
 
-def test_dispatch_repr():
-    def foo(obj):
-        return "default"
-
-    dispatch_foo = dispatch('obj')(foo)
-
-    assert repr(dispatch_foo) == repr(foo)
-
-
 def test_dispatch_argname_with_decorator():
     @dispatch('obj')
     def foo(obj):
