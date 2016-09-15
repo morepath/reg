@@ -1,10 +1,6 @@
-import sys
+"""Compatibility support for Python 2 and 3."""
 
-# True if we are running on Python 3.
-PY3 = sys.version_info[0] == 3
-
-
-if PY3:
+try:
+    string_types = (basestring,)
+except NameError:
     string_types = (str,)
-else:  # pragma: no cover
-    string_types = (basestring,)  # noqa
