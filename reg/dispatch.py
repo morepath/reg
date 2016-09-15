@@ -330,5 +330,7 @@ def same_signature(a, b):
 
 def execute(code_source, **namespace):
     """Execute code in a namespace, returning the namespace."""
-    exec(code_source, namespace)
+    code_object = compile(
+        code_source, '<generated code: {}>'.format(code_source), 'exec')
+    exec(code_object, namespace)
     return namespace
