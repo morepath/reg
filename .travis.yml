@@ -11,6 +11,7 @@ env:
     - TOXENV=coverage
     - TOXENV=pep8
     - TOXENV=docs
+    - TOXENV=perf
 install:
     - pip install tox
 script:
