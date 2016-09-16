@@ -162,4 +162,8 @@ You can also specify a test environment to run e.g.::
   $ tox -e pep8
   $ tox -e docs
 
+To run a simple performance test you can use::
+
+  $ tox -e perf
+
 .. _pyenv: https://github.com/yyuu/pyenv
