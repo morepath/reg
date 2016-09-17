@@ -1,5 +1,7 @@
+from types import FunctionType
 import pytest
-from ..context import dispatch_method, methodify, clean_dispatch_methods
+from ..context import (
+    dispatch, dispatch_method, methodify, clean_dispatch_methods)
 from ..predicate import match_instance
 from ..error import RegistrationError
 
@@ -640,6 +642,145 @@ def test_clean_dispatch_methods():
     assert foo.bar(Alpha()) == "default"
     # but hasn't affected qux registry
     assert qux.bar(Alpha()) == "Qux Alpha"
+
+
+def test_replacing_with_normal_method():
+    class Foo(object):
+        @dispatch_method('obj')
+        def bar(self, obj):
+            return "default"
+
+    class Alpha(object):
+        pass
+
+    class Beta(object):
+        pass
+
+    # At this moment Foo.bar is still a descriptor, even though it is
+    # not easy to see that:
+    assert isinstance(vars(Foo)['bar'], dispatch_method)
+
+    # Simply using Foo.bar wouldn't have worked here, as it would
+    # invoke the descriptor:
+    assert isinstance(Foo.bar, FunctionType)
+
+    # We now replace the descriptor with the actual unbound method:
+    Foo.bar = Foo.bar
+
+    # Now the descriptor is gone
+    assert isinstance(vars(Foo)['bar'], FunctionType)
+
+    # But we can still use the generic function as usual, and even
+    # register new implementations:
+    Foo.bar.register(obj=Alpha)(lambda self, obj: "Alpha")
+    Foo.bar.register(obj=Beta)(lambda self, obj: "Beta")
+    foo = Foo()
+    assert foo.bar(Alpha()) == "Alpha"
+    assert foo.bar(Beta()) == "Beta"
+    assert foo.bar(None) == "default"
+
+
+def test_replacing_with_normal_method_and_its_effect_on_inheritance():
+    class Foo(object):
+        @dispatch_method('obj')
+        def bar(self, obj):
+            return "default"
+
+    class SubFoo(Foo):
+        pass
+
+    class Alpha(object):
+        pass
+
+    class Beta(object):
+        pass
+
+    Foo.bar.register(obj=Alpha)(lambda self, obj: "Alpha")
+    Foo.bar.register(obj=Beta)(lambda self, obj: "Beta")
+
+    foo = Foo()
+    assert foo.bar(Alpha()) == "Alpha"
+    assert foo.bar(Beta()) == "Beta"
+    assert foo.bar(None) == "default"
+
+    # SubFoo has different dispatching from Foo
+    subfoo = SubFoo()
+    assert subfoo.bar(Alpha()) == "default"
+    assert subfoo.bar(Beta()) == "default"
+    assert subfoo.bar(None) == "default"
+
+    # We now replace the descriptor with the actual unbound method:
+    Foo.bar = Foo.bar
+
+    # Now the descriptor is gone
+    assert isinstance(vars(Foo)['bar'], FunctionType)
+
+    # Foo.bar works as before:
+    foo = Foo()
+    assert foo.bar(Alpha()) == "Alpha"
+    assert foo.bar(Beta()) == "Beta"
+    assert foo.bar(None) == "default"
+
+    # But now SubFoo.bar shares the dispatch registry with Foo:
+    subfoo = SubFoo()
+    assert subfoo.bar(Alpha()) == "Alpha"
+    assert subfoo.bar(Beta()) == "Beta"
+    assert subfoo.bar(None) == "default"
+
+    # This is exactly the same behavior we'd get by using dispatch
+    # instead of dispatch_method:
+    del Foo, SubFoo
+
+    class Foo(object):
+        @dispatch('obj')
+        def bar(self, obj):
+            return "default"
+
+    class SubFoo(Foo):
+        pass
+
+    # Foo and SubFoo share the same registry:
+    Foo.bar.register(obj=Alpha)(lambda self, obj: "Alpha")
+    SubFoo.bar.register(obj=Beta)(lambda self, obj: "Beta")
+
+    foo = Foo()
+    assert foo.bar(Alpha()) == "Alpha"
+    assert foo.bar(Beta()) == "Beta"
+    assert foo.bar(None) == "default"
+
+    subfoo = SubFoo()
+    assert subfoo.bar(Alpha()) == "Alpha"
+    assert subfoo.bar(Beta()) == "Beta"
+    assert subfoo.bar(None) == "default"
+
+    # Now we start again, and do the replacement for both subclass and
+    # parent class, in this order:
+    del Foo, SubFoo
+
+    class Foo(object):
+        @dispatch_method('obj')
+        def bar(self, obj):
+            return "default"
+
+    class SubFoo(Foo):
+        pass
+
+    Foo.bar.register(obj=Alpha)(lambda self, obj: "Alpha")
+    Foo.bar.register(obj=Beta)(lambda self, obj: "Beta")
+
+    SubFoo.bar = SubFoo.bar
+    Foo.bar = Foo.bar
+
+    # This has kept two separate registries:
+    foo = Foo()
+    assert foo.bar(Alpha()) == "Alpha"
+    assert foo.bar(Beta()) == "Beta"
+    assert foo.bar(None) == "default"
+
+    subfoo = SubFoo()
+    assert subfoo.bar(Alpha()) == "default"
+    assert subfoo.bar(Beta()) == "default"
+    assert subfoo.bar(None) == "default"
 
 
 def unmethodify(func):
