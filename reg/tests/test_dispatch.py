@@ -4,7 +4,7 @@ import pytest
 from ..predicate import (
     match_instance, match_key, match_class, key_predicate, NOT_FOUND)
 from ..dispatch import dispatch
-from ..error import RegistrationError, KeyExtractorError
+from ..error import RegistrationError
 
 
 class IAlpha(object):
@@ -396,7 +396,7 @@ def test_call_with_no_args_while_arg_expected():
     with pytest.raises(TypeError):
         target()
 
-    with pytest.raises(KeyExtractorError):
+    with pytest.raises(TypeError):
         target.component()
 
 
@@ -414,7 +414,7 @@ def test_call_with_wrong_args():
     with pytest.raises(TypeError):
         target(wrong=1)
 
-    with pytest.raises(KeyExtractorError):
+    with pytest.raises(TypeError):
         target.component(wrong=1)
 
 

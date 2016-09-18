@@ -4,7 +4,7 @@ from .predicate import match_argname
 from .compat import string_types
 from .predicate import create_predicates_registry
 from .arginfo import arginfo
-from .error import RegistrationError, KeyExtractorError
+from .error import RegistrationError
 
 
 class dispatch(object):
@@ -206,10 +206,7 @@ def call({signature}):
         :returns: an immutable ``predicate_key`` based on the predicates
           the callable was configured with.
         """
-        try:
-            return self._predicate_key(*args, **kw)
-        except TypeError as ex:
-            raise KeyExtractorError(str(ex))
+        return self._predicate_key(*args, **kw)
 
     def component(self, *args, **kw):
         """Lookup function dispatched to with args and kw.

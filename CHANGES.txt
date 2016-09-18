@@ -136,6 +136,10 @@ CHANGES
 
 - **Breaking change**
 
+  Removed the exception class ``KeyExtractorError`` from the API.
+
+- **Breaking change**
+
   Removed the ``info`` attribute from ``KeyExtractor``.
 
 - **Breaking change**
