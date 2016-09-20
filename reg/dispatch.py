@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from functools import update_wrapper, partial, wraps
+from functools import partial, wraps
 from .predicate import match_argname
 from .compat import string_types
 from .predicate import create_predicates_registry
@@ -72,7 +72,6 @@ class Dispatch(object):
         self._original_predicates = predicates
         self._define_call()
         self._register_predicates(predicates)
-        update_wrapper(self, callable)
 
     def _register_predicates(self, predicates):
         self.registry = create_predicates_registry(predicates)
