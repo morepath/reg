@@ -9,7 +9,7 @@ long_description = '\n'.join((
 setup(
     name='reg',
     version='0.10.dev0',
-    description="Generic functions. Clever registries and lookups",
+    description="Clever dispatch",
     long_description=long_description,
     author="Martijn Faassen",
     author_email="faassen@startifact.com",
