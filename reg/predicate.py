@@ -1,7 +1,7 @@
 import inspect
+from operator import itemgetter
 
 from .sentinel import NOT_FOUND
-from .argextract import KeyExtractor, ClassKeyExtractor
 from .error import RegistrationError
 
 
@@ -72,7 +72,7 @@ def match_key(name, func, fallback=None, default=None):
     :default: optional default value.
     :returns: a :class:`Predicate`.
     """
-    return key_predicate(name, KeyExtractor(func), fallback, default)
+    return key_predicate(name, lambda d: func(**d), fallback, default)
 
 
 def match_instance(name, func=None, fallback=None, default=None):
@@ -90,8 +90,9 @@ def match_instance(name, func=None, fallback=None, default=None):
 
     """
     if func is None:
-        func = eval('lambda {0}: {0}'.format(name))
-    return class_predicate(name, ClassKeyExtractor(func), fallback, default)
+        return match_argname(name, fallback, default)
+    return class_predicate(
+        name, lambda d: func(**d).__class__, fallback, default)
 
 
 def match_argname(argname, fallback=None, default=None):
@@ -123,8 +124,8 @@ def match_class(name, func=None, fallback=None, default=None):
 
     """
     if func is None:
-        func = eval('lambda {0}: {0}'.format(name))
-    return class_predicate(name, KeyExtractor(func), fallback, default)
+        return class_predicate(name, itemgetter(name), fallback, default)
+    return class_predicate(name, lambda d: func(**d), fallback, default)
 
 
 class MultiPredicate(object):

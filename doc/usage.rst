@@ -554,7 +554,7 @@ model instance, and the ``request_method`` attribute of the request:
   @reg.dispatch(
     reg.match_instance('obj'),
     reg.match_key('request_method',
-                  lambda request: request.request_method))
+                  lambda obj, request: request.request_method))
   def view(obj, request):
       raise NotImplementedError
 
@@ -633,7 +633,7 @@ need to use :class:`reg.dispatch_method` instead of
       @reg.dispatch_method(
           reg.match_instance('obj'),
           reg.match_key('request_method',
-                        lambda request: request.request_method))
+                        lambda self, obj, request: request.request_method))
       def view(self, obj, request):
           return "Generic content of {} bytes.".format(self.size(obj))
 

@@ -19,13 +19,13 @@ def test_registry():
     def view(self, request):
         raise NotImplementedError()
 
-    def get_model(self):
+    def get_model(self, request):
         return self
 
-    def get_name(request):
+    def get_name(self, request):
         return request.name
 
-    def get_request_method(request):
+    def get_request_method(self, request):
         return request.request_method
 
     def model_fallback(self, request):
@@ -183,13 +183,13 @@ def test_dict_caching_registry():
     class FooSub(Foo):
         pass
 
-    def get_model(self):
+    def get_model(self, request):
         return self
 
-    def get_name(request):
+    def get_name(self, request):
         return request.name
 
-    def get_request_method(request):
+    def get_request_method(self, request):
         return request.request_method
 
     def model_fallback(self, request):
@@ -285,13 +285,13 @@ def test_lru_caching_registry():
     class FooSub(Foo):
         pass
 
-    def get_model(self):
+    def get_model(self, request):
         return self
 
-    def get_name(request):
+    def get_name(self, request):
         return request.name
 
-    def get_request_method(request):
+    def get_request_method(self, request):
         return request.request_method
 
     def model_fallback(self, request):
