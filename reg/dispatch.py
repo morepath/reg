@@ -198,7 +198,7 @@ def call({signature}):
         dispatch to the right function.
 
         If the ``predicate_key`` cannot be constructed from ``args``
-        and ``kw``, this raises a :exc:`KeyExtractorError`.
+        and ``kw``, this raises a :exc:`TypeError`.
 
         :param args: the varargs given to the callable.
         :param kw: the keyword arguments given to the callable.

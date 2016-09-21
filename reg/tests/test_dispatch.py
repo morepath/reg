@@ -1163,3 +1163,48 @@ def test_component_lookup_before_call_and_no_registrations():
         pass
 
     assert foo.component(Bar()) is None
+
+
+def test_predicate_key_too_few_arguments_gives_typeerror():
+    @dispatch('obj')
+    def foo(obj):
+        pass
+
+    def for_bar(obj):
+        return obj.method()
+
+    def for_qux(obj):
+        return obj.method()
+
+    with pytest.raises(TypeError):
+        assert foo.predicate_key()
+
+
+def test_predicate_key_too_many_arguments_gives_typeerror():
+    @dispatch('obj')
+    def foo(obj):
+        pass
+
+    def for_bar(obj):
+        return obj.method()
+
+    def for_qux(obj):
+        return obj.method()
+
+    with pytest.raises(TypeError):
+        assert foo.predicate_key(1, 2)
+
+
+def test_predicate_key_wrong_keyword_argument_gives_typeerror():
+    @dispatch('obj')
+    def foo(obj):
+        pass
+
+    def for_bar(obj):
+        return obj.method()
+
+    def for_qux(obj):
+        return obj.method()
+
+    with pytest.raises(TypeError):
+        assert foo.predicate_key(wrong=1)

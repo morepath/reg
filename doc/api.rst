@@ -43,8 +43,6 @@ Errors
 
 .. autoexception:: RegistrationError
 
-.. autoexception:: KeyExtractorError
-
 Argument introspection
 ----------------------
 
