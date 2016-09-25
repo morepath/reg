@@ -137,6 +137,9 @@ CHANGES
 - **Breaking change**
 
   Removed the exception class ``KeyExtractorError`` from the API.
+  When passing the wrong number of arguments to a dispatch function,
+  or when using the wrong argument names, you will now get a
+  TypeError, in conformity with standard Python behaviour.
 
 - **Breaking change**
 
