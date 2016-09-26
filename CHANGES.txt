@@ -143,7 +143,9 @@ CHANGES
 
 - **Breaking change**
 
-  Removed the ``info`` attribute from ``KeyExtractor``.
+  Removed the ``KeyExtractor`` class from the API. Callables used in
+  predicate construction now expect the same arguments as the dispatch
+  function.
 
 - **Breaking change**
 
