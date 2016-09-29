@@ -173,7 +173,7 @@ def call({signature}):
             return partial(self.register, **key_dict)
         validate_signature(func, self.wrapped_func)
         predicate_key = self.registry.key_dict_to_predicate_key(key_dict)
-        self.register_value(predicate_key, func)
+        self.registry.register(predicate_key, func)
         return func
 
     def register_value(self, predicate_key, value):
