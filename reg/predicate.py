@@ -7,23 +7,25 @@ from .error import RegistrationError
 
 class Predicate(object):
     """A dispatch predicate.
+
+    :param name: predicate name. This is used by
+      :meth:`reg.Registry.register_function_by_name`.
+    :param index: a function that constructs an index given
+      a fallback argument; typically you supply either a :class:`KeyIndex`
+      or :class:`ClassIndex`.
+    :param get_key: a callable that accepts a dictionary with the invocation
+      arguments of the generic function and returns a key to be used for
+      dispatching.
+    :param fallback: optional fallback value. The fallback of the
+      the most generic index for which no values could be
+      found is used.
+    :param default: optional predicate default. This is used by
+      :meth:`.reg.Registry.register_function_by_name`, and supplies
+      the value if it is not given explicitly.
     """
+
     def __init__(self, name, index, get_key=None, fallback=None,
                  default=None):
-        """
-        :param name: predicate name. This is used by
-          :meth:`reg.Registry.register_function_by_name`.
-        :param index: a function that constructs an index given
-          a fallback argument; typically you supply either a :class:`KeyIndex`
-          or :class:`ClassIndex`.
-        :param get_key: optional :class:`KeyExtractor`.
-        :param fallback: optional fallback value. The fallback of the
-          the most generic index for which no values could be
-          found is used.
-        :param default: optional predicate default. This is used by
-          :meth:`.reg.Registry.register_function_by_name`, and supplies
-          the value if it is not given explicitly.
-        """
         self.name = name
         self.index = index
         self.fallback = fallback
@@ -40,10 +42,12 @@ class Predicate(object):
 def key_predicate(name, get_key=None, fallback=None, default=None):
     """Construct predicate indexed on any immutable value.
 
-    :name: predicate name.
-    :get_key: a :class:`KeyExtractor`. Should return key to dispatch on.
-    :fallback: a fallback value. By default is ``None``.
-    :default: optional default value.
+    :param name: predicate name.
+    :param get_key: a callable that accepts a dictionary with the invocation
+      arguments of the generic function and returns a key to be used for
+      dispatching.
+    :param fallback: a fallback value. By default is ``None``.
+    :param default: optional default value.
     :returns: a :class:`Predicate`.
     """
     return Predicate(name, KeyIndex, get_key, fallback, default)
@@ -52,10 +56,12 @@ def key_predicate(name, get_key=None, fallback=None, default=None):
 def class_predicate(name, get_key=None, fallback=None, default=None):
     """Construct predicate indexed on class.
 
-    :name: predicate name.
-    :get_key: a :class:`KeyExtractor`. Should return class to dispatch on.
-    :fallback: a fallback value. By default is ``None``.
-    :default: optional default value.
+    :param name: predicate name.
+    :param get_key: a callable that accepts a dictionary with the invocation
+      arguments of the generic function and returns a key to be used for
+      dispatching.
+    :param fallback: a fallback value. By default is ``None``.
+    :param default: optional default value.
     :returns: a :class:`Predicate`.
     """
     return Predicate(name, ClassIndex, get_key, fallback, default)
