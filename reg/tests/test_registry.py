@@ -8,6 +8,13 @@ from ..dispatch import dispatch
 import pytest
 
 
+def register_value(generic, key, value):
+    """Low-level function that directly uses the internal registry of the
+    generic function to register an implementation.
+    """
+    generic.register.__self__.registry.register(key, value)
+
+
 def test_registry():
     class Foo(object):
         pass
@@ -52,9 +59,9 @@ def test_registry():
     def foo_edit(self, request):
         return "foo edit"
 
-    view.register_value((Foo, '', 'GET'), foo_default)
-    view.register_value((Foo, '', 'POST'), foo_post)
-    view.register_value((Foo, 'edit', 'POST'), foo_edit)
+    register_value(view, (Foo, '', 'GET'), foo_default)
+    register_value(view, (Foo, '', 'POST'), foo_post)
+    register_value(view, (Foo, 'edit', 'POST'), foo_edit)
 
     key_lookup = view.key_lookup
     assert key_lookup.component((Foo, '', 'GET')) is foo_default
@@ -222,9 +229,9 @@ def test_dict_caching_registry():
     def foo_edit(self, request):
         return "foo edit"
 
-    view.register_value((Foo, '', 'GET'), foo_default)
-    view.register_value((Foo, '', 'POST'), foo_post)
-    view.register_value((Foo, 'edit', 'POST'), foo_edit)
+    register_value(view, (Foo, '', 'GET'), foo_default)
+    register_value(view, (Foo, '', 'POST'), foo_post)
+    register_value(view, (Foo, 'edit', 'POST'), foo_edit)
 
     class Request(object):
         def __init__(self, name, request_method):
@@ -324,9 +331,9 @@ def test_lru_caching_registry():
     def foo_edit(self, request):
         return "foo edit"
 
-    view.register_value((Foo, '', 'GET'), foo_default)
-    view.register_value((Foo, '', 'POST'), foo_post)
-    view.register_value((Foo, 'edit', 'POST'), foo_edit)
+    register_value(view, (Foo, '', 'GET'), foo_default)
+    register_value(view, (Foo, '', 'POST'), foo_post)
+    register_value(view, (Foo, 'edit', 'POST'), foo_edit)
 
     class Request(object):
         def __init__(self, name, request_method):

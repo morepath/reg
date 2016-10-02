@@ -176,20 +176,6 @@ def call({signature}):
         self.registry.register(predicate_key, func)
         return func
 
-    def register_value(self, predicate_key, value):
-        """Low-level function to register a value.
-
-        Can be used to register an arbitrary non-callable Python
-        object. Of course this cannot be called, but you can still
-        look it up using :meth:`reg.Dispatch.component`.
-        """
-        if isinstance(predicate_key, list):
-            predicate_key = tuple(predicate_key)
-        # if we have a 1 tuple, we register the single value inside
-        if isinstance(predicate_key, tuple) and len(predicate_key) == 1:
-            predicate_key = predicate_key[0]
-        self.registry.register(predicate_key, value)
-
     def predicate_key(self, *args, **kw):
         """Construct predicate_key for function arguments.
 
