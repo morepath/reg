@@ -68,28 +68,29 @@ def class_predicate(name, get_key=None, fallback=None, default=None):
 
 
 def match_key(name, func, fallback=None, default=None):
-    """Predicate that extracts immutable key according to func.
+    """Predicate that returns a value used for dispatching.
 
     :name: predicate name.
-    :func: argument that takes arguments. These arguments are
-      extracted from the arguments given to the dispatch function.
-      This function should return what to dispatch on.
+    :func: a callable that accepts the same arguments as the generic
+      function and returns the value used for dispatching.  The
+      returned value must be of an immutable type.
     :fallback: the fallback value. By default it is ``None``.
     :default: optional default value.
     :returns: a :class:`Predicate`.
+
     """
     return key_predicate(name, lambda d: func(**d), fallback, default)
 
 
 def match_instance(name, func=None, fallback=None, default=None):
-    """Predicate that extracts class of instance returned by func.
+    """Predicate that returns an instance whose class is used for dispatching.
 
     :name: predicate name.
-    :func: argument that takes arguments. These arguments are
-      extracted from the arguments given to the dispatch function.
-      This function should return an instance; dispatching is done on
-      the class of that instance. If ``None`` use the argument having
-      the same name as the predicate.
+
+    :func: a callable that accepts the same arguments as the generic
+      function and returns the instance whose class is used for
+      dispatching.  If ``None``, use a callable returning the argument
+      with the same name as the predicate.
     :fallback: the fallback value. By default it is ``None``.
     :default: optional default value.
     :returns: a :class:`Predicate`.
@@ -103,14 +104,14 @@ def match_instance(name, func=None, fallback=None, default=None):
 
 
 def match_class(name, func=None, fallback=None, default=None):
-    """Predicate that extracts class returned by func.
+    """Predicate that returns a class used for dispatching.
 
     :name: predicate name.
-    :func: argument that takes arguments. These arguments are
-      extracted from the arguments given to the dispatch function.
-      This function should return a class; dispatching is done on this
-      class. If ``None`` use the class of the argument having the same
-      name as the predicate.
+
+    :func: a callable that accepts the same arguments as the generic
+      function and returns a class used for
+      dispatching.  If ``None``, use a callable returning the argument
+      with the same name as the predicate.
     :fallback: the fallback value. By default it is ``None``.
     :default: optional default value.
     :returns: a :class:`Predicate`.
