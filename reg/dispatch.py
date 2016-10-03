@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 from functools import partial, wraps
-from .predicate import match_argname
+from .predicate import match_instance
 from .compat import string_types
 from .predicate import create_predicates_registry
 from .arginfo import arginfo
@@ -13,13 +13,12 @@ class dispatch(object):
     This takes the predicates to dispatch on as zero or more
     parameters.
 
-    :param predicates: sequence of :class:`reg.Predicate` instances to do
-      the dispatch on. You create predicates using
+    :param predicates: sequence of :class:`reg.Predicate` instances to
+      do the dispatch on. You create predicates using
       :func:`reg.match_instance`, :func:`reg.match_key`,
-      :func:`reg.match_class`, or :func:`reg.match_argname`, or with a
-      custom predicate class. You can also pass in plain string
-      argument, which is turned into a :func:`reg.match_argname`
-      predicate.
+      :func:`reg.match_class`, or with a custom predicate class. You
+      can also pass in plain string argument, which is turned into a
+      :func:`reg.match_instance` predicate.
     :param get_key_lookup: a function that gets a
       :class:`PredicateRegistry` instance and returns a key lookup. A
       :class:`PredicateRegistry` instance is itself a key lookup, but
@@ -28,6 +27,7 @@ class dispatch(object):
       :class:`reg.LruCachingKeyLookup`) to make it more efficient.
     :returns: a function that you can use as if it were a
       :class:`reg.Dispatch` instance.
+
     """
     def __init__(self, *predicates, **kw):
         self.predicates = [self._make_predicate(predicate)
@@ -36,7 +36,7 @@ class dispatch(object):
 
     def _make_predicate(self, predicate):
         if isinstance(predicate, string_types):
-            return match_argname(predicate)
+            return match_instance(predicate)
         return predicate
 
     def __call__(self, callable):

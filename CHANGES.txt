@@ -152,6 +152,11 @@ CHANGES
   Removed the ``argnames`` attribute from ``Predicate`` and its
   descendant.
 
+- **Breaking change**
+
+  Remove the ``match_argname`` predicate.  You can now use
+  ``match_instance`` with no callable instead.
+
 - The second argument for ``match_class`` is now optional; if you
   don't supply it ``match_class`` will generate a predicate function
   that extracts that name by default.

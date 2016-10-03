@@ -15,8 +15,6 @@ Dispatch functions
 
 .. autofunction:: match_instance
 
-.. autofunction:: match_argname
-
 .. autofunction:: match_class
 
 .. autoclass:: DictCachingKeyLookup

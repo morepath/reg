@@ -96,23 +96,10 @@ def match_instance(name, func=None, fallback=None, default=None):
 
     """
     if func is None:
-        return match_argname(name, fallback, default)
+        return class_predicate(
+            name, lambda d: d[name].__class__, fallback, default)
     return class_predicate(
         name, lambda d: func(**d).__class__, fallback, default)
-
-
-def match_argname(argname, fallback=None, default=None):
-    """Predicate that extracts class of specified argument.
-
-    :name: predicate name.
-    :argname: name of the argument to dispatch on - its class will
-      be used for the dispatch.
-    :fallback: the fallback value. By default it is ``None``.
-    :default: optional default value.
-    :returns: a :class:`Predicate`.
-    """
-    return class_predicate(argname, lambda argdict: argdict[argname].__class__,
-                           fallback, default)
 
 
 def match_class(name, func=None, fallback=None, default=None):

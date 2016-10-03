@@ -10,11 +10,10 @@ class dispatch_method(dispatch):
 
     This takes the predicates to dispatch on as zero or more parameters.
 
-    :param predicates: sequence of :class:`Predicate` instances
-      to do the dispatch on. You create predicates using
+    :param predicates: sequence of :class:`Predicate` instances to do
+      the dispatch on. You create predicates using
       :func:`reg.match_instance`, :func:`reg.match_key`,
-      :func:`reg.match_class`, or :func:`reg.match_argname`, or with a
-      custom predicate class.
+      :func:`reg.match_class`, or with a custom predicate class.
 
       You can also pass in plain string argument, which is turned into
       a :func:`reg.match_instance` predicate.
