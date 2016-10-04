@@ -3,3 +3,4 @@ exclude .installed.cfg
 recursive-include reg *.py
 recursive-include tests *.py
 recursive-include doc *.rst Makefile *.py *.bat
+include .coveragerc
