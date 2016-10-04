@@ -67,18 +67,23 @@ def class_predicate(name, get_key=None, fallback=None, default=None):
     return Predicate(name, ClassIndex, get_key, fallback, default)
 
 
-def match_key(name, func, fallback=None, default=None):
+def match_key(name, func=None, fallback=None, default=None):
     """Predicate that returns a value used for dispatching.
 
     :name: predicate name.
     :func: a callable that accepts the same arguments as the generic
       function and returns the value used for dispatching.  The
       returned value must be of an immutable type.
+
+      If ``None``, use a callable returning the argument
+      with the same name as the predicate.
     :fallback: the fallback value. By default it is ``None``.
     :default: optional default value.
     :returns: a :class:`Predicate`.
 
     """
+    if func is None:
+        return key_predicate(name, itemgetter(name), fallback, default)
     return key_predicate(name, lambda d: func(**d), fallback, default)
 
 

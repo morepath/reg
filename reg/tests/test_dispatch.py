@@ -508,7 +508,7 @@ def test_different_defaults_in_specific_non_dispatch_arg():
 
 
 def test_different_defaults_in_specific_dispatch_arg():
-    @dispatch(match_key('key', lambda key: key))
+    @dispatch(match_key('key'))
     def target(key='default'):
         return 'fallback: %s' % key
 
@@ -523,7 +523,7 @@ def test_different_defaults_in_specific_dispatch_arg():
 
 
 def test_different_defaults_in_specific_dispatch_arg_causes_dispatch():
-    @dispatch(match_key('key', lambda key: key))
+    @dispatch(match_key('key'))
     def target(key='foo'):
         return 'fallback: %s' % key
 

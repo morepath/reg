@@ -4,7 +4,9 @@ CHANGES
 0.11 (unreleased)
 =================
 
-- Nothing changed yet.
+- The second argument for ``match_key`` is now optional; if you
+  don't supply it ``match_key`` will generate a predicate function
+  that extracts that name by default.
 
 
 0.10 (2016-10-04)
