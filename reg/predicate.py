@@ -130,8 +130,6 @@ def match_class(name, func=None, fallback=None, default=None):
 class MultiPredicate(object):
     def __init__(self, predicates):
         self.predicates = predicates
-        self.predicate_names = set(
-            [predicate.name for predicate in predicates])
 
     def create_index(self):
         return MultiIndex(self.predicates)
