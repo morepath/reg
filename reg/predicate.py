@@ -39,34 +39,6 @@ class Predicate(object):
         return d.get(self.name, self.default)
 
 
-def key_predicate(name, get_key=None, fallback=None, default=None):
-    """Construct predicate indexed on any immutable value.
-
-    :param name: predicate name.
-    :param get_key: a callable that accepts a dictionary with the invocation
-      arguments of the generic function and returns a key to be used for
-      dispatching.
-    :param fallback: a fallback value. By default is ``None``.
-    :param default: optional default value.
-    :returns: a :class:`Predicate`.
-    """
-    return Predicate(name, KeyIndex, get_key, fallback, default)
-
-
-def class_predicate(name, get_key=None, fallback=None, default=None):
-    """Construct predicate indexed on class.
-
-    :param name: predicate name.
-    :param get_key: a callable that accepts a dictionary with the invocation
-      arguments of the generic function and returns a key to be used for
-      dispatching.
-    :param fallback: a fallback value. By default is ``None``.
-    :param default: optional default value.
-    :returns: a :class:`Predicate`.
-    """
-    return Predicate(name, ClassIndex, get_key, fallback, default)
-
-
 def match_key(name, func=None, fallback=None, default=None):
     """Predicate that returns a value used for dispatching.
 
@@ -83,8 +55,8 @@ def match_key(name, func=None, fallback=None, default=None):
 
     """
     if func is None:
-        return key_predicate(name, itemgetter(name), fallback, default)
-    return key_predicate(name, lambda d: func(**d), fallback, default)
+        return Predicate(name, KeyIndex, itemgetter(name), fallback, default)
+    return Predicate(name, KeyIndex, lambda d: func(**d), fallback, default)
 
 
 def match_instance(name, func=None, fallback=None, default=None):
@@ -102,10 +74,10 @@ def match_instance(name, func=None, fallback=None, default=None):
 
     """
     if func is None:
-        return class_predicate(
-            name, lambda d: d[name].__class__, fallback, default)
-    return class_predicate(
-        name, lambda d: func(**d).__class__, fallback, default)
+        return Predicate(
+            name, ClassIndex, lambda d: d[name].__class__, fallback, default)
+    return Predicate(
+        name, ClassIndex, lambda d: func(**d).__class__, fallback, default)
 
 
 def match_class(name, func=None, fallback=None, default=None):
@@ -123,8 +95,8 @@ def match_class(name, func=None, fallback=None, default=None):
 
     """
     if func is None:
-        return class_predicate(name, itemgetter(name), fallback, default)
-    return class_predicate(name, lambda d: func(**d), fallback, default)
+        return Predicate(name, ClassIndex, itemgetter(name), fallback, default)
+    return Predicate(name, ClassIndex, lambda d: func(**d), fallback, default)
 
 
 class MultiPredicate(object):

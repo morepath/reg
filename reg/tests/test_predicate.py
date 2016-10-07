@@ -1,5 +1,5 @@
-from ..predicate import (KeyIndex, ClassIndex, MultiIndex,
-                         key_predicate, class_predicate, MultiPredicate,
+from ..predicate import (KeyIndex, ClassIndex, MultiIndex, MultiPredicate,
+                         match_instance, match_key,
                          PredicateRegistry as Registry, NOT_FOUND)
 from ..error import RegistrationError
 import pytest
@@ -40,7 +40,7 @@ def test_multi_class_predicate_permutations():
     class BSub(BBase):
         pass
 
-    i = MultiIndex([class_predicate('a'), class_predicate('a')])
+    i = MultiIndex([match_instance('a'), match_instance('a')])
 
     assert list(i.permutations([ASub, BSub])) == [
         (ASub, BSub),
@@ -57,9 +57,9 @@ def test_multi_class_predicate_permutations():
 
 def test_multi_key_predicate_permutations():
     i = MultiIndex([
-        key_predicate('a'),
-        key_predicate('b'),
-        key_predicate('c'),
+        match_key('a'),
+        match_key('b'),
+        match_key('c'),
     ])
 
     assert list(i.permutations(['A', 'B', 'C'])) == [
@@ -67,7 +67,7 @@ def test_multi_key_predicate_permutations():
 
 
 def test_registry_single_key_predicate():
-    r = Registry(key_predicate('a'))
+    r = Registry(match_key('a'))
 
     r.register('A', 'A value')
 
@@ -78,7 +78,7 @@ def test_registry_single_key_predicate():
 
 
 def test_registry_single_class_predicate():
-    r = Registry(class_predicate('a'))
+    r = Registry(match_instance('a'))
 
     class Foo(object):
         pass
@@ -100,7 +100,7 @@ def test_registry_single_class_predicate():
 
 
 def test_registry_single_classic_class_predicate():
-    r = Registry(class_predicate('a'))
+    r = Registry(match_instance('a'))
 
     class Foo:
         pass
@@ -122,7 +122,7 @@ def test_registry_single_classic_class_predicate():
 
 
 def test_registry_single_class_predicate_also_sub():
-    r = Registry(class_predicate('a'))
+    r = Registry(match_instance('a'))
 
     class Foo(object):
         pass
@@ -146,8 +146,8 @@ def test_registry_single_class_predicate_also_sub():
 
 def test_registry_multi_class_predicate():
     r = Registry(MultiPredicate([
-        class_predicate('a'),
-        class_predicate('b'),
+        match_instance('a'),
+        match_instance('b'),
     ]))
 
     class A(object):
@@ -181,8 +181,8 @@ def test_registry_multi_class_predicate():
 
 def test_registry_multi_mixed_predicate_class_key():
     r = Registry(MultiPredicate([
-        class_predicate('a'),
-        key_predicate('b'),
+        match_instance('a'),
+        match_key('b'),
     ]))
 
     class A(object):
@@ -211,8 +211,8 @@ def test_registry_multi_mixed_predicate_class_key():
 
 def test_registry_multi_mixed_predicate_key_class():
     r = Registry(MultiPredicate([
-        key_predicate('a'),
-        class_predicate('b'),
+        match_key('a'),
+        match_instance('b'),
     ]))
 
     class B(object):
@@ -238,29 +238,29 @@ def test_registry_multi_mixed_predicate_key_class():
 
 
 def test_single_predicate_get_key():
-    def get_key(argdict):
-        return argdict['foo']
+    def get_key(foo):
+        return foo
 
-    p = key_predicate('a', get_key)
+    p = match_key('a', get_key)
 
     assert p.get_key({'foo': 'value'}) == 'value'
 
 
 def test_multi_predicate_get_key():
-    def a_key(d):
+    def a_key(**d):
         return d['a']
 
-    def b_key(d):
+    def b_key(**d):
         return d['b']
 
-    p = MultiPredicate([key_predicate('a', a_key),
-                        key_predicate('b', b_key)])
+    p = MultiPredicate([match_key('a', a_key),
+                        match_key('b', b_key)])
 
     assert p.get_key(dict(a='A', b='B')) == ('A', 'B')
 
 
 def test_single_predicate_fallback():
-    r = Registry(key_predicate('a', fallback='fallback'))
+    r = Registry(match_key('a', fallback='fallback'))
 
     r.register('A', 'A value')
 
@@ -270,8 +270,8 @@ def test_single_predicate_fallback():
 
 
 def test_multi_predicate_fallback():
-    r = Registry(MultiPredicate([key_predicate('a', fallback='fallback1'),
-                                 key_predicate('b', fallback='fallback2')]))
+    r = Registry(MultiPredicate([match_key('a', fallback='fallback1'),
+                                 match_key('b', fallback='fallback2')]))
 
     r.register(('A', 'B'), 'value')
 
@@ -288,8 +288,8 @@ def test_multi_predicate_fallback():
 
 def test_predicate_self_request():
     m = Registry(MultiPredicate([
-        key_predicate('a'),
-        key_predicate('b', fallback='registered for all')]))
+        match_key('a'),
+        match_key('b', fallback='registered for all')]))
     m.register(('foo', 'POST'), 'registered for post')
 
     assert m.component(('foo', 'GET')) is None
@@ -303,8 +303,8 @@ def test_predicate_self_request():
 
 def test_predicate_duplicate_key():
     m = Registry(MultiPredicate([
-        key_predicate('a'),
-        key_predicate('b', fallback='registered for all')]))
+        match_key('a'),
+        match_key('b', fallback='registered for all')]))
     m.register(('foo', 'POST'), 'registered for post')
     with pytest.raises(RegistrationError):
         m.register(('foo', 'POST'), 'registered again')
@@ -312,9 +312,9 @@ def test_predicate_duplicate_key():
 
 def test_name_request_method_body_model_registered_for_base():
     m = Registry(MultiPredicate([
-        key_predicate('name', fallback='name fallback'),
-        key_predicate('request_method', fallback='request_method fallback'),
-        class_predicate('body_model', fallback='body_model fallback')]))
+        match_key('name', fallback='name fallback'),
+        match_key('request_method', fallback='request_method fallback'),
+        match_instance('body_model', fallback='body_model fallback')]))
 
     class Foo(object):
         pass
@@ -336,9 +336,9 @@ def test_name_request_method_body_model_registered_for_base():
 
 def test_name_request_method_body_model_registered_for_base_and_sub():
     m = Registry(MultiPredicate([
-        key_predicate('name', fallback='name fallback'),
-        key_predicate('request', fallback='request_method fallback'),
-        class_predicate('body_model', fallback='body_model fallback')]))
+        match_key('name', fallback='name fallback'),
+        match_key('request', fallback='request_method fallback'),
+        match_instance('body_model', fallback='body_model fallback')]))
 
     class Foo(object):
         pass
@@ -363,21 +363,21 @@ def test_name_request_method_body_model_registered_for_base_and_sub():
 
 
 def test_key_by_predicate_name():
-    p = key_predicate('foo', default='default')
+    p = match_key('foo', default='default')
 
     assert p.key_by_predicate_name({'foo': 'value'}) == 'value'
     assert p.key_by_predicate_name({}) == 'default'
 
 
 def test_multi_key_by_predicate_name():
-    p = MultiPredicate([key_predicate('foo', default='default foo'),
-                        key_predicate('bar', default='default bar')])
+    p = MultiPredicate([match_key('foo', default='default foo'),
+                        match_key('bar', default='default bar')])
     assert p.key_by_predicate_name({'foo': 'FOO',
                                     'bar': 'BAR'}) == ('FOO', 'BAR')
     assert p.key_by_predicate_name({}) == ('default foo', 'default bar')
 
 
 def test_nameless_predicate_key():
-    p = key_predicate('a')
+    p = match_key('a')
 
     assert p.key_by_predicate_name({}) is None

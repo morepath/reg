@@ -1,6 +1,5 @@
 from __future__ import unicode_literals
 from ..predicate import (PredicateRegistry, SingleValueRegistry,
-                         class_predicate,
                          match_instance, match_key)
 from ..cache import DictCachingKeyLookup, LruCachingKeyLookup
 from ..error import RegistrationError
@@ -96,7 +95,7 @@ def test_registry():
 
 
 def test_predicate_registry_class_lookup():
-    reg = PredicateRegistry(class_predicate('obj'))
+    reg = PredicateRegistry(match_instance('obj'))
 
     class Document(object):
         pass
@@ -127,8 +126,8 @@ def test_predicate_registry_class_lookup():
 
 
 def test_predicate_registry_target_find_specific():
-    reg = PredicateRegistry(class_predicate('obj'))
-    reg2 = PredicateRegistry(class_predicate('obj'))
+    reg = PredicateRegistry(match_instance('obj'))
+    reg2 = PredicateRegistry(match_instance('obj'))
 
     class Document(object):
         pass
@@ -165,7 +164,7 @@ def test_registry_no_sources():
 
 
 def test_register_twice_with_predicate():
-    reg = PredicateRegistry(class_predicate('obj'))
+    reg = PredicateRegistry(match_instance('obj'))
 
     class Document(object):
         pass

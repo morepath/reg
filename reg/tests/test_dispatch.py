@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 import pytest
 
 from ..predicate import (
-    match_instance, match_key, match_class, key_predicate, NOT_FOUND)
+    match_instance, match_key, match_class, NOT_FOUND)
 from ..dispatch import dispatch
 from ..error import RegistrationError
 
@@ -741,8 +741,8 @@ def test_dispatch_predicates_register_defaults():
 
 def test_key_dict_to_predicate_key():
     @dispatch(
-        key_predicate('foo', default='default foo'),
-        key_predicate('bar', default='default bar'))
+        match_key('foo', default='default foo'),
+        match_key('bar', default='default bar'))
     def view(self, request):
         raise NotImplementedError()
 
@@ -756,8 +756,8 @@ def test_key_dict_to_predicate_key():
 
 def test_key_dict_to_predicate_key_unknown_keys():
     @dispatch(
-        key_predicate('foo', default='default foo'),
-        key_predicate('bar', default='default bar'))
+        match_key('foo', default='default foo'),
+        match_key('bar', default='default bar'))
     def view(self, request):
         raise NotImplementedError()
 

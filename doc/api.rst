@@ -60,7 +60,3 @@ Predicate Registry
 
 .. autoclass:: KeyIndex
    :members:
-
-.. autofunction:: key_predicate
-
-.. autofunction:: class_predicate
