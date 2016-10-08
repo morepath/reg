@@ -55,8 +55,10 @@ def match_key(name, func=None, fallback=None, default=None):
 
     """
     if func is None:
-        return Predicate(name, KeyIndex, itemgetter(name), fallback, default)
-    return Predicate(name, KeyIndex, lambda d: func(**d), fallback, default)
+        get_key = itemgetter(name)
+    else:
+        get_key = lambda d: func(**d)
+    return Predicate(name, KeyIndex, get_key, fallback, default)
 
 
 def match_instance(name, func=None, fallback=None, default=None):
@@ -74,10 +76,10 @@ def match_instance(name, func=None, fallback=None, default=None):
 
     """
     if func is None:
-        return Predicate(
-            name, ClassIndex, lambda d: d[name].__class__, fallback, default)
-    return Predicate(
-        name, ClassIndex, lambda d: func(**d).__class__, fallback, default)
+        get_key = lambda d: d[name].__class__
+    else:
+        get_key = lambda d: func(**d).__class__
+    return Predicate(name, ClassIndex, get_key, fallback, default)
 
 
 def match_class(name, func=None, fallback=None, default=None):
@@ -95,8 +97,10 @@ def match_class(name, func=None, fallback=None, default=None):
 
     """
     if func is None:
-        return Predicate(name, ClassIndex, itemgetter(name), fallback, default)
-    return Predicate(name, ClassIndex, lambda d: func(**d), fallback, default)
+        get_key = itemgetter(name)
+    else:
+        get_key = lambda d: func(**d)
+    return Predicate(name, ClassIndex, get_key, fallback, default)
 
 
 class MultiPredicate(object):
