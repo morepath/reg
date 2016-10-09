@@ -8,8 +8,8 @@ from .error import RegistrationError
 class Predicate(object):
     """A dispatch predicate.
 
-    :param name: predicate name. This is used by
-      :meth:`reg.Registry.register_function_by_name`.
+    :param name: name used to identify the predicate when specifying
+      its expected value in :meth:`reg.Dispatch.register`.
     :param index: a function that constructs an index given
       a fallback argument; typically you supply either a :class:`KeyIndex`
       or :class:`ClassIndex`.
@@ -19,9 +19,10 @@ class Predicate(object):
     :param fallback: optional fallback value. The fallback of the
       the most generic index for which no values could be
       found is used.
-    :param default: optional predicate default. This is used by
-      :meth:`.reg.Registry.register_function_by_name`, and supplies
-      the value if it is not given explicitly.
+    :param default: default expected value of the predicate, to be
+      used by :meth:`reg.Dispatch.register` whenever the expected
+      value for the predicate is not given explicitly.
+
     """
 
     def __init__(self, name, index, get_key=None, fallback=None,
