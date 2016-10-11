@@ -1,5 +1,6 @@
 import inspect
 from operator import itemgetter
+from itertools import product
 
 from .sentinel import NOT_FOUND
 from .error import RegistrationError
@@ -198,8 +199,10 @@ class MultiIndex(object):
                 return default
         return result
 
-    def permutations(self, key):
-        return multipredicate_permutations(self.indexes, key)
+    def permutations(self, keys):
+        return product(*(
+            index.permutations(key) for index, key in zip(self.indexes, keys)
+        ))
 
     def fallback(self, keys):
         result = None
@@ -298,20 +301,3 @@ class SingleValueRegistry(object):
 
     def all(self, key):
         yield self.value
-
-
-# XXX transform to non-recursive version
-# use # http://blog.moertel.com/posts/2013-05-14-recursive-to-iterative-2.html
-def multipredicate_permutations(indexes, keys):
-    first = keys[0]
-    rest = keys[1:]
-    first_index = indexes[0]
-    rest_indexes = indexes[1:]
-    if not rest:
-        for permutation in first_index.permutations(first):
-            yield (permutation,)
-        return
-    for permutation in first_index.permutations(first):
-        for rest_permutation in multipredicate_permutations(
-                rest_indexes, rest):
-            yield (permutation,) + rest_permutation
