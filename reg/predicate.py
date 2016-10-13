@@ -176,28 +176,10 @@ class MultiIndex(object):
             index.add(key, value)
 
     def get(self, keys, default):
-        matches = []
-        # get all matching indexes first
-        for index, key in zip(self.indexes, keys):
-            match = index.get(key)
-            # bail out early if None or any match has 0 items
-            if not match:
-                return default
-            matches.append(match)
-        # sort matches by length.
-        # this allows cheaper intersection calls later
-        matches.sort(key=lambda match: len(match))
-
-        result = None
-        for match in matches:
-            if result is None:
-                result = match
-            else:
-                result = result.intersection(match)
-            # bail out early if there is nothing left
-            if not result:
-                return default
-        return result
+        empty = set()
+        sets = (
+            index.get(key) or empty for index, key in zip(self.indexes, keys))
+        return next(sets, empty).intersection(*sets) or default
 
     def permutations(self, keys):
         return product(*(
