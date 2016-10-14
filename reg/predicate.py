@@ -106,11 +106,9 @@ def match_class(name, func=None, fallback=None, default=None):
 
 
 class MultiPredicate(object):
+    """Transitional class for compatibility, soon to be removed."""
     def __init__(self, predicates):
         self.predicates = predicates
-
-    def create_index(self):
-        return MultiIndex(self.predicates)
 
     def get_key(self, d):
         return tuple([predicate.get_key(d) for predicate in self.predicates])
@@ -140,17 +138,6 @@ class KeyIndex(object):
         """
         yield key
 
-    def fallback(self, key):
-        """Return fallback if this index does not contain key.
-
-        If index contains permutations of key, then ``NOT_FOUND``
-        is returned.
-        """
-        for k in self.permutations(key):
-            if k in self.d:
-                return NOT_FOUND
-        return self._fallback
-
 
 class ClassIndex(KeyIndex):
     def permutations(self, key):
@@ -166,14 +153,25 @@ class ClassIndex(KeyIndex):
             yield object  # pragma: no cover
 
 
-class MultiIndex(object):
-    def __init__(self, predicates):
+def create_predicates_registry(predicates):
+    return MultiplePredicateRegistry(*predicates)
+
+
+class MultiplePredicateRegistry(object):
+
+    def __init__(self, *predicates):
+        self.known_keys = {}
         self.predicates = predicates
         self.indexes = [predicate.create_index() for predicate in predicates]
+        self.key = lambda **kw: tuple([p.get_key(kw) for p in predicates])
 
-    def add(self, keys, value):
-        for index, key in zip(self.indexes, keys):
-            index.add(key, value)
+    def register(self, key, value):
+        if key in self.known_keys:
+            raise RegistrationError(
+                "Already have registration for key: %s" % (key,))
+        for index, key_item in zip(self.indexes, key):
+            index.add(key_item, value)
+        self.known_keys[key] = value
 
     def get(self, keys, default):
         empty = set()
@@ -186,7 +184,37 @@ class MultiIndex(object):
             index.permutations(key) for index, key in zip(self.indexes, keys)
         ))
 
+    def key(self, **kw):
+        """Construct a dispatch key from the arguments of a generic function.
+
+        :param kw: a dictionary with the arguments passed to a generic
+          function.
+        :returns: a tuple, to be used as a key for dispatching.
+
+        """
+        # Overwritten by init
+
+    def key_dict_to_predicate_key(self, d):
+        """Construct a dispatch key from predicate values.
+
+        Uses ``name`` and ``default`` attributes of predicates to
+        construct the dispatch key.
+
+        :param d: dictionary mapping predicate names to predicate
+          values. If a predicate is missing from ``d``, its default
+          expected value is used.
+        :returns: a tuple, to be used as a key for dispatching.
+        """
+        return tuple([p.key_by_predicate_name(d) for p in self.predicates])
+
+    def component(self, keys):
+        if not self.predicates:
+            return self.known_keys.get(keys)
+        return next(self.all(keys), None)
+
     def fallback(self, keys):
+        if not self.predicates:
+            return None
         result = None
         for index, key in zip(self.indexes, keys):
             for k in index.permutations(key):
@@ -207,79 +235,44 @@ class MultiIndex(object):
         # if all predicates match, then we don't find a fallback
         return NOT_FOUND
 
-
-def create_predicates_registry(predicates):
-    if len(predicates) == 0:
-        return SingleValueRegistry()
-    if len(predicates) == 1:
-        # an optimization in case just one predicate in use
-        predicate = predicates[0]
-    else:
-        predicate = MultiPredicate(predicates)
-    return PredicateRegistry(predicate)
-
-
-class PredicateRegistry(object):
-    def __init__(self, predicate):
-        self.known_keys = set()
-        self.predicate = predicate
-        self.index = self.predicate.create_index()
-        self.key = lambda **kw: self.predicate.get_key(kw)
-
-    def register(self, key, value):
-        if key in self.known_keys:
-            raise RegistrationError(
-                "Already have registration for key: %s" % (key,))
-        self.index.add(key, value)
-        self.known_keys.add(key)
-
-    def key_dict_to_predicate_key(self, d):
-        """Construct predicate key from key dictionary.
-
-        Uses ``name`` and ``default`` attributes of predicate to
-        construct the predicate key. If the key cannot be constructed
-        then a ``KeyError`` is raised.
-
-        :param key_dict: dictionary with predicate name keys and predicate
-          values. For omitted keys, the predicate default is used.
-        :returns: an immutable predicate_key based on the dictionary
-          and the names and defaults of the predicates the callable
-          was configured with.
-        """
-        return self.predicate.key_by_predicate_name(d)
-
-    def component(self, key):
-        return next(self.all(key), None)
-
-    def fallback(self, key):
-        return self.index.fallback(key)
-
     def all(self, key):
-        for p in self.index.permutations(key):
-            result = self.index.get(p, NOT_FOUND)
+        if not self.predicates:
+            for v in self.known_keys.values():
+                yield v
+        if not key:
+            return
+        for p in self.permutations(key):
+            result = self.get(p, NOT_FOUND)
             if result is not NOT_FOUND:
                 yield tuple(result)[0]
 
 
-class SingleValueRegistry(object):
-    def __init__(self):
-        self.value = None
-        self.key = lambda **kw: ()
+SingleValueRegistry = MultiplePredicateRegistry
+
+
+class PredicateRegistry(MultiplePredicateRegistry):
+    """Transitional class for compatibility, soon to be removed."""
+
+    def __init__(self, predicate):
+        if isinstance(predicate, MultiPredicate):
+            super(PredicateRegistry, self).__init__(*predicate.predicates)
+            self.__class__ = MultiplePredicateRegistry
+        else:
+            super(PredicateRegistry, self).__init__(predicate)
 
     def register(self, key, value):
-        if self.value is not None:
-            raise RegistrationError(
-                "Already have registration for key: %s" % (key,))
-        self.value = value
-
-    def key_dict_to_predicate_key(self, d):
-        return ()
-
-    def component(self, key):
-        return self.value
+        super(PredicateRegistry, self).register((key,), value)
 
     def fallback(self, key):
-        return None
+        return super(PredicateRegistry, self).fallback((key,))
 
     def all(self, key):
-        yield self.value
+        for k in super(PredicateRegistry, self).all((key,)):
+            yield k
+
+
+class MultiIndex(MultiplePredicateRegistry):
+    """Transitional class for compatibility, soon to be removed."""
+
+    def __init__(self, predicates):
+        MultiplePredicateRegistry.__init__(self, *predicates)
