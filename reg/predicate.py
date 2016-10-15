@@ -269,10 +269,3 @@ class PredicateRegistry(MultiplePredicateRegistry):
     def all(self, key):
         for k in super(PredicateRegistry, self).all((key,)):
             yield k
-
-
-class MultiIndex(MultiplePredicateRegistry):
-    """Transitional class for compatibility, soon to be removed."""
-
-    def __init__(self, predicates):
-        MultiplePredicateRegistry.__init__(self, *predicates)

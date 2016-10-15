@@ -1,4 +1,5 @@
-from ..predicate import (KeyIndex, ClassIndex, MultiIndex, MultiPredicate,
+from ..predicate import (KeyIndex, ClassIndex, MultiplePredicateRegistry,
+                         MultiPredicate,
                          match_instance, match_key,
                          PredicateRegistry as Registry, NOT_FOUND)
 from ..error import RegistrationError
@@ -40,7 +41,7 @@ def test_multi_class_predicate_permutations():
     class BSub(BBase):
         pass
 
-    i = MultiIndex([match_instance('a'), match_instance('a')])
+    i = MultiplePredicateRegistry(match_instance('a'), match_instance('a'))
 
     assert list(i.permutations([ASub, BSub])) == [
         (ASub, BSub),
@@ -56,11 +57,11 @@ def test_multi_class_predicate_permutations():
 
 
 def test_multi_key_predicate_permutations():
-    i = MultiIndex([
+    i = MultiplePredicateRegistry(
         match_key('a'),
         match_key('b'),
         match_key('c'),
-    ])
+    )
 
     assert list(i.permutations(['A', 'B', 'C'])) == [
         ('A', 'B', 'C')]
