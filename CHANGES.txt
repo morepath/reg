@@ -19,6 +19,8 @@ CHANGES
   don't supply it ``match_key`` will generate a predicate function
   that extracts that name by default.
 
+- Upload universal wheels to pypi during release.
+
 
 0.10 (2016-10-04)
 =================
