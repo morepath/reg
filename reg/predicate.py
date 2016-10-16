@@ -232,9 +232,6 @@ class MultiplePredicateRegistry(object):
                 yield tuple(result)[0]
 
 
-SingleValueRegistry = MultiplePredicateRegistry
-
-
 class PredicateRegistry(MultiplePredicateRegistry):
     """Transitional class for compatibility, soon to be removed."""
 

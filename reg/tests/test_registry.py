@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from ..predicate import (PredicateRegistry, SingleValueRegistry,
+from ..predicate import (PredicateRegistry, MultiplePredicateRegistry,
                          match_instance, match_key)
 from ..cache import DictCachingKeyLookup, LruCachingKeyLookup
 from ..error import RegistrationError
@@ -154,7 +154,7 @@ def test_predicate_registry_target_find_specific():
 
 
 def test_registry_no_sources():
-    reg = SingleValueRegistry()
+    reg = MultiplePredicateRegistry()
 
     class Animal(object):
         pass
@@ -175,7 +175,7 @@ def test_register_twice_with_predicate():
 
 
 def test_register_twice_without_predicates():
-    reg = SingleValueRegistry()
+    reg = MultiplePredicateRegistry()
 
     reg.register((), 'once')
     with pytest.raises(RegistrationError):
