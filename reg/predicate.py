@@ -105,21 +105,6 @@ def match_class(name, func=None, fallback=None, default=None):
     return Predicate(name, ClassIndex, get_key, fallback, default)
 
 
-class MultiPredicate(object):
-    """Transitional class for compatibility, soon to be removed."""
-    def __init__(self, predicates):
-        self.predicates = predicates
-
-    def get_key(self, d):
-        return tuple([predicate.get_key(d) for predicate in self.predicates])
-
-    def key_by_predicate_name(self, d):
-        result = []
-        for predicate in self.predicates:
-            result.append(predicate.key_by_predicate_name(d))
-        return tuple(result)
-
-
 class KeyIndex(object):
     def __init__(self, fallback=None):
         self.d = {}
@@ -254,11 +239,7 @@ class PredicateRegistry(MultiplePredicateRegistry):
     """Transitional class for compatibility, soon to be removed."""
 
     def __init__(self, predicate):
-        if isinstance(predicate, MultiPredicate):
-            super(PredicateRegistry, self).__init__(*predicate.predicates)
-            self.__class__ = MultiplePredicateRegistry
-        else:
-            super(PredicateRegistry, self).__init__(predicate)
+        super(PredicateRegistry, self).__init__(predicate)
 
     def register(self, key, value):
         super(PredicateRegistry, self).register((key,), value)

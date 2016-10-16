@@ -1,5 +1,4 @@
 from ..predicate import (KeyIndex, ClassIndex, MultiplePredicateRegistry,
-                         MultiPredicate,
                          match_instance, match_key,
                          PredicateRegistry as Registry, NOT_FOUND)
 from ..error import RegistrationError
@@ -146,10 +145,10 @@ def test_registry_single_class_predicate_also_sub():
 
 
 def test_registry_multi_class_predicate():
-    r = Registry(MultiPredicate([
+    r = MultiplePredicateRegistry(
         match_instance('a'),
         match_instance('b'),
-    ]))
+    )
 
     class A(object):
         pass
@@ -181,10 +180,10 @@ def test_registry_multi_class_predicate():
 
 
 def test_registry_multi_mixed_predicate_class_key():
-    r = Registry(MultiPredicate([
+    r = MultiplePredicateRegistry(
         match_instance('a'),
         match_key('b'),
-    ]))
+    )
 
     class A(object):
         pass
@@ -211,10 +210,10 @@ def test_registry_multi_mixed_predicate_class_key():
 
 
 def test_registry_multi_mixed_predicate_key_class():
-    r = Registry(MultiPredicate([
+    r = MultiplePredicateRegistry(
         match_key('a'),
         match_instance('b'),
-    ]))
+    )
 
     class B(object):
         pass
@@ -254,10 +253,11 @@ def test_multi_predicate_get_key():
     def b_key(**d):
         return d['b']
 
-    p = MultiPredicate([match_key('a', a_key),
-                        match_key('b', b_key)])
+    p = MultiplePredicateRegistry(
+        match_key('a', a_key),
+        match_key('b', b_key))
 
-    assert p.get_key(dict(a='A', b='B')) == ('A', 'B')
+    assert p.key(a='A', b='B') == ('A', 'B')
 
 
 def test_single_predicate_fallback():
@@ -271,8 +271,9 @@ def test_single_predicate_fallback():
 
 
 def test_multi_predicate_fallback():
-    r = Registry(MultiPredicate([match_key('a', fallback='fallback1'),
-                                 match_key('b', fallback='fallback2')]))
+    r = MultiplePredicateRegistry(
+        match_key('a', fallback='fallback1'),
+        match_key('b', fallback='fallback2'))
 
     r.register(('A', 'B'), 'value')
 
@@ -288,9 +289,9 @@ def test_multi_predicate_fallback():
 
 
 def test_predicate_self_request():
-    m = Registry(MultiPredicate([
+    m = MultiplePredicateRegistry(
         match_key('a'),
-        match_key('b', fallback='registered for all')]))
+        match_key('b', fallback='registered for all'))
     m.register(('foo', 'POST'), 'registered for post')
 
     assert m.component(('foo', 'GET')) is None
@@ -303,19 +304,19 @@ def test_predicate_self_request():
 # XXX using an incomplete key returns undefined results
 
 def test_predicate_duplicate_key():
-    m = Registry(MultiPredicate([
+    m = MultiplePredicateRegistry(
         match_key('a'),
-        match_key('b', fallback='registered for all')]))
+        match_key('b', fallback='registered for all'))
     m.register(('foo', 'POST'), 'registered for post')
     with pytest.raises(RegistrationError):
         m.register(('foo', 'POST'), 'registered again')
 
 
 def test_name_request_method_body_model_registered_for_base():
-    m = Registry(MultiPredicate([
+    m = MultiplePredicateRegistry(
         match_key('name', fallback='name fallback'),
         match_key('request_method', fallback='request_method fallback'),
-        match_instance('body_model', fallback='body_model fallback')]))
+        match_instance('body_model', fallback='body_model fallback'))
 
     class Foo(object):
         pass
@@ -336,10 +337,10 @@ def test_name_request_method_body_model_registered_for_base():
 
 
 def test_name_request_method_body_model_registered_for_base_and_sub():
-    m = Registry(MultiPredicate([
+    m = MultiplePredicateRegistry(
         match_key('name', fallback='name fallback'),
         match_key('request', fallback='request_method fallback'),
-        match_instance('body_model', fallback='body_model fallback')]))
+        match_instance('body_model', fallback='body_model fallback'))
 
     class Foo(object):
         pass
@@ -371,11 +372,12 @@ def test_key_by_predicate_name():
 
 
 def test_multi_key_by_predicate_name():
-    p = MultiPredicate([match_key('foo', default='default foo'),
-                        match_key('bar', default='default bar')])
-    assert p.key_by_predicate_name({'foo': 'FOO',
-                                    'bar': 'BAR'}) == ('FOO', 'BAR')
-    assert p.key_by_predicate_name({}) == ('default foo', 'default bar')
+    p = MultiplePredicateRegistry(
+        match_key('foo', default='default foo'),
+        match_key('bar', default='default bar'))
+    assert p.key_dict_to_predicate_key(
+        {'foo': 'FOO', 'bar': 'BAR'}) == ('FOO', 'BAR')
+    assert p.key_dict_to_predicate_key({}) == ('default foo', 'default bar')
 
 
 def test_nameless_predicate_key():
