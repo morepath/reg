@@ -105,16 +105,15 @@ def match_class(name, func=None, fallback=None, default=None):
     return Predicate(name, ClassIndex, get_key, fallback, default)
 
 
-class KeyIndex(object):
+_emptyset = frozenset()
+
+
+class KeyIndex(dict):
     def __init__(self, fallback=None):
-        self.d = {}
-        self._fallback = fallback
+        self.fallback = fallback
 
-    def add(self, key, value):
-        self.d.setdefault(key, set()).add(value)
-
-    def get(self, key, default=None):
-        return self.d.get(key, default)
+    def __missing__(self, key):
+        return _emptyset
 
     def permutations(self, key):
         """Permutations for a simple immutable key.
@@ -155,14 +154,13 @@ class MultiplePredicateRegistry(object):
             raise RegistrationError(
                 "Already have registration for key: %s" % (key,))
         for index, key_item in zip(self.indexes, key):
-            index.add(key_item, value)
+            index.setdefault(key_item, set()).add(value)
         self.known_keys[key] = value
 
     def get(self, keys, default):
-        empty = set()
         sets = (
-            index.get(key) or empty for index, key in zip(self.indexes, keys))
-        return next(sets, empty).intersection(*sets) or default
+            index[key] for index, key in zip(self.indexes, keys))
+        return next(sets, _emptyset).intersection(*sets) or default
 
     def permutations(self, keys):
         return product(*(
@@ -203,12 +201,12 @@ class MultiplePredicateRegistry(object):
         result = None
         for index, key in zip(self.indexes, keys):
             for k in index.permutations(key):
-                match = index.get(k)
+                match = index[k]
                 if match:
                     break
             else:
                 # no matching permutation for this key, so this is the fallback
-                return index._fallback
+                return index.fallback
             if result is None:
                 result = match
             else:
@@ -216,7 +214,7 @@ class MultiplePredicateRegistry(object):
             # as soon as the intersection becomes empty, we have a failed
             # match
             if not result:
-                return index._fallback
+                return index.fallback
         # if all predicates match, then we don't find a fallback
         return NOT_FOUND
 
