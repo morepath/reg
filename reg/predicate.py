@@ -144,10 +144,12 @@ def create_predicates_registry(predicates):
 class MultiplePredicateRegistry(object):
 
     def __init__(self, *predicates):
-        self.known_keys = {}
+        self.known_keys = set()
+        self.known_values = set()
         self.predicates = predicates
         self.indexes = [predicate.create_index() for predicate in predicates]
-        self.key = lambda **kw: tuple([p.get_key(kw) for p in predicates])
+        key_getters = [p.get_key for p in predicates]
+        self.key = lambda **kw: tuple([p(kw) for p in key_getters])
 
     def register(self, key, value):
         if key in self.known_keys:
@@ -155,12 +157,13 @@ class MultiplePredicateRegistry(object):
                 "Already have registration for key: %s" % (key,))
         for index, key_item in zip(self.indexes, key):
             index.setdefault(key_item, set()).add(value)
-        self.known_keys[key] = value
+        self.known_keys.add(key)
+        self.known_values.add(value)
 
-    def get(self, keys, default):
+    def get(self, keys):
         sets = (
             index[key] for index, key in zip(self.indexes, keys))
-        return next(sets, _emptyset).intersection(*sets) or default
+        return next(sets, self.known_values).intersection(*sets)
 
     def permutations(self, keys):
         return product(*(
@@ -191,8 +194,6 @@ class MultiplePredicateRegistry(object):
         return tuple([p.key_by_predicate_name(d) for p in self.predicates])
 
     def component(self, keys):
-        if not self.predicates:
-            return self.known_keys.get(keys)
         return next(self.all(keys), None)
 
     def fallback(self, keys):
@@ -219,15 +220,9 @@ class MultiplePredicateRegistry(object):
         return NOT_FOUND
 
     def all(self, key):
-        if not self.predicates:
-            for v in self.known_keys.values():
-                yield v
-        if not key:
-            return
         for p in self.permutations(key):
-            result = self.get(p, NOT_FOUND)
-            if result is not NOT_FOUND:
-                yield tuple(result)[0]
+            for value in self.get(p):
+                yield value
 
 
 class PredicateRegistry(MultiplePredicateRegistry):
