@@ -1,6 +1,6 @@
 from ..predicate import (KeyIndex, ClassIndex, MultiplePredicateRegistry,
                          match_instance, match_key,
-                         PredicateRegistry as Registry, NOT_FOUND)
+                         PredicateRegistry as Registry)
 from ..error import RegistrationError
 import pytest
 
@@ -297,7 +297,7 @@ def test_predicate_self_request():
     assert m.component(('foo', 'GET')) is None
     assert m.fallback(('foo', 'GET')) == 'registered for all'
     assert m.component(('foo', 'POST')) == 'registered for post'
-    assert m.fallback(('foo', 'POST')) is NOT_FOUND
+    assert m.fallback(('foo', 'POST')) is None
     assert m.component(('bar', 'GET')) is None
 
 

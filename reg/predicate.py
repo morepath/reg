@@ -2,7 +2,6 @@ import inspect
 from operator import itemgetter
 from itertools import product
 
-from .sentinel import NOT_FOUND
 from .error import RegistrationError
 
 
@@ -197,8 +196,6 @@ class MultiplePredicateRegistry(object):
         return next(self.all(keys), None)
 
     def fallback(self, keys):
-        if not self.predicates:
-            return None
         result = None
         for index, key in zip(self.indexes, keys):
             for k in index.permutations(key):
@@ -216,8 +213,6 @@ class MultiplePredicateRegistry(object):
             # match
             if not result:
                 return index.fallback
-        # if all predicates match, then we don't find a fallback
-        return NOT_FOUND
 
     def all(self, key):
         for p in self.permutations(key):

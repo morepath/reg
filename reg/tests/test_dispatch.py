@@ -1,8 +1,7 @@
 from __future__ import unicode_literals
 import pytest
 
-from ..predicate import (
-    match_instance, match_key, match_class, NOT_FOUND)
+from ..predicate import match_instance, match_key, match_class
 from ..dispatch import dispatch
 from ..error import RegistrationError
 
@@ -457,7 +456,7 @@ def test_fallback_to_fallback():
     assert target.fallback(beta) is fallback
     # we cannot find a fallback for alpha, as it doesn't hit the fallback
     assert target(Alpha()) == 'specific'
-    assert target.fallback(Alpha()) is NOT_FOUND
+    assert target.fallback(Alpha()) is None
 
 
 def test_fallback_to_dispatch():
