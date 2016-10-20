@@ -6,14 +6,19 @@ CHANGES
 
 - **Breaking change**
 
-  Remove the ``key_predicate`` function.  You can now use
+  The ``key_predicate`` function is gone.  You can now use
   ``Predicate(..., index=KeyIndex)`` or ``match_key`` instead.
 
 - **Breaking change**
 
-  Remove the ``class_predicate`` function.  You can now use
+  The ``class_predicate`` function is gone.  You can now use
   ``Predicate(..., index=ClassIndex)``, ``match_instance`` or
   ``match_class`` instead.
+
+- **Breaking change**
+
+  The undocumented ``Sentinel`` class and ``NOT_FOUND`` object are
+  gone.
 
 - The second argument for ``match_key`` is now optional; if you
   don't supply it ``match_key`` will generate a predicate function
