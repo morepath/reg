@@ -148,7 +148,19 @@ class MultiplePredicateRegistry(object):
         self.predicates = predicates
         self.indexes = [predicate.create_index() for predicate in predicates]
         key_getters = [p.get_key for p in predicates]
-        self.key = lambda **kw: tuple([p(kw) for p in key_getters])
+        if len(predicates) == 0:
+            self.key = lambda **kw: ()
+        elif len(predicates) == 1:
+            p, = key_getters
+            self.key = lambda **kw: (p(kw),)
+        elif len(predicates) == 2:
+            p, q = key_getters
+            self.key = lambda **kw: (p(kw), q(kw))
+        elif len(predicates) == 3:
+            p, q, r = key_getters
+            self.key = lambda **kw: (p(kw), q(kw), r(kw))
+        else:
+            self.key = lambda **kw: tuple([p(kw) for p in key_getters])
 
     def register(self, key, value):
         if key in self.known_keys:
