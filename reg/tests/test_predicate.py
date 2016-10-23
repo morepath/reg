@@ -1,6 +1,5 @@
-from ..predicate import (KeyIndex, ClassIndex, MultiplePredicateRegistry,
-                         match_instance, match_key,
-                         PredicateRegistry as Registry)
+from ..predicate import (KeyIndex, ClassIndex, PredicateRegistry,
+                         match_instance, match_key)
 from ..error import RegistrationError
 import pytest
 
@@ -40,7 +39,7 @@ def test_multi_class_predicate_permutations():
     class BSub(BBase):
         pass
 
-    i = MultiplePredicateRegistry(match_instance('a'), match_instance('a'))
+    i = PredicateRegistry(match_instance('a'), match_instance('a'))
 
     assert list(i.permutations([ASub, BSub])) == [
         (ASub, BSub),
@@ -56,7 +55,7 @@ def test_multi_class_predicate_permutations():
 
 
 def test_multi_key_predicate_permutations():
-    i = MultiplePredicateRegistry(
+    i = PredicateRegistry(
         match_key('a'),
         match_key('b'),
         match_key('c'),
@@ -67,18 +66,18 @@ def test_multi_key_predicate_permutations():
 
 
 def test_registry_single_key_predicate():
-    r = Registry(match_key('a'))
+    r = PredicateRegistry(match_key('a'))
 
-    r.register('A', 'A value')
+    r.register(('A',), 'A value')
 
-    assert r.component('A') == 'A value'
-    assert r.component('B') is None
-    assert list(r.all('A')) == ['A value']
-    assert list(r.all('B')) == []
+    assert r.component(('A',)) == 'A value'
+    assert r.component(('B',)) is None
+    assert list(r.all(('A',))) == ['A value']
+    assert list(r.all(('B',))) == []
 
 
 def test_registry_single_class_predicate():
-    r = Registry(match_instance('a'))
+    r = PredicateRegistry(match_instance('a'))
 
     class Foo(object):
         pass
@@ -89,18 +88,18 @@ def test_registry_single_class_predicate():
     class Qux(object):
         pass
 
-    r.register(Foo, 'foo')
+    r.register((Foo,), 'foo')
 
-    assert r.component(Foo) == 'foo'
-    assert r.component(FooSub) == 'foo'
-    assert r.component(Qux) is None
-    assert list(r.all(Foo)) == ['foo']
-    assert list(r.all(FooSub)) == ['foo']
-    assert list(r.all(Qux)) == []
+    assert r.component((Foo,)) == 'foo'
+    assert r.component((FooSub,)) == 'foo'
+    assert r.component((Qux,)) is None
+    assert list(r.all((Foo,))) == ['foo']
+    assert list(r.all((FooSub,))) == ['foo']
+    assert list(r.all((Qux,))) == []
 
 
 def test_registry_single_classic_class_predicate():
-    r = Registry(match_instance('a'))
+    r = PredicateRegistry(match_instance('a'))
 
     class Foo:
         pass
@@ -111,18 +110,18 @@ def test_registry_single_classic_class_predicate():
     class Qux:
         pass
 
-    r.register(Foo, 'foo')
+    r.register((Foo,), 'foo')
 
-    assert r.component(Foo) == 'foo'
-    assert r.component(FooSub) == 'foo'
-    assert r.component(Qux) is None
-    assert list(r.all(Foo)) == ['foo']
-    assert list(r.all(FooSub)) == ['foo']
-    assert list(r.all(Qux)) == []
+    assert r.component((Foo,)) == 'foo'
+    assert r.component((FooSub,)) == 'foo'
+    assert r.component((Qux,)) is None
+    assert list(r.all((Foo,))) == ['foo']
+    assert list(r.all((FooSub,))) == ['foo']
+    assert list(r.all((Qux,))) == []
 
 
 def test_registry_single_class_predicate_also_sub():
-    r = Registry(match_instance('a'))
+    r = PredicateRegistry(match_instance('a'))
 
     class Foo(object):
         pass
@@ -133,19 +132,19 @@ def test_registry_single_class_predicate_also_sub():
     class Qux(object):
         pass
 
-    r.register(Foo, 'foo')
-    r.register(FooSub, 'sub')
+    r.register((Foo,), 'foo')
+    r.register((FooSub,), 'sub')
 
-    assert r.component(Foo) == 'foo'
-    assert r.component(FooSub) == 'sub'
-    assert r.component(Qux) is None
-    assert list(r.all(Foo)) == ['foo']
-    assert list(r.all(FooSub)) == ['sub', 'foo']
-    assert list(r.all(Qux)) == []
+    assert r.component((Foo,)) == 'foo'
+    assert r.component((FooSub,)) == 'sub'
+    assert r.component((Qux,)) is None
+    assert list(r.all((Foo,))) == ['foo']
+    assert list(r.all((FooSub,))) == ['sub', 'foo']
+    assert list(r.all((Qux,))) == []
 
 
 def test_registry_multi_class_predicate():
-    r = MultiplePredicateRegistry(
+    r = PredicateRegistry(
         match_instance('a'),
         match_instance('b'),
     )
@@ -180,7 +179,7 @@ def test_registry_multi_class_predicate():
 
 
 def test_registry_multi_mixed_predicate_class_key():
-    r = MultiplePredicateRegistry(
+    r = PredicateRegistry(
         match_instance('a'),
         match_key('b'),
     )
@@ -210,7 +209,7 @@ def test_registry_multi_mixed_predicate_class_key():
 
 
 def test_registry_multi_mixed_predicate_key_class():
-    r = MultiplePredicateRegistry(
+    r = PredicateRegistry(
         match_key('a'),
         match_instance('b'),
     )
@@ -253,7 +252,7 @@ def test_multi_predicate_get_key():
     def b_key(**d):
         return d['b']
 
-    p = MultiplePredicateRegistry(
+    p = PredicateRegistry(
         match_key('a', a_key),
         match_key('b', b_key))
 
@@ -261,17 +260,17 @@ def test_multi_predicate_get_key():
 
 
 def test_single_predicate_fallback():
-    r = Registry(match_key('a', fallback='fallback'))
+    r = PredicateRegistry(match_key('a', fallback='fallback'))
 
-    r.register('A', 'A value')
+    r.register(('A',), 'A value')
 
-    assert r.component('A') == 'A value'
-    assert r.component('B') is None
-    assert r.fallback('B') == 'fallback'
+    assert r.component(('A',)) == 'A value'
+    assert r.component(('B',)) is None
+    assert r.fallback(('B',)) == 'fallback'
 
 
 def test_multi_predicate_fallback():
-    r = MultiplePredicateRegistry(
+    r = PredicateRegistry(
         match_key('a', fallback='fallback1'),
         match_key('b', fallback='fallback2'))
 
@@ -289,7 +288,7 @@ def test_multi_predicate_fallback():
 
 
 def test_predicate_self_request():
-    m = MultiplePredicateRegistry(
+    m = PredicateRegistry(
         match_key('a'),
         match_key('b', fallback='registered for all'))
     m.register(('foo', 'POST'), 'registered for post')
@@ -304,7 +303,7 @@ def test_predicate_self_request():
 # XXX using an incomplete key returns undefined results
 
 def test_predicate_duplicate_key():
-    m = MultiplePredicateRegistry(
+    m = PredicateRegistry(
         match_key('a'),
         match_key('b', fallback='registered for all'))
     m.register(('foo', 'POST'), 'registered for post')
@@ -313,7 +312,7 @@ def test_predicate_duplicate_key():
 
 
 def test_name_request_method_body_model_registered_for_base():
-    m = MultiplePredicateRegistry(
+    m = PredicateRegistry(
         match_key('name', fallback='name fallback'),
         match_key('request_method', fallback='request_method fallback'),
         match_instance('body_model', fallback='body_model fallback'))
@@ -337,7 +336,7 @@ def test_name_request_method_body_model_registered_for_base():
 
 
 def test_name_request_method_body_model_registered_for_base_and_sub():
-    m = MultiplePredicateRegistry(
+    m = PredicateRegistry(
         match_key('name', fallback='name fallback'),
         match_key('request', fallback='request_method fallback'),
         match_instance('body_model', fallback='body_model fallback'))
@@ -372,7 +371,7 @@ def test_key_by_predicate_name():
 
 
 def test_multi_key_by_predicate_name():
-    p = MultiplePredicateRegistry(
+    p = PredicateRegistry(
         match_key('foo', default='default foo'),
         match_key('bar', default='default bar'))
     assert p.key_dict_to_predicate_key(

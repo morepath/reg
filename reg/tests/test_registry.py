@@ -1,6 +1,5 @@
 from __future__ import unicode_literals
-from ..predicate import (PredicateRegistry, MultiplePredicateRegistry,
-                         match_instance, match_key)
+from ..predicate import PredicateRegistry, match_instance, match_key
 from ..cache import DictCachingKeyLookup, LruCachingKeyLookup
 from ..error import RegistrationError
 from ..dispatch import dispatch
@@ -103,26 +102,26 @@ def test_predicate_registry_class_lookup():
     class SpecialDocument(Document):
         pass
 
-    reg.register(Document, 'document line count')
-    reg.register(SpecialDocument,
+    reg.register((Document,), 'document line count')
+    reg.register((SpecialDocument,),
                  'special document line count')
 
-    assert (reg.component(Document) ==
+    assert (reg.component((Document,)) ==
             'document line count')
 
-    assert (reg.component(SpecialDocument) ==
+    assert (reg.component((SpecialDocument,)) ==
             'special document line count')
 
     class AnotherDocument(Document):
         pass
 
-    assert (reg.component(AnotherDocument) ==
+    assert (reg.component((AnotherDocument,)) ==
             'document line count')
 
     class Other(object):
         pass
 
-    assert reg.component(Other) is None
+    assert reg.component((Other,)) is None
 
 
 def test_predicate_registry_target_find_specific():
@@ -141,20 +140,20 @@ def test_predicate_registry_target_find_specific():
     def special_linecount(obj):
         pass
 
-    reg.register(Document, 'line count')
-    reg2.register(Document, 'special line count')
+    reg.register((Document,), 'line count')
+    reg2.register((Document,), 'special line count')
 
-    assert reg.component(Document) == 'line count'
-    assert (reg2.component(Document) ==
+    assert reg.component((Document,)) == 'line count'
+    assert (reg2.component((Document,)) ==
             'special line count')
 
-    assert reg.component(SpecialDocument) == 'line count'
-    assert (reg2.component(SpecialDocument) ==
+    assert reg.component((SpecialDocument,)) == 'line count'
+    assert (reg2.component((SpecialDocument,)) ==
             'special line count')
 
 
 def test_registry_no_sources():
-    reg = MultiplePredicateRegistry()
+    reg = PredicateRegistry()
 
     class Animal(object):
         pass
@@ -169,13 +168,13 @@ def test_register_twice_with_predicate():
     class Document(object):
         pass
 
-    reg.register(Document, 'document line count')
+    reg.register((Document,), 'document line count')
     with pytest.raises(RegistrationError):
-        reg.register(Document, 'another line count')
+        reg.register((Document,), 'another line count')
 
 
 def test_register_twice_without_predicates():
-    reg = MultiplePredicateRegistry()
+    reg = PredicateRegistry()
 
     reg.register((), 'once')
     with pytest.raises(RegistrationError):

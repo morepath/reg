@@ -137,10 +137,10 @@ class ClassIndex(KeyIndex):
 
 
 def create_predicates_registry(predicates):
-    return MultiplePredicateRegistry(*predicates)
+    return PredicateRegistry(*predicates)
 
 
-class MultiplePredicateRegistry(object):
+class PredicateRegistry(object):
 
     def __init__(self, *predicates):
         self.known_keys = set()
@@ -230,20 +230,3 @@ class MultiplePredicateRegistry(object):
         for p in self.permutations(key):
             for value in self.get(p):
                 yield value
-
-
-class PredicateRegistry(MultiplePredicateRegistry):
-    """Transitional class for compatibility, soon to be removed."""
-
-    def __init__(self, predicate):
-        super(PredicateRegistry, self).__init__(predicate)
-
-    def register(self, key, value):
-        super(PredicateRegistry, self).register((key,), value)
-
-    def fallback(self, key):
-        return super(PredicateRegistry, self).fallback((key,))
-
-    def all(self, key):
-        for k in super(PredicateRegistry, self).all((key,)):
-            yield k
