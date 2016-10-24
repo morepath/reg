@@ -20,6 +20,14 @@ CHANGES
   The undocumented ``Sentinel`` class and ``NOT_FOUND`` object are
   gone.
 
+- **Breaking change**
+
+  The class ``PredicateRegistry`` is not longer part of the API.
+  Internally, the classes ``MultiPredicate``, ``MultiIndex``,
+  ``SingleValueRegistry`` have all been merged into
+  ``PredicateRegistry``, which should now considered an implementation
+  detail.
+
 - The second argument for ``match_key`` is now optional; if you
   don't supply it ``match_key`` will generate a predicate function
   that extracts that name by default.
