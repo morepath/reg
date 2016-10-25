@@ -29,7 +29,6 @@ class DictCachingKeyLookup(object):
     """
     def __init__(self, key_lookup):
         self.key_lookup = key_lookup
-        self.key_dict_to_predicate_key = key_lookup.key_dict_to_predicate_key
         self.component = Cache(key_lookup.component).__getitem__
         self.fallback = Cache(key_lookup.fallback).__getitem__
         self.all = Cache(lambda key: list(key_lookup.all(key))).__getitem__
@@ -57,7 +56,6 @@ class LruCachingKeyLookup(object):
     def __init__(self, key_lookup, component_cache_size, all_cache_size,
                  fallback_cache_size):
         self.key_lookup = key_lookup
-        self.key_dict_to_predicate_key = key_lookup.key_dict_to_predicate_key
         self.component = lru_cache(component_cache_size)(key_lookup.component)
         self.fallback = lru_cache(fallback_cache_size)(key_lookup.fallback)
         self.all = lru_cache(all_cache_size)(

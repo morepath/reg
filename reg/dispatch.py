@@ -233,7 +233,7 @@ def call({signature}):
           If omitted, predicate default is used.
         :returns: the function being dispatched to, or fallback.
         """
-        key = self.key_lookup.key_dict_to_predicate_key(kw)
+        key = self.registry.key_dict_to_predicate_key(kw)
         return self.key_lookup.component(key)
 
     def all(self, *args, **kw):
@@ -262,7 +262,7 @@ def call({signature}):
           predicate value. If omitted, predicate default is used.
         :returns: iterable of functions being dispatched to.
         """
-        key = self.key_lookup.key_dict_to_predicate_key(kw)
+        key = self.registry.key_dict_to_predicate_key(kw)
         return self.key_lookup.all(key)
 
     def key_dict_to_predicate_key(self, key_dict):
