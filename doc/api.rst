@@ -46,11 +46,13 @@ Argument introspection
 
 .. autofunction:: arginfo
 
-Predicate Registry
-------------------
+Low-level predicate support
+---------------------------
 
-.. autoclass:: PredicateRegistry
-   :members:
+Typically, you'd be using :func:`reg.match_key`,
+:func:`reg.match_instance`, and :func:`reg.match_class` to define
+predicates.  Should you require finer control, you can use the
+following classes:
 
 .. autoclass:: Predicate
    :members:

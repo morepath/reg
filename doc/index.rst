@@ -13,6 +13,7 @@ for your application, library or framework.
    patterns
    api
    developing
+   internals
    history
    changes
 
@@ -22,4 +23,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

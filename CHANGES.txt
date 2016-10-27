@@ -32,6 +32,9 @@ CHANGES
   don't supply it ``match_key`` will generate a predicate function
   that extracts that name by default.
 
+- The documentation now includes a section describing the internals of
+  Reg.
+
 - Upload universal wheels to pypi during release.
 
 
