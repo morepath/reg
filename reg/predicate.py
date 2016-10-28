@@ -136,10 +136,6 @@ class ClassIndex(KeyIndex):
             yield object  # pragma: no cover
 
 
-def create_predicates_registry(predicates):
-    return PredicateRegistry(*predicates)
-
-
 class PredicateRegistry(object):
 
     def __init__(self, *predicates):

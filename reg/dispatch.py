@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 from functools import partial, wraps
 from .predicate import match_instance
 from .compat import string_types
-from .predicate import create_predicates_registry
+from .predicate import PredicateRegistry
 from .arginfo import arginfo
 from .error import RegistrationError
 
@@ -74,7 +74,7 @@ class Dispatch(object):
         self._register_predicates(predicates)
 
     def _register_predicates(self, predicates):
-        self.registry = create_predicates_registry(predicates)
+        self.registry = PredicateRegistry(*predicates)
         self.predicates = predicates
         self.call.key_lookup = self.key_lookup = \
             self.get_key_lookup(self.registry)
