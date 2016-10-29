@@ -74,11 +74,14 @@ class dispatch_method(dispatch):
 
 class DispatchMethod(Dispatch):
 
-    def predicate_key(self, *args, **kw):
-        # pass in a None as the first argument
-        # this matches up the bound self that is passed automatically
-        # into __call__
-        return super(DispatchMethod, self).predicate_key(None, *args, **kw)
+    def by_args(self, *args, **kw):
+        """Lookup an implementation by invocation arguments.
+
+        :param args: positional arguments used in invocation.
+        :param kw: named arguments used in invocation.
+        :returns: a :class:`reg.LookupEntry`.
+        """
+        return super(DispatchMethod, self).by_args(None, *args, **kw)
 
 
 def methodify(func, selfname=None):

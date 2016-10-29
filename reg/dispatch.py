@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 from functools import partial, wraps
+from collections import namedtuple
 from .predicate import match_instance
 from .compat import string_types
 from .predicate import PredicateRegistry
@@ -47,6 +48,33 @@ def identity(registry):
     return registry
 
 
+class LookupEntry(
+        namedtuple('LookupEntry', 'lookup key')):
+    """The dispatch data associated to a key."""
+
+    __slots__ = ()
+
+    @property
+    def component(self):
+        """The function to dispatch to, excluding fallbacks."""
+        return self.lookup.component(self.key)
+
+    @property
+    def fallback(self):
+        """The approriate fallback implementation."""
+        return self.lookup.fallback(self.key)
+
+    @property
+    def matches(self):
+        """An iterator over all the compatible implementations."""
+        return self.lookup.all(self.key)
+
+    @property
+    def all_matches(self):
+        """The list of all compatible implementations."""
+        return list(self.matches)
+
+
 class Dispatch(object):
     """Dispatch function.
 
@@ -85,6 +113,7 @@ class Dispatch(object):
         )
         self._predicate_key.__globals__.update(
             _registry_key=self.registry.key,
+            _return_type=partial(LookupEntry, self.key_lookup),
         )
 
     def _define_call(self):
@@ -127,10 +156,10 @@ def call({signature}):
         # We now build the implementation for the predicate_key method
         self._predicate_key = execute(
             "def predicate_key({signature}):\n"
-            "    return _registry_key({predicate_args})".format(
+            "    return _return_type(_registry_key({predicate_args}))".format(
                 signature=format_signature(args),
                 predicate_args=predicate_args),
-            _registry_key=None)['predicate_key']
+            _registry_key=None, _return_type=None)['predicate_key']
 
     def clean(self):
         """Clean up implementations and added predicates.
@@ -191,6 +220,15 @@ def call({signature}):
         :returns: an immutable ``predicate_key`` based on the predicates
           the callable was configured with.
         """
+        return self._predicate_key(*args, **kw).key
+
+    def by_args(self, *args, **kw):
+        """Lookup an implementation by invocation arguments.
+
+        :param args: positional arguments used in invocation.
+        :param kw: named arguments used in invocation.
+        :returns: a :class:`reg.LookupEntry`.
+        """
         return self._predicate_key(*args, **kw)
 
     def component(self, *args, **kw):
@@ -206,8 +244,7 @@ def call({signature}):
            dispatch information to construct ``predicate_key``.
         :returns: the function being dispatched to, or None.
         """
-        key = self.predicate_key(*args, **kw)
-        return self.key_lookup.component(key)
+        return self.by_args(*args, **kw).component
 
     def fallback(self, *args, **kw):
         """Lookup fallback for args and kw.
@@ -218,8 +255,7 @@ def call({signature}):
            dispatch information to construct ``predicate_key``.
         :returns: the function being dispatched to, or fallback.
         """
-        key = self.predicate_key(*args, **kw)
-        return self.key_lookup.fallback(key)
+        return self.by_args(*args, **kw).fallback
 
     def component_by_keys(self, **kw):
         """Look up function based on key_dict.
@@ -233,8 +269,7 @@ def call({signature}):
           If omitted, predicate default is used.
         :returns: the function being dispatched to, or fallback.
         """
-        key = self.registry.key_dict_to_predicate_key(kw)
-        return self.key_lookup.component(key)
+        return self.by_predicates(**kw).component
 
     def all(self, *args, **kw):
         """Lookup all functions dispatched to with args and kw.
@@ -248,8 +283,7 @@ def call({signature}):
            dispatch information to construct predicate_key.
         :returns: an iterable of functions.
         """
-        key = self.predicate_key(*args, **kw)
-        return self.key_lookup.all(key)
+        return self.by_args(*args, **kw).matches
 
     def all_by_keys(self, **kw):
         """Look up all functions dispatched to using keyword arguments.
@@ -262,8 +296,17 @@ def call({signature}):
           predicate value. If omitted, predicate default is used.
         :returns: iterable of functions being dispatched to.
         """
-        key = self.registry.key_dict_to_predicate_key(kw)
-        return self.key_lookup.all(key)
+        return self.by_predicates(**kw).matches
+
+    def by_predicates(self, **predicate_values):
+        """Lookup an implementation by predicate values.
+
+        :param predicate_values: the values of the predicates to lookup.
+        :returns: a :class:`reg.LookupEntry`.
+        """
+        return LookupEntry(
+            self.key_lookup,
+            self.registry.key_dict_to_predicate_key(predicate_values))
 
     def key_dict_to_predicate_key(self, key_dict):
         """Turn a key dict into a predicate key.

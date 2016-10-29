@@ -261,10 +261,10 @@ def test_dict_caching_registry():
 
     key_lookup = view.key_lookup
     # prime and check the all cache
-    assert list(view.all(Foo(), Request('', 'GET'))) == [foo_default]
+    assert view.by_args(Foo(), Request('', 'GET')).all_matches == [foo_default]
     assert key_lookup.all.__self__.get((Foo, '', 'GET')) is not None
     # should be coming from cache now
-    assert list(view.all(Foo(), Request('', 'GET'))) == [foo_default]
+    assert view.by_args(Foo(), Request('', 'GET')).all_matches == [foo_default]
 
     class Bar(object):
         pass
