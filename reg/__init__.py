@@ -1,5 +1,5 @@
 # flake8: noqa
-from .dispatch import dispatch, Dispatch
+from .dispatch import dispatch, Dispatch, LookupEntry
 from .context import (dispatch_method, DispatchMethod,
                       methodify, clean_dispatch_methods)
 from .arginfo import arginfo
