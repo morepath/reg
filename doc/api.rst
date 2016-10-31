@@ -17,6 +17,9 @@ Dispatch functions
 
 .. autofunction:: match_class
 
+.. autoclass:: LookupEntry
+   :members:
+
 .. autoclass:: DictCachingKeyLookup
    :members:
 
