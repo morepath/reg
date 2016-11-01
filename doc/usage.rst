@@ -697,46 +697,49 @@ Lower level API
 Component lookup
 ~~~~~~~~~~~~~~~~
 
-You can look up the function that a function would dispatch to without
-calling it. You do this using the :meth:`reg.Dispatch.component`
-method on the dispatch function:
+You can look up the implementation that a generic function would
+dispatch to without calling it. You can look that up by invocation
+arguments using the :meth:`reg.Dispatch.by_args` method on the
+dispatch function or by predicate values using the
+:meth:`reg.Dispatch.by_predicates` method:
 
-.. doctest::
+  >>> size.by_args(doc).component
+  <function document_size at 0x...>
 
-  >>> size.component(doc) is document_size
+  >>> size.by_predicates(item=Document).component
+  <function document_size at 0x...>
+
+Both methods return a :class:`reg.LookupEntry` instance whose
+attributes, as we've just seen, include the dispatched implementation
+under the name ``component``.  Another interesting attribute is the
+actual key used for dispatching:
+
+   >>> view.by_predicates(request_method='GET', obj=Document).key
+   (<class 'Document'>, 'GET')
+   >>> view.by_predicates(obj=Image, request_method='POST').key
+   (<class 'Image'>, 'POST')
+
+
+Getting all compatible implementations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As Reg supports inheritance, if a function like ``size`` has an
+implementation registered for a class, say ``Document``, the same
+implementation will be available for any if its subclasses, like
+``HtmlDocument``:
+
+  >>> size.by_args(doc).component is size.by_args(htmldoc).component
   True
 
-Sometimes it's useful to have more control and go to a lower level by
-specifying the keys that go in directly. We can use
-:meth:`reg.Dispatch.component_by_keys` for that:
+The ``matches`` and ``all_matches`` attributes of
+:class:`reg.LookupEntry` are an interator and the list, respectively,
+of *all* the registered components that are compatible with a
+particular instance, including those of base classes. Right now this
+is pretty boring as there's only one of them:
 
-  >>> size.component_by_keys(item=Document) is document_size
-  True
-
-Getting all
-~~~~~~~~~~~
-
-As we've seen, Reg supports inheritance. ``size`` for instance was
-registered for ``Document`` instances, and is therefore also available
-of instances of its subclass, ``HtmlDocument``:
-
-.. doctest::
-
-  >>> size.component(doc) is document_size
-  True
-  >>> size.component(htmldoc) is document_size
-  True
-
-Using the special :meth:`reg.Dispatch.all` method we can also get an
-iterable of *all* the components registered for a particular instance,
-including those of base classes. Right now this is pretty boring as
-there's only one of them:
-
-.. doctest::
-
-  >>> list(size.all(doc))
+  >>> size.by_args(doc).all_matches
   [<function document_size at ...>]
-  >>> list(size.all(htmldoc))
+  >>> size.by_args(htmldoc).all_matches
   [<function document_size at ...>]
 
 We can make this more interesting by registering a special
@@ -750,28 +753,13 @@ We can make this more interesting by registering a special
   size.register(htmldocument_size, item=HtmlDocument)
 
 ``size.all()`` for ``htmldoc`` now also gives back the more specific
-``htmldocument_size``::
+``htmldocument_size``:
 
-  >>> list(size.all(htmldoc))
+  >>> size.by_args(htmldoc).all_matches
   [<function htmldocument_size at ...>, <function document_size at ...>]
 
-Predicate key
-~~~~~~~~~~~~~
+The implementation are listed in order of decreasing specificity, with
+the first one as the one returned by the ``component`` attribute:
 
-In some cases it can be useful to get an immutable key that represents
-a dispatch registration. The Morepath web framework uses this for
-instance to determine whether registrations are identical in its
-conflict detection and override system.
-
-Earlier we registered various views for object and request method. We
-can get immutable keys for such registrations using
-:meth:`reg.Dispatch.key_dict_to_predicate_key`:
-
-.. doctest::
-
-   >>> view.key_dict_to_predicate_key(
-   ...  {'request_method': 'GET', 'obj': Document})
-   (<class 'Document'>, 'GET')
-   >>> view.key_dict_to_predicate_key(
-   ...  {'obj': Image, 'request_method': 'POST'})
-   (<class 'Image'>, 'POST')
+  >>> size.by_args(htmldoc).component
+  <function htmldocument_size at ...>
