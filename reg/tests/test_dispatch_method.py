@@ -389,11 +389,11 @@ def test_dispatch_method_api_available():
     Foo.bar.register(beta_func, obj=Beta)
 
     assert foo.bar(Alpha()) == "Alpha"
-    assert Foo.bar.component(Alpha()) == alpha_func
-    assert foo.bar.component(Alpha()) == alpha_func
+    assert Foo.bar.by_args(Alpha()).component == alpha_func
+    assert foo.bar.by_args(Alpha()).component == alpha_func
     assert list(foo.bar.all(Alpha())) == [alpha_func]
-    assert foo.bar.component(Beta()) == beta_func
-    assert foo.bar.component(None) is None
+    assert foo.bar.by_args(Beta()).component == beta_func
+    assert foo.bar.by_args(None).component is None
     assert foo.bar.fallback(None) is obj_fallback
     assert list(foo.bar.all(None)) == []
 
@@ -423,7 +423,7 @@ def test_dispatch_method_with_register_function_value():
     Foo.bar.register(methodify(alpha_func), obj=Alpha)
     Foo.bar.register(methodify(beta_func), obj=Beta)
 
-    assert unmethodify(foo.bar.component(Alpha())) is alpha_func
+    assert unmethodify(foo.bar.by_args(Alpha()).component) is alpha_func
 
 
 def test_dispatch_method_with_register_auto_value():
@@ -451,10 +451,10 @@ def test_dispatch_method_with_register_auto_value():
     Foo.bar.register(methodify(alpha_func, 'app'), obj=Alpha)
     Foo.bar.register(methodify(beta_func, 'app'), obj=Beta)
 
-    assert unmethodify(foo.bar.component(Alpha())) is alpha_func
-    assert unmethodify(foo.bar.component(Beta())) is beta_func
+    assert unmethodify(foo.bar.by_args(Alpha()).component) is alpha_func
+    assert unmethodify(foo.bar.by_args(Beta()).component) is beta_func
     # actually since this is a method this is also unwrapped
-    assert foo.bar.component(Beta()) is beta_func
+    assert foo.bar.by_args(Beta()).component is beta_func
 
 
 def test_install_method():

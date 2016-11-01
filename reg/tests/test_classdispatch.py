@@ -33,7 +33,7 @@ def test_dispatch_basic():
     assert something(DemoClass) == (
         "Something for <class '{}.DemoClass'>".format(__name__))
 
-    assert something.component(DemoClass) is something_for_object
+    assert something.by_args(DemoClass).component is something_for_object
     assert list(something.all(DemoClass)) == [something_for_object]
 
 

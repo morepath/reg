@@ -84,7 +84,7 @@ def test_dispatch_no_arguments():
 
     foo.register(special_foo)
 
-    assert foo.component() is special_foo
+    assert foo.by_args().component is special_foo
     assert list(foo.all()) == [special_foo]
     assert foo() == 'special'
     assert foo.fallback() is None
@@ -154,7 +154,7 @@ def test_component_no_source():
         pass
 
     target.register(foo)
-    assert target.component() is foo
+    assert target.by_args().component is foo
 
 
 def test_component_no_source_key_dict():
@@ -180,7 +180,7 @@ def test_component_one_source():
     target.register(foo, obj=Alpha)
 
     alpha = Alpha()
-    assert target.component(alpha) is foo
+    assert target.by_args(alpha).component is foo
 
 
 def test_component_one_source_key_dict():
@@ -208,7 +208,7 @@ def test_component_two_sources():
 
     alpha = Alpha()
     beta = Beta()
-    assert target.component(alpha, beta) is foo
+    assert target.by_args(alpha, beta).component is foo
 
 
 def test_component_inheritance():
@@ -229,7 +229,7 @@ def test_component_inheritance():
 
     delta = Delta()
 
-    assert target.component(delta) is foo
+    assert target.by_args(delta).component is foo
 
 
 def test_component_inheritance_old_style_class():
@@ -251,10 +251,10 @@ def test_component_inheritance_old_style_class():
     gamma = Gamma()
     delta = Delta()
 
-    assert target.component(gamma) is foo
+    assert target.by_args(gamma).component is foo
 
     # inheritance case
-    assert target.component(delta) is foo
+    assert target.by_args(delta).component is foo
 
 
 def test_call_no_source():
@@ -315,7 +315,7 @@ def test_component_not_found_no_sources():
     def target():
         pass
 
-    assert target.component() is None
+    assert target.by_args().component is None
 
 
 def test_call_not_found_no_sources():
@@ -331,7 +331,7 @@ def test_component_not_found_one_source():
     def target(obj):
         pass
 
-    assert target.component('dummy') is None
+    assert target.by_args('dummy').component is None
 
 
 def test_call_not_found_one_source():
@@ -347,7 +347,7 @@ def test_component_not_found_two_sources():
     def target(a, b):
         pass
 
-    assert target.component('dummy', 'dummy') is None
+    assert target.by_args('dummy', 'dummy').component is None
 
 
 def test_call_not_found_two_sources():
@@ -396,7 +396,7 @@ def test_call_with_no_args_while_arg_expected():
         target()
 
     with pytest.raises(TypeError):
-        target.component()
+        target.by_args().component
 
 
 def test_call_with_wrong_args():
@@ -414,7 +414,7 @@ def test_call_with_wrong_args():
         target(wrong=1)
 
     with pytest.raises(TypeError):
-        target.component(wrong=1)
+        target.by_args(wrong=1)
 
 
 def test_extra_arg_for_call():
@@ -1041,7 +1041,7 @@ def test_component_lookup_before_call_and_no_registrations():
     class Bar(object):
         pass
 
-    assert foo.component(Bar()) is None
+    assert foo.by_args(Bar()).component is None
 
 
 def test_predicate_key_too_few_arguments_gives_typeerror():

@@ -231,21 +231,6 @@ def call({signature}):
         """
         return self._predicate_key(*args, **kw)
 
-    def component(self, *args, **kw):
-        """Lookup function dispatched to with args and kw.
-
-        Looks up the function to dispatch to using args and
-        kw. Returns the fallback value (default: ``None``) if nothing
-        could be found.
-
-        :args: varargs. Used to extract dispatch information to
-           construct ``predicate_key``.
-        :kw: keyword arguments. Used to extract
-           dispatch information to construct ``predicate_key``.
-        :returns: the function being dispatched to, or None.
-        """
-        return self.by_args(*args, **kw).component
-
     def fallback(self, *args, **kw):
         """Lookup fallback for args and kw.
 
