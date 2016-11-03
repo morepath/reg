@@ -87,7 +87,7 @@ def test_dispatch_no_arguments():
     assert foo.by_args().component is special_foo
     assert list(foo.all()) == [special_foo]
     assert foo() == 'special'
-    assert foo.fallback() is None
+    assert foo.by_args().fallback is None
 
 
 def test_all():
@@ -453,10 +453,10 @@ def test_fallback_to_fallback():
     beta = Beta()
     assert target(beta) == 'fallback!'
     # this is *not* a registered fallback so won't be returned here
-    assert target.fallback(beta) is fallback
+    assert target.by_args(beta).fallback is fallback
     # we cannot find a fallback for alpha, as it doesn't hit the fallback
     assert target(Alpha()) == 'specific'
-    assert target.fallback(Alpha()) is None
+    assert target.by_args(Alpha()).fallback is None
 
 
 def test_fallback_to_dispatch():
@@ -472,7 +472,7 @@ def test_fallback_to_dispatch():
     beta = Beta()
     assert target(beta) == 'fallback'
     # this is *not* a registered fallback so won't be returned here
-    assert target.fallback(beta) is None
+    assert target.by_args(beta).fallback is None
 
 
 def test_calling_twice():
@@ -666,7 +666,7 @@ def test_dispatch_external_predicates():
     assert view(Foo(), Request('dummy', 'GET')) == 'Name fallback'
     assert view(Foo(), Request('', 'PUT')) == 'Request method fallback'
     assert view(FooSub(), Request('dummy', 'GET')) == 'Name fallback'
-    assert view.fallback(Bar(), Request('', 'GET')) is model_fallback
+    assert view.by_args(Bar(), Request('', 'GET')).fallback is model_fallback
 
 
 def test_dispatch_predicates_register_defaults():
@@ -870,11 +870,12 @@ def test_fallback_should_already_use_subset():
         model=Collection, request_method='POST',
         body_model=Item)
 
-    assert view.fallback(Collection(),
-                         Request('', 'POST', Item2()),
-                         ) is body_model_fallback
-    assert view(Collection(), Request('', 'POST', Item2()),
-                ) == 'Body model fallback'
+    assert view.by_args(
+        Collection(), Request('', 'POST', Item2()),
+    ).fallback is body_model_fallback
+    assert view(
+        Collection(), Request('', 'POST', Item2()),
+    ) == 'Body model fallback'
 
 
 def test_dispatch_missing_argument():

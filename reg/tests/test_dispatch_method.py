@@ -394,7 +394,7 @@ def test_dispatch_method_api_available():
     assert list(foo.bar.all(Alpha())) == [alpha_func]
     assert foo.bar.by_args(Beta()).component == beta_func
     assert foo.bar.by_args(None).component is None
-    assert foo.bar.fallback(None) is obj_fallback
+    assert foo.bar.by_args(None).fallback is obj_fallback
     assert list(foo.bar.all(None)) == []
 
 
