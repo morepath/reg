@@ -231,20 +231,6 @@ def call({signature}):
         """
         return self._predicate_key(*args, **kw)
 
-    def component_by_keys(self, **kw):
-        """Look up function based on key_dict.
-
-        Looks up the function to dispatch to using a key_dict,
-        mapping predicate name to predicate value. Returns the fallback
-        value (default: ``None``) if nothing could be found.
-
-        :kw: key is predicate name, value is
-          predicate value under which it was registered.
-          If omitted, predicate default is used.
-        :returns: the function being dispatched to, or fallback.
-        """
-        return self.by_predicates(**kw).component
-
     def all(self, *args, **kw):
         """Lookup all functions dispatched to with args and kw.
 

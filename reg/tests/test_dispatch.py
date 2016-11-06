@@ -166,7 +166,7 @@ def test_component_no_source_key_dict():
         pass
 
     target.register(foo)
-    assert target.component_by_keys() is foo
+    assert target.by_predicates().component is foo
 
 
 def test_component_one_source():
@@ -193,7 +193,7 @@ def test_component_one_source_key_dict():
 
     target.register(foo, obj=Alpha)
 
-    assert target.component_by_keys(obj=Alpha) is foo
+    assert target.by_predicates(obj=Alpha).component is foo
 
 
 def test_component_two_sources():
