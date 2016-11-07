@@ -245,19 +245,6 @@ def call({signature}):
         """
         return self.by_args(*args, **kw).matches
 
-    def all_by_keys(self, **kw):
-        """Look up all functions dispatched to using keyword arguments.
-
-        Looks up the function to dispatch to using a ``key_dict``,
-        mapping predicate name to predicate value. Returns the fallback
-        value (default: ``None``) if nothing could be found.
-
-        :kw: a dictionary. key is predicate name, value is
-          predicate value. If omitted, predicate default is used.
-        :returns: iterable of functions being dispatched to.
-        """
-        return self.by_predicates(**kw).matches
-
     def by_predicates(self, **predicate_values):
         """Lookup an implementation by predicate values.
 

@@ -139,9 +139,9 @@ def test_all_by_keys():
     target.register(registered_for_sub, obj=Sub)
     target.register(registered_for_base, obj=Base)
 
-    assert list(target.all_by_keys(obj=Sub)) == [
+    assert target.by_predicates(obj=Sub).all_matches == [
         registered_for_sub, registered_for_base]
-    assert list(target.all_by_keys(obj=Base)) == [
+    assert target.by_predicates(obj=Base).all_matches == [
         registered_for_base]
 
 
