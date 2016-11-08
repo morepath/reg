@@ -391,11 +391,11 @@ def test_dispatch_method_api_available():
     assert foo.bar(Alpha()) == "Alpha"
     assert Foo.bar.by_args(Alpha()).component == alpha_func
     assert foo.bar.by_args(Alpha()).component == alpha_func
-    assert list(foo.bar.all(Alpha())) == [alpha_func]
+    assert foo.bar.by_args(Alpha()).all_matches == [alpha_func]
     assert foo.bar.by_args(Beta()).component == beta_func
     assert foo.bar.by_args(None).component is None
     assert foo.bar.by_args(None).fallback is obj_fallback
-    assert list(foo.bar.all(None)) == []
+    assert foo.bar.by_args(None).all_matches == []
 
 
 def test_dispatch_method_with_register_function_value():

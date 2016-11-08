@@ -34,7 +34,7 @@ def test_dispatch_basic():
         "Something for <class '{}.DemoClass'>".format(__name__))
 
     assert something.by_args(DemoClass).component is something_for_object
-    assert list(something.all(DemoClass)) == [something_for_object]
+    assert something.by_args(DemoClass).all_matches == [something_for_object]
 
 
 def test_classdispatch_multidispatch():

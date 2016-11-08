@@ -361,10 +361,10 @@ def test_lru_caching_registry():
 
     all_cache = view.key_lookup.all.__closure__[0].cell_contents
     # prime and check the all cache
-    assert list(view.all(Foo(), Request('', 'GET'))) == [foo_default]
+    assert view.by_args(Foo(), Request('', 'GET')).all_matches == [foo_default]
     assert all_cache.get(((Foo, '', 'GET'),)) is not None
     # should be coming from cache now
-    assert list(view.all(Foo(), Request('', 'GET'))) == [foo_default]
+    assert view.by_args(Foo(), Request('', 'GET')).all_matches == [foo_default]
 
     class Bar(object):
         pass

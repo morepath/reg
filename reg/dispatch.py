@@ -231,20 +231,6 @@ def call({signature}):
         """
         return self._predicate_key(*args, **kw)
 
-    def all(self, *args, **kw):
-        """Lookup all functions dispatched to with args and kw.
-
-        Looks up functions for all permutations based on predicate_key,
-        where predicate_key is constructed from args and kw.
-
-        :args: varargs. Used to extract dispatch information to
-           construct predicate_key.
-        :kw: keyword arguments. Used to extract
-           dispatch information to construct predicate_key.
-        :returns: an iterable of functions.
-        """
-        return self.by_args(*args, **kw).matches
-
     def by_predicates(self, **predicate_values):
         """Lookup an implementation by predicate values.
 

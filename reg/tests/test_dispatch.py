@@ -85,7 +85,7 @@ def test_dispatch_no_arguments():
     foo.register(special_foo)
 
     assert foo.by_args().component is special_foo
-    assert list(foo.all()) == [special_foo]
+    assert foo.by_args().all_matches == [special_foo]
     assert foo() == 'special'
     assert foo.by_args().fallback is None
 
@@ -113,9 +113,9 @@ def test_all():
     base = Base()
     sub = Sub()
 
-    assert list(target.all(sub)) == [
+    assert target.by_args(sub).all_matches == [
         registered_for_sub, registered_for_base]
-    assert list(target.all(base)) == [
+    assert target.by_args(base).all_matches == [
         registered_for_base]
 
 
