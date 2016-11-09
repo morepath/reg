@@ -205,23 +205,6 @@ def call({signature}):
         self.registry.register(predicate_key, func)
         return func
 
-    def predicate_key(self, *args, **kw):
-        """Construct predicate_key for function arguments.
-
-        For function arguments, construct the appropriate
-        ``predicate_key``. This is used by the dispatch mechanism to
-        dispatch to the right function.
-
-        If the ``predicate_key`` cannot be constructed from ``args``
-        and ``kw``, this raises a :exc:`TypeError`.
-
-        :param args: the varargs given to the callable.
-        :param kw: the keyword arguments given to the callable.
-        :returns: an immutable ``predicate_key`` based on the predicates
-          the callable was configured with.
-        """
-        return self._predicate_key(*args, **kw).key
-
     def by_args(self, *args, **kw):
         """Lookup an implementation by invocation arguments.
 

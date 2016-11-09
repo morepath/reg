@@ -1057,7 +1057,7 @@ def test_predicate_key_too_few_arguments_gives_typeerror():
         return obj.method()
 
     with pytest.raises(TypeError):
-        assert foo.predicate_key()
+        assert foo.by_args()
 
 
 def test_predicate_key_too_many_arguments_gives_typeerror():
@@ -1072,7 +1072,7 @@ def test_predicate_key_too_many_arguments_gives_typeerror():
         return obj.method()
 
     with pytest.raises(TypeError):
-        assert foo.predicate_key(1, 2)
+        assert foo.by_args(1, 2)
 
 
 def test_predicate_key_wrong_keyword_argument_gives_typeerror():
@@ -1087,4 +1087,4 @@ def test_predicate_key_wrong_keyword_argument_gives_typeerror():
         return obj.method()
 
     with pytest.raises(TypeError):
-        assert foo.predicate_key(wrong=1)
+        assert foo.by_args(wrong=1)
