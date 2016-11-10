@@ -745,12 +745,8 @@ def test_key_dict_to_predicate_key():
     def view(self, request):
         raise NotImplementedError()
 
-    assert view.key_dict_to_predicate_key({
-        'foo': 'FOO',
-        'bar': 'BAR'}) == ('FOO', 'BAR')
-    assert view.key_dict_to_predicate_key({}) == (
-        'default foo',
-        'default bar')
+    assert view.by_predicates(foo='FOO', bar='BAR').key == ('FOO', 'BAR')
+    assert view.by_predicates().key == ('default foo', 'default bar')
 
 
 def test_key_dict_to_predicate_key_unknown_keys():
@@ -761,9 +757,8 @@ def test_key_dict_to_predicate_key_unknown_keys():
         raise NotImplementedError()
 
     # unknown keys are just ignored
-    assert view.key_dict_to_predicate_key({'unknown': 'blah'}) == (
-        'default foo',
-        'default bar')
+    assert view.by_predicates(unknown='blah').key == \
+        ('default foo', 'default bar')
 
 
 def test_register_dispatch_key_dict():
@@ -804,7 +799,7 @@ def test_register_dispatch_key_dict():
                   request_method_fallback,
                   default='GET')])
 
-    assert view.key_dict_to_predicate_key({}) == (None, '', 'GET')
+    assert view.by_predicates().key == (None, '', 'GET')
 
 
 def test_fallback_should_already_use_subset():
@@ -926,7 +921,7 @@ def test_dict_to_predicate_key_for_no_dispatch():
     def foo():
         pass
 
-    assert foo.key_dict_to_predicate_key({}) == ()
+    assert foo.by_predicates().key == ()
 
 
 def test_dispatch_clean():

@@ -224,17 +224,6 @@ def call({signature}):
             self.key_lookup,
             self.registry.key_dict_to_predicate_key(predicate_values))
 
-    def key_dict_to_predicate_key(self, key_dict):
-        """Turn a key dict into a predicate key.
-
-        Given a key dict under which an implementation function is
-        registered, return an immutable predicate key.
-
-        :param key_dict: dict with registration information
-        :returns: an immutable predicate key
-        """
-        return self.registry.key_dict_to_predicate_key(key_dict)
-
 
 def validate_signature(f, dispatch):
     f_arginfo = arginfo(f)
