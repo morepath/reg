@@ -172,6 +172,8 @@ class PredicateRegistry(object):
         # this code is a bit convoluted for performance reasons.
         sets = (
             index[key] for index, key in zip(self.indexes, keys))
+        # besides doing the intersection,
+        # this returns the known values if there are no indexes at all
         return next(sets, self.known_values).intersection(*sets)
 
     def permutations(self, keys):
