@@ -168,6 +168,8 @@ class PredicateRegistry(object):
         self.known_values.add(value)
 
     def get(self, keys):
+        # do an intersection of all sets that result from index lookup
+        # this code is a bit convoluted for performance reasons.
         sets = (
             index[key] for index, key in zip(self.indexes, keys))
         return next(sets, self.known_values).intersection(*sets)
