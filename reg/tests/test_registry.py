@@ -106,17 +106,17 @@ def test_predicate_registry_class_lookup():
     reg.register((SpecialDocument,),
                  'special document line count')
 
-    assert (reg.component((Document,)) ==
-            'document line count')
+    assert (reg.component((Document,))
+            == 'document line count')
 
-    assert (reg.component((SpecialDocument,)) ==
-            'special document line count')
+    assert (reg.component((SpecialDocument,))
+            == 'special document line count')
 
     class AnotherDocument(Document):
         pass
 
-    assert (reg.component((AnotherDocument,)) ==
-            'document line count')
+    assert (reg.component((AnotherDocument,))
+            == 'document line count')
 
     class Other(object):
         pass
@@ -144,12 +144,12 @@ def test_predicate_registry_target_find_specific():
     reg2.register((Document,), 'special line count')
 
     assert reg.component((Document,)) == 'line count'
-    assert (reg2.component((Document,)) ==
-            'special line count')
+    assert (reg2.component((Document,))
+            == 'special line count')
 
     assert reg.component((SpecialDocument,)) == 'line count'
-    assert (reg2.component((SpecialDocument,)) ==
-            'special line count')
+    assert (reg2.component((SpecialDocument,))
+            == 'special line count')
 
 
 def test_registry_no_sources():

@@ -239,9 +239,9 @@ def validate_signature(f, dispatch):
 
 def format_signature(args):
     return ', '.join(
-        args.args +
-        (['*' + args.varargs] if args.varargs else []) +
-        (['**' + args.keywords] if args.keywords else []))
+        args.args
+        + (['*' + args.varargs] if args.varargs else [])
+        + (['**' + args.keywords] if args.keywords else []))
 
 
 def same_signature(a, b):
@@ -252,9 +252,9 @@ def same_signature(a, b):
     """
     a_args = set(a.args)
     b_args = set(b.args)
-    return (len(a_args) == len(b_args) and
-            a.varargs == b.varargs and
-            a.keywords == b.keywords)
+    return (len(a_args) == len(b_args)
+            and a.varargs == b.varargs
+            and a.keywords == b.keywords)
 
 
 def execute(code_source, **namespace):
