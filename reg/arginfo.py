@@ -93,11 +93,8 @@ WRAPPER_DESCRIPTOR = Dummy.__init__
 
 
 def get_class_init(class_):
-    try:
-        func = class_.__init__
-    except AttributeError:  # pragma: no cover
-        # Python 2 classic class without __init__.
-        return fake_empty_init
+    func = class_.__init__
+
     # If this is a new-style class and there is no __init__
     # defined, in CPython (but not PyPy) this is a WRAPPER_DESCRIPTOR.
     if func is WRAPPER_DESCRIPTOR:

@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 from functools import partial, wraps
 from collections import namedtuple
 from .predicate import match_instance
-from .compat import string_types
 from .predicate import PredicateRegistry
 from .arginfo import arginfo
 from .error import RegistrationError
@@ -36,7 +35,7 @@ class dispatch(object):
         self.get_key_lookup = kw.pop('get_key_lookup', identity)
 
     def _make_predicate(self, predicate):
-        if isinstance(predicate, string_types):
+        if isinstance(predicate, str):
             return match_instance(predicate)
         return predicate
 

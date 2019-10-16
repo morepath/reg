@@ -1,19 +1,26 @@
-sudo: false
+dist: xenial
 language: python
 
-python: 3.5
-env:
-    - TOXENV=py27
-    - TOXENV=py33
-    - TOXENV=py34
-    - TOXENV=py35
-    - TOXENV=pypy
-    - TOXENV=coverage
-    - TOXENV=pep8
-    - TOXENV=docs
-    - TOXENV=perf
+python:
+    - "3.4"
+    - "3.5"
+    - "3.6"
+    - "3.7"
+    - "pypy3.6-7.1.1"
+matrix:
+    include:
+    - python: "3.7"
+      env: TOXENV="-e perf"
+    - python: "3.7"
+      env: TOXENV="-e docs"
+    - python: "3.7"
+      env: TOXENV="-e pep8"
+    - python: "3.7"
+      env: TOXENV="-e coverage"
+before_install:
+    - pip install --upgrade pip setuptools
 install:
     - pip install --upgrade pip setuptools
-    - pip install tox
+    - pip install tox-travis
 script:
-    - tox -e $TOXENV
+    - tox -s false $TOXENV
