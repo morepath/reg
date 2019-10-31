@@ -10,7 +10,7 @@ CHANGES
 
 - Dropped support for Python 3.3.
 
-- Added support for Python 3.5, 3.6, 3.7 and Pypy 3.6.
+- Added support for Python 3.5, 3.6, 3.7, 3.8 and Pypy 3.6.
 
 - Make Python 3.7 the default testing environment.
 
