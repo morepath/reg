@@ -4,6 +4,16 @@ CHANGES
 0.12 (unreleased)
 =================
 
+- **Breaking change**
+
+  reg.arginfo(callable) returns now a FullArgSpec tuple
+  instead of the deprecated ArgSpec tuple. FullArgSpec has
+  full support for annotations and keyword-only parameters.
+
+  Fixes `#55`_.
+
+  .. _#55: https://github.com/morepath/reg/issues/55
+
 - **Removed**: Removed support for Python 2.
   
   You have to upgrade to Python 3 if you want to use this version.

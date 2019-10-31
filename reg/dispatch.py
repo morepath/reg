@@ -241,7 +241,7 @@ def format_signature(args):
     return ', '.join(
         args.args
         + (['*' + args.varargs] if args.varargs else [])
-        + (['**' + args.keywords] if args.keywords else []))
+        + (['**' + args.varkw] if args.varkw else []))
 
 
 def same_signature(a, b):
@@ -254,7 +254,7 @@ def same_signature(a, b):
     b_args = set(b.args)
     return (len(a_args) == len(b_args)
             and a.varargs == b.varargs
-            and a.keywords == b.keywords)
+            and a.varkw == b.varkw)
 
 
 def execute(code_source, **namespace):
