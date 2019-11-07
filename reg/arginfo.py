@@ -97,19 +97,7 @@ def get_class_init(class_):
     func = class_.__init__
 
     # If this is a new-style class and there is no __init__
-    # defined, in CPython (but not PyPy) this is a WRAPPER_DESCRIPTOR.
+    # defined this is a WRAPPER_DESCRIPTOR.
     if func is WRAPPER_DESCRIPTOR:
         return fake_empty_init
-    # A PyPy class without __init__ needs to be handled specially,
-    # as the default __init__ in this case falsely reports varargs
-    # and varkw.
-    if is_pypy_default_init(func):
-        return fake_empty_init  # pragma: nocoverage
     return func
-
-
-def is_pypy_default_init(func):
-    try:
-        return func.func_code.co_name == 'descr__init__'
-    except AttributeError:  # pragma: nocoverage
-        return False
