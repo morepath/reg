@@ -5,12 +5,12 @@ import inspect
 def arginfo(callable):
     """Get information about the arguments of a callable.
 
-    Returns a :class:`inspect.ArgSpec` object as for
-    :func:`inspect.getargspec`.
+    Returns a :class:`inspect.FullArgSpec` object as for
+    :func:`inspect.getfullargspec`.
 
-    :func:`inspect.getargspec` returns information about the arguments
+    :func:`inspect.getfullargspec` returns information about the arguments
     of a function. arginfo also works for classes and instances with a
-    __call__ defined. Unlike getargspec, arginfo treats bound methods
+    __call__ defined. Unlike getfullargspec, arginfo treats bound methods
     like functions, so that the self argument is not reported.
 
     arginfo returns ``None`` if given something that is not callable.
@@ -33,11 +33,12 @@ def arginfo(callable):
     func, cache_key, remove_self = get_callable_info(callable)
     if func is None:
         return None
-    result = inspect.getargspec(func)
+    result = inspect.getfullargspec(func)
     if remove_self:
         args = result.args[1:]
-        result = inspect.ArgSpec(args, result.varargs, result.keywords,
-                                 result.defaults)
+        result = inspect.FullArgSpec(args, result.varargs, result.varkw,
+                                     result.defaults, result.kwonlyargs,
+                                     result.kwonlydefaults, result.annotations)
     arginfo._cache[cache_key] = result
     return result
 
@@ -57,7 +58,7 @@ def get_callable_info(callable):
 
     Returns a tuple of:
 
-    * actual function/method that can be inspected with inspect.getargspec.
+    * actual function/method that can be inspected with inspect.getfullargspec.
 
     * cache key to use to cache results.
 
@@ -93,25 +94,10 @@ WRAPPER_DESCRIPTOR = Dummy.__init__
 
 
 def get_class_init(class_):
-    try:
-        func = class_.__init__
-    except AttributeError:  # pragma: no cover
-        # Python 2 classic class without __init__.
-        return fake_empty_init
+    func = class_.__init__
+
     # If this is a new-style class and there is no __init__
-    # defined, in CPython (but not PyPy) this is a WRAPPER_DESCRIPTOR.
+    # defined this is a WRAPPER_DESCRIPTOR.
     if func is WRAPPER_DESCRIPTOR:
         return fake_empty_init
-    # A PyPy class without __init__ needs to be handled specially,
-    # as the default __init__ in this case falsely reports varargs
-    # and keywords.
-    if is_pypy_default_init(func):
-        return fake_empty_init  # pragma: nocoverage
     return func
-
-
-def is_pypy_default_init(func):
-    try:
-        return func.func_code.co_name == 'descr__init__'
-    except AttributeError:  # pragma: nocoverage
-        return False

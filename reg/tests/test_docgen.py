@@ -67,9 +67,9 @@ def test_autodoc(tmpdir):
     # status=None makes Sphinx completely quiet, in case you run
     # py.test with the -s switch.  For debugging you might want to
     # remove it.
-    app = Sphinx(root, root, root, root, 'text', status=None)
+    app = Sphinx(root, root, root + '/build', root, 'text', status=None)
     app.build()
-    assert tmpdir.join('contents.txt').read() == """\
+    assert tmpdir.join('build/contents.txt').read() == """\
 Sample module for testing autodoc.
 
 class reg.tests.fixtures.module.Foo

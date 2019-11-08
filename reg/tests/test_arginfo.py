@@ -81,7 +81,7 @@ def test_arginfo_no_args(callable):
     info = arginfo(callable)
     assert info.args == []
     assert info.varargs is None
-    assert info.keywords is None
+    assert info.varkw is None
     assert info.defaults is None
 
 
@@ -144,7 +144,7 @@ def test_arginfo_args(callable):
     info = arginfo(callable)
     assert info.args == ['a']
     assert info.varargs is None
-    assert info.keywords is None
+    assert info.varkw is None
     assert info.defaults is None
 
 
@@ -195,7 +195,7 @@ def test_arginfo_varargs(callable):
     info = arginfo(callable)
     assert info.args == []
     assert info.varargs == 'args'
-    assert info.keywords is None
+    assert info.varkw is None
     assert info.defaults is None
 
 
@@ -246,7 +246,7 @@ def test_arginfo_keywords(callable):
     info = arginfo(callable)
     assert info.args == []
     assert info.varargs is None
-    assert info.keywords == 'kw'
+    assert info.varkw == 'kw'
     assert info.defaults is None
 
 
@@ -297,7 +297,7 @@ def test_arginfo_defaults(callable):
     info = arginfo(callable)
     assert info.args == ['a']
     assert info.varargs is None
-    assert info.keywords is None
+    assert info.varkw is None
     assert info.defaults == (1,)
 
 
@@ -307,7 +307,7 @@ def test_arginfo_builtin():
     info = arginfo(int)
     assert info.args == []
     assert info.varargs is None
-    assert info.keywords is None
+    assert info.varkw is None
     assert info.defaults is None
 
 

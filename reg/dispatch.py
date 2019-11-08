@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 from functools import partial, wraps
 from collections import namedtuple
 from .predicate import match_instance
-from .compat import string_types
 from .predicate import PredicateRegistry
 from .arginfo import arginfo
 from .error import RegistrationError
@@ -36,7 +35,7 @@ class dispatch(object):
         self.get_key_lookup = kw.pop('get_key_lookup', identity)
 
     def _make_predicate(self, predicate):
-        if isinstance(predicate, string_types):
+        if isinstance(predicate, str):
             return match_instance(predicate)
         return predicate
 
@@ -240,9 +239,9 @@ def validate_signature(f, dispatch):
 
 def format_signature(args):
     return ', '.join(
-        args.args +
-        (['*' + args.varargs] if args.varargs else []) +
-        (['**' + args.keywords] if args.keywords else []))
+        args.args
+        + (['*' + args.varargs] if args.varargs else [])
+        + (['**' + args.varkw] if args.varkw else []))
 
 
 def same_signature(a, b):
@@ -253,9 +252,9 @@ def same_signature(a, b):
     """
     a_args = set(a.args)
     b_args = set(b.args)
-    return (len(a_args) == len(b_args) and
-            a.varargs == b.varargs and
-            a.keywords == b.keywords)
+    return (len(a_args) == len(b_args)
+            and a.varargs == b.varargs
+            and a.varkw == b.varkw)
 
 
 def execute(code_source, **namespace):
