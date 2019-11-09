@@ -1,11 +1,11 @@
 from cProfile import run
 from reg import dispatch
-from reg import CachingKeyLookup
+from reg import LruCachingKeyLookup
 
 
 def get_key_lookup(r):
-    return CachingKeyLookup(r, component_cache_size=5000,
-                            all_cache_size=5000, fallback_cache_size=5000)
+    return LruCachingKeyLookup(r, component_cache_size=5000,
+                               all_cache_size=5000, fallback_cache_size=5000)
 
 
 @dispatch(get_key_lookup=get_key_lookup)
@@ -56,6 +56,7 @@ def myargs3(a, b, c):
 def myargs4(a, b, c, d):
     return "args4"
 
+
 args0.register(myargs0)
 args1.register(myargs1, a=Foo)
 args2.register(myargs2, a=Foo, b=Foo)
@@ -64,9 +65,8 @@ args4.register(myargs4, a=Foo, b=Foo, c=Foo, d=Foo)
 
 
 def repeat_args4():
-    for i in xrange(10000):
+    for i in range(10000):
         args4(Foo(), Foo(), Foo(), Foo())
 
 
 run("repeat_args4()", sort="tottime")
-

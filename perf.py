@@ -1,12 +1,8 @@
 import timeit
 
 from reg import dispatch
-from reg import DictCachingKeyLookup, LruCachingKeyLookup
+from reg import DictCachingKeyLookup
 
-
-# def get_key_lookup(r):
-#     return LruCachingKeyLookup(r, component_cache_size=5000,
-#                                all_cache_size=5000, fallback_cache_size=5000)
 
 def get_key_lookup(r):
     return DictCachingKeyLookup(r)
@@ -59,6 +55,7 @@ def myargs3(a, b, c):
 
 def myargs4(a, b, c, d):
     return "args4"
+
 
 args0.register(myargs0)
 args1.register(myargs1, a=Foo)

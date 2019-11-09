@@ -56,6 +56,7 @@ def myargs3(a, b, c):
 def myargs4(a, b, c, d):
     return "args4"
 
+
 args0.register(myargs0)
 args1.register(myargs1, a=Foo)
 args2.register(myargs2, a=Foo, b=Foo)
