@@ -13,22 +13,22 @@ def args0():
     raise NotImplementedError()
 
 
-@dispatch('a', get_key_lookup=get_key_lookup)
+@dispatch("a", get_key_lookup=get_key_lookup)
 def args1(a):
     raise NotImplementedError()
 
 
-@dispatch('a', 'b', get_key_lookup=get_key_lookup)
+@dispatch("a", "b", get_key_lookup=get_key_lookup)
 def args2(a, b):
     raise NotImplementedError()
 
 
-@dispatch('a', 'b', 'c', get_key_lookup=get_key_lookup)
+@dispatch("a", "b", "c", get_key_lookup=get_key_lookup)
 def args3(a, b, c):
     raise NotImplementedError()
 
 
-@dispatch('a', 'b', 'c', 'd', get_key_lookup=get_key_lookup)
+@dispatch("a", "b", "c", "d", get_key_lookup=get_key_lookup)
 def args4(a, b, c, d):
     raise NotImplementedError()
 
@@ -92,41 +92,68 @@ def plain_docall4():
     myargs4(Foo(), Foo(), Foo(), Foo())
 
 
-plain_zero_time = timeit.timeit("plain_docall0()",
-                                setup="from __main__ import plain_docall0")
+plain_zero_time = timeit.timeit(
+    "plain_docall0()", setup="from __main__ import plain_docall0"
+)
 
 print("\nPerformance test")
 print("================")
 
 print("dispatch 0 args")
-print("{0:.2f}".format(timeit.timeit("docall0()",
-                                     setup="from __main__ import docall0"
-                                     ) / plain_zero_time) + "x")
+print(
+    "{0:.2f}".format(
+        timeit.timeit("docall0()", setup="from __main__ import docall0")
+        / plain_zero_time
+    )
+    + "x"
+)
 
 print("dispatch 1 args")
-print("{0:.2f}".format(timeit.timeit("docall1()",
-                                     setup="from __main__ import docall1"
-                                     ) / plain_zero_time) + "x")
+print(
+    "{0:.2f}".format(
+        timeit.timeit("docall1()", setup="from __main__ import docall1")
+        / plain_zero_time
+    )
+    + "x"
+)
 
 print("dispatch 2 args")
-print("{0:.2f}".format(timeit.timeit("docall2()",
-                                     setup="from __main__ import docall2"
-                                     ) / plain_zero_time) + "x")
+print(
+    "{0:.2f}".format(
+        timeit.timeit("docall2()", setup="from __main__ import docall2")
+        / plain_zero_time
+    )
+    + "x"
+)
 
 print("dispatch 3 args")
-print("{0:.2f}".format(timeit.timeit("docall3()",
-                                     setup="from __main__ import docall3"
-                                     ) / plain_zero_time) + "x")
+print(
+    "{0:.2f}".format(
+        timeit.timeit("docall3()", setup="from __main__ import docall3")
+        / plain_zero_time
+    )
+    + "x"
+)
 
 print("dispatch 4 args")
-print("{0:.2f}".format(timeit.timeit("docall4()",
-                                     setup="from __main__ import docall4"
-                                     ) / plain_zero_time) + "x")
+print(
+    "{0:.2f}".format(
+        timeit.timeit("docall4()", setup="from __main__ import docall4")
+        / plain_zero_time
+    )
+    + "x"
+)
 
 print("Plain func 0 args")
 print("1.00x (base duration)")
 
 print("Plain func 4 args")
-print("{0:.2f}".format(timeit.timeit("plain_docall4()",
-                                     setup="from __main__ import plain_docall4"
-                                     ) / plain_zero_time) + "x")
+print(
+    "{0:.2f}".format(
+        timeit.timeit(
+            "plain_docall4()", setup="from __main__ import plain_docall4"
+        )
+        / plain_zero_time
+    )
+    + "x"
+)

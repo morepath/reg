@@ -28,9 +28,11 @@ class dispatch_method(dispatch):
       time the method is invoked.
 
     """
+
     def __init__(self, *predicates, **kw):
         self.first_invocation_hook = kw.pop(
-            'first_invocation_hook', lambda x: None)
+            "first_invocation_hook", lambda x: None
+        )
         super(dispatch_method, self).__init__(*predicates, **kw)
         self._cache = {}
 
@@ -48,9 +50,9 @@ class dispatch_method(dispatch):
         if dispatch is None:
             # if this is the first time we access the dispatch method,
             # we create it and store it in the cache
-            dispatch = DispatchMethod(self.predicates,
-                                      self.callable,
-                                      self.get_key_lookup).call
+            dispatch = DispatchMethod(
+                self.predicates, self.callable, self.get_key_lookup
+            ).call
             self._cache[type] = dispatch
 
         # we cannot attach the dispatch method to the class
@@ -73,7 +75,6 @@ class dispatch_method(dispatch):
 
 
 class DispatchMethod(Dispatch):
-
     def by_args(self, *args, **kw):
         """Lookup an implementation by invocation arguments.
 
@@ -116,18 +117,18 @@ def methodify(func, selfname=None):
     if args.args[:1] != [selfname]:
         # Add missing self to the signature:
         code_template = (
-            "def wrapper({selfname}, {signature}): return _func({signature})")
+            "def wrapper({selfname}, {signature}): return _func({signature})"
+        )
     elif inspect.ismethod(func):
         # Bound method: must be wrapped despite same signature:
-        code_template = (
-            "def wrapper({signature}): return _func({signature})")
+        code_template = "def wrapper({signature}): return _func({signature})"
     else:
         # No wrapping needed:
         return func
     code_source = code_template.format(
-        signature=format_signature(args),
-        selfname=selfname or '_')
-    return execute(code_source, _func=func)['wrapper']
+        signature=format_signature(args), selfname=selfname or "_"
+    )
+    return execute(code_source, _func=func)["wrapper"]
 
 
 def clean_dispatch_methods(cls):
@@ -140,5 +141,5 @@ def clean_dispatch_methods(cls):
     """
     for name in dir(cls):
         attr = getattr(cls, name)
-        if inspect.isfunction(attr) and hasattr(attr, 'clean'):
+        if inspect.isfunction(attr) and hasattr(attr, "clean"):
             attr.clean()
