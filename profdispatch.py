@@ -4,8 +4,12 @@ from reg import LruCachingKeyLookup
 
 
 def get_key_lookup(r):
-    return LruCachingKeyLookup(r, component_cache_size=5000,
-                               all_cache_size=5000, fallback_cache_size=5000)
+    return LruCachingKeyLookup(
+        r,
+        component_cache_size=5000,
+        all_cache_size=5000,
+        fallback_cache_size=5000,
+    )
 
 
 @dispatch(get_key_lookup=get_key_lookup)
@@ -13,22 +17,22 @@ def args0():
     raise NotImplementedError()
 
 
-@dispatch('a', get_key_lookup=get_key_lookup)
+@dispatch("a", get_key_lookup=get_key_lookup)
 def args1(a):
     raise NotImplementedError()
 
 
-@dispatch('a', 'b', get_key_lookup=get_key_lookup)
+@dispatch("a", "b", get_key_lookup=get_key_lookup)
 def args2(a, b):
     raise NotImplementedError()
 
 
-@dispatch('a', 'b', 'c', get_key_lookup=get_key_lookup)
+@dispatch("a", "b", "c", get_key_lookup=get_key_lookup)
 def args3(a, b, c):
     raise NotImplementedError()
 
 
-@dispatch('a', 'b', 'c', 'd', get_key_lookup=get_key_lookup)
+@dispatch("a", "b", "c", "d", get_key_lookup=get_key_lookup)
 def args4(a, b, c, d):
     raise NotImplementedError()
 

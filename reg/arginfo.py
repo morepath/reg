@@ -36,9 +36,15 @@ def arginfo(callable):
     result = inspect.getfullargspec(func)
     if remove_self:
         args = result.args[1:]
-        result = inspect.FullArgSpec(args, result.varargs, result.varkw,
-                                     result.defaults, result.kwonlyargs,
-                                     result.kwonlydefaults, result.annotations)
+        result = inspect.FullArgSpec(
+            args,
+            result.varargs,
+            result.varkw,
+            result.defaults,
+            result.kwonlyargs,
+            result.kwonlydefaults,
+            result.annotations,
+        )
     arginfo._cache[cache_key] = result
     return result
 
@@ -76,7 +82,7 @@ def get_callable_info(callable):
     if inspect.isclass(callable):
         return get_class_init(callable), callable, True
     try:
-        callable = getattr(callable, '__call__')
+        callable = getattr(callable, "__call__")
         return callable, callable, True
     except AttributeError:
         return None, None, False

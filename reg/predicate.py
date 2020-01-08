@@ -25,8 +25,7 @@ class Predicate(object):
 
     """
 
-    def __init__(self, name, index, get_key=None, fallback=None,
-                 default=None):
+    def __init__(self, name, index, get_key=None, fallback=None, default=None):
         self.name = name
         self.index = index
         self.fallback = fallback
@@ -137,7 +136,6 @@ class ClassIndex(KeyIndex):
 
 
 class PredicateRegistry(object):
-
     def __init__(self, *predicates):
         self.known_keys = set()
         self.known_values = set()
@@ -147,7 +145,7 @@ class PredicateRegistry(object):
         if len(predicates) == 0:
             self.key = lambda **kw: ()
         elif len(predicates) == 1:
-            p, = key_getters
+            (p,) = key_getters
             self.key = lambda **kw: (p(kw),)
         elif len(predicates) == 2:
             p, q = key_getters
@@ -161,7 +159,8 @@ class PredicateRegistry(object):
     def register(self, key, value):
         if key in self.known_keys:
             raise RegistrationError(
-                "Already have registration for key: %s" % (key,))
+                "Already have registration for key: %s" % (key,)
+            )
         for index, key_item in zip(self.indexes, key):
             index.setdefault(key_item, set()).add(value)
         self.known_keys.add(key)
@@ -170,16 +169,15 @@ class PredicateRegistry(object):
     def get(self, keys):
         # do an intersection of all sets that result from index lookup
         # this code is a bit convoluted for performance reasons.
-        sets = (
-            index[key] for index, key in zip(self.indexes, keys))
+        sets = (index[key] for index, key in zip(self.indexes, keys))
         # besides doing the intersection,
         # this returns the known values if there are no indexes at all
         return next(sets, self.known_values).intersection(*sets)
 
     def permutations(self, keys):
-        return product(*(
-            index.permutations(key) for index, key in zip(self.indexes, keys)
-        ))
+        return product(
+            *(index.permutations(key) for index, key in zip(self.indexes, keys))
+        )
 
     def key(self, **kw):
         """Construct a dispatch key from the arguments of a generic function.

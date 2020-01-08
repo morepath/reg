@@ -27,6 +27,7 @@ class DictCachingKeyLookup(object):
     :param: key_lookup - the :class:`PredicateRegistry` to cache.
 
     """
+
     def __init__(self, key_lookup):
         self.key_lookup = key_lookup
         self.component = Cache(key_lookup.component).__getitem__
@@ -53,10 +54,17 @@ class LruCachingKeyLookup(object):
     :param fallback_cache_size: how many cache entries to store for
       the :meth:`fallback` method.
     """
-    def __init__(self, key_lookup, component_cache_size, all_cache_size,
-                 fallback_cache_size):
+
+    def __init__(
+        self,
+        key_lookup,
+        component_cache_size,
+        all_cache_size,
+        fallback_cache_size,
+    ):
         self.key_lookup = key_lookup
         self.component = lru_cache(component_cache_size)(key_lookup.component)
         self.fallback = lru_cache(fallback_cache_size)(key_lookup.fallback)
         self.all = lru_cache(all_cache_size)(
-            lambda key: list(key_lookup.all(key)))
+            lambda key: list(key_lookup.all(key))
+        )
