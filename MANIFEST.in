@@ -1,4 +1,4 @@
-include *.txt *.rst *.cfg *.py *.ini
+include *.txt *.rst *.cfg *.py *.ini *.toml *.yaml
 exclude .installed.cfg
 recursive-include reg *.py
 recursive-include tests *.py
