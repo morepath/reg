@@ -10,7 +10,7 @@ long_description = "\n".join(
 
 setup(
     name="reg",
-    version="0.12",
+    version="0.13.dev0",
     description="Clever dispatch",
     long_description=long_description,
     author="Martijn Faassen",
