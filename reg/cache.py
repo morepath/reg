@@ -12,7 +12,7 @@ class Cache(dict):
         return result
 
 
-class DictCachingKeyLookup(object):
+class DictCachingKeyLookup:
     """A key lookup that caches.
 
     Implements the read-only API of :class:`reg.PredicateRegistry` using
@@ -35,7 +35,7 @@ class DictCachingKeyLookup(object):
         self.all = Cache(lambda key: list(key_lookup.all(key))).__getitem__
 
 
-class LruCachingKeyLookup(object):
+class LruCachingKeyLookup:
     """A key lookup that caches.
 
     Implements the read-only API of :class:`reg.PredicateRegistry`, using

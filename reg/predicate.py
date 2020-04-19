@@ -5,7 +5,7 @@ from itertools import product
 from .error import RegistrationError
 
 
-class Predicate(object):
+class Predicate:
     """A dispatch predicate.
 
     :param name: name used to identify the predicate when specifying
@@ -125,17 +125,12 @@ class ClassIndex(KeyIndex):
     def permutations(self, key):
         """Permutations for class key.
 
-        Returns class and its base classes in mro order. If a classic
-        class in Python 2, smuggle in ``object`` as the base class
-        anyway to make lookups consistent.
+        Returns class and its base classes in mro order.
         """
-        for class_ in inspect.getmro(key):
-            yield class_
-        if class_ is not object:
-            yield object  # pragma: no cover
+        yield from inspect.getmro(key)
 
 
-class PredicateRegistry(object):
+class PredicateRegistry:
     def __init__(self, *predicates):
         self.known_keys = set()
         self.known_values = set()
@@ -159,7 +154,7 @@ class PredicateRegistry(object):
     def register(self, key, value):
         if key in self.known_keys:
             raise RegistrationError(
-                "Already have registration for key: %s" % (key,)
+                "Already have registration for key: {}".format(key)
             )
         for index, key_item in zip(self.indexes, key):
             index.setdefault(key_item, set()).add(value)
@@ -226,5 +221,4 @@ class PredicateRegistry(object):
 
     def all(self, key):
         for p in self.permutations(key):
-            for value in self.get(p):
-                yield value
+            yield from self.get(p)

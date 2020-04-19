@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from functools import partial, wraps
 from collections import namedtuple
 from .predicate import match_instance
@@ -7,7 +6,7 @@ from .arginfo import arginfo
 from .error import RegistrationError
 
 
-class dispatch(object):
+class dispatch:
     """Decorator to make a function dispatch based on its arguments.
 
     This takes the predicates to dispatch on as zero or more
@@ -75,7 +74,7 @@ class LookupEntry(namedtuple("LookupEntry", "lookup key")):
         return list(self.matches)
 
 
-class Dispatch(object):
+class Dispatch:
     """Dispatch function.
 
     You can register implementations based on particular predicates. The

@@ -2,20 +2,20 @@ from ..dispatch import dispatch
 from ..predicate import match_class
 
 
-class DemoClass(object):
+class DemoClass:
     pass
 
 
-class SpecialClass(object):
+class SpecialClass:
     pass
 
 
-class Foo(object):
+class Foo:
     def __repr__(self):
         return "<instance of Foo>"
 
 
-class Bar(object):
+class Bar:
     def __repr__(self):
         return "<instance of Bar>"
 

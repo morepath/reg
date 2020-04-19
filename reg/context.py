@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 import inspect
 from types import MethodType
 from .dispatch import dispatch, Dispatch, format_signature, execute
@@ -33,7 +32,7 @@ class dispatch_method(dispatch):
         self.first_invocation_hook = kw.pop(
             "first_invocation_hook", lambda x: None
         )
-        super(dispatch_method, self).__init__(*predicates, **kw)
+        super().__init__(*predicates, **kw)
         self._cache = {}
 
     def __call__(self, callable):
@@ -82,7 +81,7 @@ class DispatchMethod(Dispatch):
         :param kw: named arguments used in invocation.
         :returns: a :class:`reg.LookupEntry`.
         """
-        return super(DispatchMethod, self).by_args(None, *args, **kw)
+        return super().by_args(None, *args, **kw)
 
 
 def methodify(func, selfname=None):

@@ -28,7 +28,7 @@ Here is a concrete example. First we define a context class we call
 
   import reg
 
-  class A(object):
+  class A:
       @reg.dispatch_method(
         reg.match_instance('obj'),
         reg.match_key('request_method',
@@ -43,11 +43,11 @@ content classes:
 
 .. testcode::
 
-  class Document(object):
+  class Document:
      def __init__(self, text):
          self.text = text
 
-  class Image(object):
+  class Image:
       def __init__(self, bytes):
           self.bytes = bytes
 
@@ -55,7 +55,7 @@ We also need a request class:
 
 .. testcode::
 
-  class Request(object):
+  class Request:
       def __init__(self, request_method, body=''):
           self.request_method = request_method
           self.body = body

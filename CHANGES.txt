@@ -4,7 +4,11 @@ CHANGES
 0.13 (unreleased)
 =================
 
-- Nothing changed yet.
+- Cleanup old Python 2 code with pyupgrade_.
+
+  .. _pyupgrade: https://github.com/asottile/pyupgrade
+
+- Remove support of classic classes for Python 2 and remove obsolente tests.
 
 
 0.12 (2020-01-29)

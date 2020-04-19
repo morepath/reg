@@ -6,7 +6,7 @@ def func_no_args():
     pass
 
 
-class ObjNoArgs(object):
+class ObjNoArgs:
     def __call__(self):
         pass
 
@@ -14,7 +14,7 @@ class ObjNoArgs(object):
 obj_no_args = ObjNoArgs()
 
 
-class MethodNoArgs(object):
+class MethodNoArgs:
     def method(self):
         pass
 
@@ -22,32 +22,23 @@ class MethodNoArgs(object):
 method_no_args = MethodNoArgs()
 
 
-class StaticMethodNoArgs(object):
+class StaticMethodNoArgs:
     @staticmethod
     def method():
         pass
 
 
-class ClassMethodNoArgs(object):
+class ClassMethodNoArgs:
     @classmethod
     def method(cls):
         pass
 
 
-class ClassNoInit(object):
+class ClassNoInit:
     pass
 
 
-class ClassNoArgs(object):
-    def __init__(self):
-        pass
-
-
-class ClassicNoInit:
-    pass
-
-
-class ClassicNoArgs:
+class ClassNoArgs:
     def __init__(self):
         pass
 
@@ -57,14 +48,6 @@ class InheritedNoInit(ClassNoInit):
 
 
 class InheritedNoArgs(ClassNoArgs):
-    pass
-
-
-class ClassicInheritedNoInit(ClassicNoInit):
-    pass
-
-
-class ClassicInheritedNoArgs(ClassicNoArgs):
     pass
 
 
@@ -78,12 +61,8 @@ class ClassicInheritedNoArgs(ClassicNoArgs):
         ClassMethodNoArgs.method,
         ClassNoInit,
         ClassNoArgs,
-        ClassicNoInit,
-        ClassicNoArgs,
         InheritedNoInit,
         InheritedNoArgs,
-        ClassicInheritedNoInit,
-        ClassicInheritedNoArgs,
     ],
 )
 def test_arginfo_no_args(callable):
@@ -98,7 +77,7 @@ def func_args(a):
     pass
 
 
-class ObjArgs(object):
+class ObjArgs:
     def __call__(self, a):
         pass
 
@@ -106,7 +85,7 @@ class ObjArgs(object):
 obj_args = ObjArgs()
 
 
-class MethodArgs(object):
+class MethodArgs:
     def method(self, a):
         pass
 
@@ -114,33 +93,24 @@ class MethodArgs(object):
 method_args = MethodArgs()
 
 
-class StaticMethodArgs(object):
+class StaticMethodArgs:
     @staticmethod
     def method(a):
         pass
 
 
-class ClassMethodArgs(object):
+class ClassMethodArgs:
     @classmethod
     def method(cls, a):
         pass
 
 
-class ClassArgs(object):
-    def __init__(self, a):
-        pass
-
-
-class ClassicArgs:
+class ClassArgs:
     def __init__(self, a):
         pass
 
 
 class InheritedArgs(ClassArgs):
-    pass
-
-
-class ClassicInheritedArgs(ClassicArgs):
     pass
 
 
@@ -153,9 +123,7 @@ class ClassicInheritedArgs(ClassicArgs):
         StaticMethodArgs.method,
         ClassMethodArgs.method,
         ClassArgs,
-        ClassicArgs,
         InheritedArgs,
-        ClassicInheritedArgs,
     ],
 )
 def test_arginfo_args(callable):
@@ -170,7 +138,7 @@ def func_varargs(*args):
     pass
 
 
-class ObjVarargs(object):
+class ObjVarargs:
     def __call__(self, *args):
         pass
 
@@ -178,7 +146,7 @@ class ObjVarargs(object):
 obj_varargs = ObjVarargs()
 
 
-class MethodVarargs(object):
+class MethodVarargs:
     def method(self, *args):
         pass
 
@@ -186,21 +154,12 @@ class MethodVarargs(object):
 method_varargs = MethodVarargs()
 
 
-class ClassVarargs(object):
-    def __init__(self, *args):
-        pass
-
-
-class ClassicVarargs:
+class ClassVarargs:
     def __init__(self, *args):
         pass
 
 
 class InheritedVarargs(ClassVarargs):
-    pass
-
-
-class ClassicInheritedVarargs(ClassicVarargs):
     pass
 
 
@@ -211,9 +170,7 @@ class ClassicInheritedVarargs(ClassicVarargs):
         obj_varargs,
         method_varargs.method,
         ClassVarargs,
-        ClassicVarargs,
         InheritedVarargs,
-        ClassicInheritedVarargs,
     ],
 )
 def test_arginfo_varargs(callable):
@@ -228,7 +185,7 @@ def func_keywords(**kw):
     pass
 
 
-class ObjKeywords(object):
+class ObjKeywords:
     def __call__(self, **kw):
         pass
 
@@ -236,7 +193,7 @@ class ObjKeywords(object):
 obj_keywords = ObjKeywords()
 
 
-class MethodKeywords(object):
+class MethodKeywords:
     def method(self, **kw):
         pass
 
@@ -244,21 +201,12 @@ class MethodKeywords(object):
 method_keywords = MethodKeywords()
 
 
-class ClassKeywords(object):
-    def __init__(self, **kw):
-        pass
-
-
-class ClassicKeywords:
+class ClassKeywords:
     def __init__(self, **kw):
         pass
 
 
 class InheritedKeywords(ClassKeywords):
-    pass
-
-
-class ClassicInheritedKeywords(ClassicKeywords):
     pass
 
 
@@ -269,9 +217,7 @@ class ClassicInheritedKeywords(ClassicKeywords):
         obj_keywords,
         method_keywords.method,
         ClassKeywords,
-        ClassicKeywords,
         InheritedKeywords,
-        ClassicInheritedKeywords,
     ],
 )
 def test_arginfo_keywords(callable):
@@ -286,7 +232,7 @@ def func_defaults(a=1):
     pass
 
 
-class ObjDefaults(object):
+class ObjDefaults:
     def __call__(self, a=1):
         pass
 
@@ -294,7 +240,7 @@ class ObjDefaults(object):
 obj_defaults = ObjDefaults()
 
 
-class MethodDefaults(object):
+class MethodDefaults:
     def method(self, a=1):
         pass
 
@@ -302,21 +248,12 @@ class MethodDefaults(object):
 method_defaults = MethodDefaults()
 
 
-class ClassDefaults(object):
-    def __init__(self, a=1):
-        pass
-
-
-class ClassicDefaults:
+class ClassDefaults:
     def __init__(self, a=1):
         pass
 
 
 class InheritedDefaults(ClassDefaults):
-    pass
-
-
-class ClassicInheritedDefaults(ClassicDefaults):
     pass
 
 
@@ -327,9 +264,7 @@ class ClassicInheritedDefaults(ClassicDefaults):
         obj_defaults,
         method_defaults.method,
         ClassDefaults,
-        ClassicDefaults,
         InheritedDefaults,
-        ClassicInheritedDefaults,
     ],
 )
 def test_arginfo_defaults(callable):
@@ -360,7 +295,7 @@ def test_arginfo_cache():
 
 
 def test_arginfo_cache_callable():
-    class Foo(object):
+    class Foo:
         def __call__(self):
             pass
 

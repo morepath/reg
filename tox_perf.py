@@ -33,7 +33,7 @@ def args4(a, b, c, d):
     raise NotImplementedError()
 
 
-class Foo(object):
+class Foo:
     pass
 
 
@@ -101,7 +101,7 @@ print("================")
 
 print("dispatch 0 args")
 print(
-    "{0:.2f}".format(
+    "{:.2f}".format(
         timeit.timeit("docall0()", setup="from __main__ import docall0")
         / plain_zero_time
     )
@@ -110,7 +110,7 @@ print(
 
 print("dispatch 1 args")
 print(
-    "{0:.2f}".format(
+    "{:.2f}".format(
         timeit.timeit("docall1()", setup="from __main__ import docall1")
         / plain_zero_time
     )
@@ -119,7 +119,7 @@ print(
 
 print("dispatch 2 args")
 print(
-    "{0:.2f}".format(
+    "{:.2f}".format(
         timeit.timeit("docall2()", setup="from __main__ import docall2")
         / plain_zero_time
     )
@@ -128,7 +128,7 @@ print(
 
 print("dispatch 3 args")
 print(
-    "{0:.2f}".format(
+    "{:.2f}".format(
         timeit.timeit("docall3()", setup="from __main__ import docall3")
         / plain_zero_time
     )
@@ -137,7 +137,7 @@ print(
 
 print("dispatch 4 args")
 print(
-    "{0:.2f}".format(
+    "{:.2f}".format(
         timeit.timeit("docall4()", setup="from __main__ import docall4")
         / plain_zero_time
     )
@@ -149,7 +149,7 @@ print("1.00x (base duration)")
 
 print("Plain func 4 args")
 print(
-    "{0:.2f}".format(
+    "{:.2f}".format(
         timeit.timeit(
             "plain_docall4()", setup="from __main__ import plain_docall4"
         )

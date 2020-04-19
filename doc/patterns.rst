@@ -17,7 +17,7 @@ small icon and a large icon. We want this API:
 
   from abc import ABCMeta, abstractmethod
 
-  class Icon(object):
+  class Icon:
       __metaclass__ = ABCMeta
       @abstractmethod
       def small(self):
@@ -41,11 +41,11 @@ We define ``Document`` and ``Image`` content classes:
 
 .. testcode::
 
-  class Document(object):
+  class Document:
      def __init__(self, text):
          self.text = text
 
-  class Image(object):
+  class Image:
       def __init__(self, bytes):
           self.bytes = bytes
 
@@ -231,7 +231,7 @@ Let's use it:
 
   something.register(something_for_object, cls=object)
 
-  class DemoClass(object):
+  class DemoClass:
       pass
 
 When we now call ``something()`` with ``DemoClass`` as the first
@@ -247,7 +247,7 @@ implementations for particular classes:
 
 .. testcode::
 
-  class ParticularClass(object):
+  class ParticularClass:
       pass
 
   def something_particular(cls):

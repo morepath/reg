@@ -80,11 +80,11 @@ the ``title`` fuction we defined above.
 
 .. testcode::
 
-  class TitledReport(object):
+  class TitledReport:
      def __init__(self, title):
         self.title = title
 
-  class LabeledReport(object):
+  class LabeledReport:
      def __init__(self, label):
         self.label = label
 
@@ -152,11 +152,11 @@ This is the implementation of our CMS:
 
 .. testcode::
 
-  class Document(object):
+  class Document:
      def __init__(self, text):
          self.text = text
 
-  class Folder(object):
+  class Folder:
      def __init__(self, entries):
          self.entries = entries
 
@@ -180,14 +180,14 @@ method to both classes:
 
 .. testcode::
 
-  class Document(object):
+  class Document:
      def __init__(self, text):
          self.text = text
 
      def size(self):
          return len(self.text)
 
-  class Folder(object):
+  class Folder:
      def __init__(self, entries):
          self.entries = entries
 
@@ -217,7 +217,7 @@ size. Let's try this:
 
 .. testcode::
 
-  class Image(object):
+  class Image:
       def __init__(self, bytes):
           self.bytes = bytes
 
@@ -350,7 +350,7 @@ kind of folder item, the ``File``, with a ``file_size`` function?
 
 .. testcode::
 
-  class File(object):
+  class File:
      def __init__(self, bytes):
          self.bytes = bytes
 
@@ -536,7 +536,7 @@ attribute:
 
 .. testcode::
 
-  class Request(object):
+  class Request:
       def __init__(self, request_method, body=''):
           self.request_method = request_method
           self.body = body
@@ -624,7 +624,7 @@ need to use :class:`reg.dispatch_method` instead of
 
 .. testcode::
 
-  class CMS(object):
+  class CMS:
 
       @reg.dispatch_method('item')
       def size(self, item):

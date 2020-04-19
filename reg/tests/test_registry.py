@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from ..predicate import PredicateRegistry, match_instance, match_key
 from ..cache import DictCachingKeyLookup, LruCachingKeyLookup
 from ..error import RegistrationError
@@ -14,7 +13,7 @@ def register_value(generic, key, value):
 
 
 def test_registry():
-    class Foo(object):
+    class Foo:
         pass
 
     class FooSub(Foo):
@@ -72,7 +71,7 @@ def test_registry():
     assert key_lookup.component((FooSub, "", "GET")) is foo_default
     assert key_lookup.component((FooSub, "", "POST")) is foo_post
 
-    class Request(object):
+    class Request:
         def __init__(self, name, request_method):
             self.name = name
             self.request_method = request_method
@@ -81,7 +80,7 @@ def test_registry():
     assert view(FooSub(), Request("", "GET")) == "foo default"
     assert view(FooSub(), Request("edit", "POST")) == "foo edit"
 
-    class Bar(object):
+    class Bar:
         pass
 
     assert view(Bar(), Request("", "GET")) == "Model fallback"
@@ -93,7 +92,7 @@ def test_registry():
 def test_predicate_registry_class_lookup():
     reg = PredicateRegistry(match_instance("obj"))
 
-    class Document(object):
+    class Document:
         pass
 
     class SpecialDocument(Document):
@@ -111,7 +110,7 @@ def test_predicate_registry_class_lookup():
 
     assert reg.component((AnotherDocument,)) == "document line count"
 
-    class Other(object):
+    class Other:
         pass
 
     assert reg.component((Other,)) is None
@@ -121,7 +120,7 @@ def test_predicate_registry_target_find_specific():
     reg = PredicateRegistry(match_instance("obj"))
     reg2 = PredicateRegistry(match_instance("obj"))
 
-    class Document(object):
+    class Document:
         pass
 
     class SpecialDocument(Document):
@@ -146,7 +145,7 @@ def test_predicate_registry_target_find_specific():
 def test_registry_no_sources():
     reg = PredicateRegistry()
 
-    class Animal(object):
+    class Animal:
         pass
 
     reg.register((), "elephant")
@@ -156,7 +155,7 @@ def test_registry_no_sources():
 def test_register_twice_with_predicate():
     reg = PredicateRegistry(match_instance("obj"))
 
-    class Document(object):
+    class Document:
         pass
 
     reg.register((Document,), "document line count")
@@ -173,7 +172,7 @@ def test_register_twice_without_predicates():
 
 
 def test_dict_caching_registry():
-    class Foo(object):
+    class Foo:
         pass
 
     class FooSub(Foo):
@@ -224,7 +223,7 @@ def test_dict_caching_registry():
     register_value(view, (Foo, "", "POST"), foo_post)
     register_value(view, (Foo, "edit", "POST"), foo_edit)
 
-    class Request(object):
+    class Request:
         def __init__(self, name, request_method):
             self.name = name
             self.request_method = request_method
@@ -260,7 +259,7 @@ def test_dict_caching_registry():
     # should be coming from cache now
     assert view.by_args(Foo(), Request("", "GET")).all_matches == [foo_default]
 
-    class Bar(object):
+    class Bar:
         pass
 
     assert view(Bar(), Request("", "GET")) == "Model fallback"
@@ -279,7 +278,7 @@ def test_dict_caching_registry():
 
 
 def test_lru_caching_registry():
-    class Foo(object):
+    class Foo:
         pass
 
     class FooSub(Foo):
@@ -330,7 +329,7 @@ def test_lru_caching_registry():
     register_value(view, (Foo, "", "POST"), foo_post)
     register_value(view, (Foo, "edit", "POST"), foo_edit)
 
-    class Request(object):
+    class Request:
         def __init__(self, name, request_method):
             self.name = name
             self.request_method = request_method
@@ -362,7 +361,7 @@ def test_lru_caching_registry():
     # should be coming from cache now
     assert view.by_args(Foo(), Request("", "GET")).all_matches == [foo_default]
 
-    class Bar(object):
+    class Bar:
         pass
 
     assert view(Bar(), Request("", "GET")) == "Model fallback"

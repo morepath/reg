@@ -15,7 +15,7 @@ def test_key_index_permutations():
 
 
 def test_class_index_permutations():
-    class Foo(object):
+    class Foo:
         pass
 
     class Bar(Foo):
@@ -32,13 +32,13 @@ def test_class_index_permutations():
 
 
 def test_multi_class_predicate_permutations():
-    class ABase(object):
+    class ABase:
         pass
 
     class ASub(ABase):
         pass
 
-    class BBase(object):
+    class BBase:
         pass
 
     class BSub(BBase):
@@ -79,28 +79,6 @@ def test_registry_single_key_predicate():
 def test_registry_single_class_predicate():
     r = PredicateRegistry(match_instance("a"))
 
-    class Foo(object):
-        pass
-
-    class FooSub(Foo):
-        pass
-
-    class Qux(object):
-        pass
-
-    r.register((Foo,), "foo")
-
-    assert r.component((Foo,)) == "foo"
-    assert r.component((FooSub,)) == "foo"
-    assert r.component((Qux,)) is None
-    assert list(r.all((Foo,))) == ["foo"]
-    assert list(r.all((FooSub,))) == ["foo"]
-    assert list(r.all((Qux,))) == []
-
-
-def test_registry_single_classic_class_predicate():
-    r = PredicateRegistry(match_instance("a"))
-
     class Foo:
         pass
 
@@ -123,13 +101,13 @@ def test_registry_single_classic_class_predicate():
 def test_registry_single_class_predicate_also_sub():
     r = PredicateRegistry(match_instance("a"))
 
-    class Foo(object):
+    class Foo:
         pass
 
     class FooSub(Foo):
         pass
 
-    class Qux(object):
+    class Qux:
         pass
 
     r.register((Foo,), "foo")
@@ -146,13 +124,13 @@ def test_registry_single_class_predicate_also_sub():
 def test_registry_multi_class_predicate():
     r = PredicateRegistry(match_instance("a"), match_instance("b"),)
 
-    class A(object):
+    class A:
         pass
 
     class AA(A):
         pass
 
-    class B(object):
+    class B:
         pass
 
     class BB(B):
@@ -178,13 +156,13 @@ def test_registry_multi_class_predicate():
 def test_registry_multi_mixed_predicate_class_key():
     r = PredicateRegistry(match_instance("a"), match_key("b"),)
 
-    class A(object):
+    class A:
         pass
 
     class AA(A):
         pass
 
-    class Unknown(object):
+    class Unknown:
         pass
 
     r.register((A, "B"), "foo")
@@ -205,13 +183,13 @@ def test_registry_multi_mixed_predicate_class_key():
 def test_registry_multi_mixed_predicate_key_class():
     r = PredicateRegistry(match_key("a"), match_instance("b"),)
 
-    class B(object):
+    class B:
         pass
 
     class BB(B):
         pass
 
-    class Unknown(object):
+    class Unknown:
         pass
 
     r.register(("A", B), "foo")
@@ -309,7 +287,7 @@ def test_name_request_method_body_model_registered_for_base():
         match_instance("body_model", fallback="body_model fallback"),
     )
 
-    class Foo(object):
+    class Foo:
         pass
 
     class Bar(Foo):
@@ -334,7 +312,7 @@ def test_name_request_method_body_model_registered_for_base_and_sub():
         match_instance("body_model", fallback="body_model fallback"),
     )
 
-    class Foo(object):
+    class Foo:
         pass
 
     class Bar(Foo):
