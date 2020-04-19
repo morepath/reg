@@ -13,10 +13,11 @@ pip-wheel-metadata
 /src/
 
 # Unit test / coverage reports
-.cache/
-/.coverage
-/htmlcov
-/.tox
+.cache
+.pytest_cache
+.coverage
+htmlcov
+.tox
 
 # Sphinx documentation
 /doc/build/
