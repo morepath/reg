@@ -60,7 +60,11 @@ def test_multi_class_predicate_permutations():
 
 
 def test_multi_key_predicate_permutations():
-    i = PredicateRegistry(match_key("a"), match_key("b"), match_key("c"),)
+    i = PredicateRegistry(
+        match_key("a"),
+        match_key("b"),
+        match_key("c"),
+    )
 
     assert list(i.permutations(["A", "B", "C"])) == [("A", "B", "C")]
 
@@ -144,7 +148,10 @@ def test_registry_single_class_predicate_also_sub():
 
 
 def test_registry_multi_class_predicate():
-    r = PredicateRegistry(match_instance("a"), match_instance("b"),)
+    r = PredicateRegistry(
+        match_instance("a"),
+        match_instance("b"),
+    )
 
     class A(object):
         pass
@@ -176,7 +183,10 @@ def test_registry_multi_class_predicate():
 
 
 def test_registry_multi_mixed_predicate_class_key():
-    r = PredicateRegistry(match_instance("a"), match_key("b"),)
+    r = PredicateRegistry(
+        match_instance("a"),
+        match_key("b"),
+    )
 
     class A(object):
         pass
@@ -203,7 +213,10 @@ def test_registry_multi_mixed_predicate_class_key():
 
 
 def test_registry_multi_mixed_predicate_key_class():
-    r = PredicateRegistry(match_key("a"), match_instance("b"),)
+    r = PredicateRegistry(
+        match_key("a"),
+        match_instance("b"),
+    )
 
     class B(object):
         pass

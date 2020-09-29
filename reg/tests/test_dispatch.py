@@ -892,11 +892,17 @@ def test_fallback_should_already_use_subset():
     )
 
     assert (
-        view.by_args(Collection(), Request("", "POST", Item2()),).fallback
+        view.by_args(
+            Collection(),
+            Request("", "POST", Item2()),
+        ).fallback
         is body_model_fallback
     )
     assert (
-        view(Collection(), Request("", "POST", Item2()),)
+        view(
+            Collection(),
+            Request("", "POST", Item2()),
+        )
         == "Body model fallback"
     )
 
