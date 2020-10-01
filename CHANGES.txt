@@ -4,7 +4,7 @@ CHANGES
 0.13 (unreleased)
 =================
 
-- Nothing changed yet.
+- Drop support for Python below 3.6
 
 
 0.12 (2020-01-29)
@@ -21,7 +21,7 @@ CHANGES
   .. _#55: https://github.com/morepath/reg/issues/55
 
 - **Removed**: Removed support for Python 2.
-  
+
   You have to upgrade to Python 3 if you want to use this version.
 
 - Dropped support for Python 3.3.
