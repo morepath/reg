@@ -1,3 +1,2 @@
 class RegistrationError(Exception):
-    """Registration error.
-    """
+    """Registration error."""

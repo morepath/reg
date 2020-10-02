@@ -5,7 +5,7 @@ from .fixtures.module import Foo, foo
 
 def rstrip_lines(s):
     "Delete trailing spaces from each line in s."
-    return "\n".join(l.rstrip() for l in s.splitlines())
+    return "\n".join(line.rstrip() for line in s.splitlines())
 
 
 def test_dispatch_method_class_help(capsys):
