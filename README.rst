@@ -12,8 +12,8 @@ Documentation_.
 Build Status
 ------------
 
-.. image:: https://travis-ci.org/morepath/reg.svg?branch=master
-    :target: https://travis-ci.org/morepath/reg
+.. image:: https://travis-ci.com/morepath/reg.svg?branch=master
+    :target: https://travis-ci.com/morepath/reg
 
 .. image:: https://coveralls.io/repos/github/morepath/reg/badge.svg?branch=master
     :target: https://coveralls.io/github/morepath/reg?branch=master
