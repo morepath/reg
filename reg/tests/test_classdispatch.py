@@ -2,20 +2,20 @@ from ..dispatch import dispatch
 from ..predicate import match_class
 
 
-class DemoClass(object):
+class DemoClass:
     pass
 
 
-class SpecialClass(object):
+class SpecialClass:
     pass
 
 
-class Foo(object):
+class Foo:
     def __repr__(self):
         return "<instance of Foo>"
 
 
-class Bar(object):
+class Bar:
     def __repr__(self):
         return "<instance of Bar>"
 
@@ -30,9 +30,7 @@ def test_dispatch_basic():
 
     something.register(something_for_object, cls=object)
 
-    assert something(DemoClass) == (
-        "Something for <class '{}.DemoClass'>".format(__name__)
-    )
+    assert something(DemoClass) == (f"Something for <class '{__name__}.DemoClass'>")
 
     assert something.by_args(DemoClass).component is something_for_object
     assert something.by_args(DemoClass).all_matches == [something_for_object]
@@ -49,18 +47,14 @@ def test_classdispatch_multidispatch():
     def something_for_object_and_foo(cls, other):
         return "Something, other is Foo: %s" % other
 
-    something.register(
-        something_for_object_and_object, cls=object, other=object
-    )
+    something.register(something_for_object_and_object, cls=object, other=object)
 
     something.register(something_for_object_and_foo, cls=object, other=Foo)
 
     assert something(DemoClass, Bar()) == (
         "Something, other is object: <instance of Bar>"
     )
-    assert something(DemoClass, Foo()) == (
-        "Something, other is Foo: <instance of Foo>"
-    )
+    assert something(DemoClass, Foo()) == ("Something, other is Foo: <instance of Foo>")
 
 
 def test_classdispatch_extra_arguments():
@@ -103,9 +97,7 @@ def test_classdispatch_override():
     something.register(something_for_object, cls=object)
     something.register(something_for_special, cls=SpecialClass)
 
-    assert something(SpecialClass) == (
-        "Special for <class '{}.SpecialClass'>".format(__name__)
-    )
+    assert something(SpecialClass) == (f"Special for <class '{__name__}.SpecialClass'>")
 
 
 def test_classdispatch_fallback():

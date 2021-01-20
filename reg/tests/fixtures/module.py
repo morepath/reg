@@ -3,7 +3,7 @@
 from reg import dispatch_method, dispatch
 
 
-class Foo(object):
+class Foo:
     "Class for foo objects."
 
     @dispatch_method("obj")

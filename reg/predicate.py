@@ -5,7 +5,7 @@ from itertools import product
 from .error import RegistrationError
 
 
-class Predicate(object):
+class Predicate:
     """A dispatch predicate.
 
     :param name: name used to identify the predicate when specifying
@@ -135,7 +135,7 @@ class ClassIndex(KeyIndex):
             yield object  # pragma: no cover
 
 
-class PredicateRegistry(object):
+class PredicateRegistry:
     def __init__(self, *predicates):
         self.known_keys = set()
         self.known_values = set()
@@ -158,9 +158,7 @@ class PredicateRegistry(object):
 
     def register(self, key, value):
         if key in self.known_keys:
-            raise RegistrationError(
-                "Already have registration for key: %s" % (key,)
-            )
+            raise RegistrationError(f"Already have registration for key: {key}")
         for index, key_item in zip(self.indexes, key):
             index.setdefault(key_item, set()).add(value)
         self.known_keys.add(key)
@@ -226,5 +224,4 @@ class PredicateRegistry(object):
 
     def all(self, key):
         for p in self.permutations(key):
-            for value in self.get(p):
-                yield value
+            yield from self.get(p)

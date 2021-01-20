@@ -14,15 +14,15 @@ def test_dispatch_method_explicit_fallback():
     def obj_fallback(self, obj):
         return "Obj fallback"
 
-    class Foo(object):
+    class Foo:
         @dispatch_method(match_instance("obj", fallback=obj_fallback))
         def bar(self, obj):
             return "default"
 
-    class Alpha(object):
+    class Alpha:
         pass
 
-    class Beta(object):
+    class Beta:
         pass
 
     foo = Foo()
@@ -38,15 +38,15 @@ def test_dispatch_method_explicit_fallback():
 
 
 def test_dispatch_method_without_fallback():
-    class Foo(object):
+    class Foo:
         @dispatch_method(match_instance("obj"))
         def bar(self, obj):
             return "default"
 
-    class Alpha(object):
+    class Alpha:
         pass
 
-    class Beta(object):
+    class Beta:
         pass
 
     foo = Foo()
@@ -62,15 +62,15 @@ def test_dispatch_method_without_fallback():
 
 
 def test_dispatch_method_string_predicates():
-    class Foo(object):
+    class Foo:
         @dispatch_method("obj")
         def bar(self, obj):
             return "default"
 
-    class Alpha(object):
+    class Alpha:
         pass
 
-    class Beta(object):
+    class Beta:
         pass
 
     foo = Foo()
@@ -86,17 +86,17 @@ def test_dispatch_method_string_predicates():
 
 
 def test_dispatch_method_add_predicates():
-    class Foo(object):
+    class Foo:
         @dispatch_method()
         def bar(self, obj):
             return "default"
 
     Foo.bar.add_predicates([match_instance("obj")])
 
-    class Alpha(object):
+    class Alpha:
         pass
 
-    class Beta(object):
+    class Beta:
         pass
 
     foo = Foo()
@@ -112,15 +112,15 @@ def test_dispatch_method_add_predicates():
 
 
 def test_dispatch_method_register_function():
-    class Foo(object):
+    class Foo:
         @dispatch_method(match_instance("obj"))
         def bar(self, obj):
             return "default"
 
-    class Alpha(object):
+    class Alpha:
         pass
 
-    class Beta(object):
+    class Beta:
         pass
 
     foo = Foo()
@@ -136,12 +136,12 @@ def test_dispatch_method_register_function():
 
 
 def test_dispatch_method_register_function_wrong_signature_too_long():
-    class Foo(object):
+    class Foo:
         @dispatch_method("obj")
         def bar(self, obj):
             return "default"
 
-    class Alpha(object):
+    class Alpha:
         pass
 
     with pytest.raises(RegistrationError):
@@ -149,12 +149,12 @@ def test_dispatch_method_register_function_wrong_signature_too_long():
 
 
 def test_dispatch_method_register_function_wrong_signature_too_short():
-    class Foo(object):
+    class Foo:
         @dispatch_method("obj")
         def bar(self, obj):
             return "default"
 
-    class Alpha(object):
+    class Alpha:
         pass
 
     with pytest.raises(RegistrationError):
@@ -162,12 +162,12 @@ def test_dispatch_method_register_function_wrong_signature_too_short():
 
 
 def test_dispatch_method_register_non_callable():
-    class Foo(object):
+    class Foo:
         @dispatch_method("obj")
         def bar(self, obj):
             return "default"
 
-    class Alpha(object):
+    class Alpha:
         pass
 
     with pytest.raises(RegistrationError):
@@ -180,17 +180,17 @@ def test_dispatch_method_methodify_non_callable():
 
 
 def test_dispatch_method_register_auto():
-    class Foo(object):
+    class Foo:
         x = "X"
 
         @dispatch_method(match_instance("obj"))
         def bar(self, obj):
             return "default"
 
-    class Alpha(object):
+    class Alpha:
         pass
 
-    class Beta(object):
+    class Beta:
         pass
 
     foo = Foo()
@@ -198,9 +198,7 @@ def test_dispatch_method_register_auto():
     assert foo.bar(Alpha()) == "default"
 
     Foo.bar.register(methodify(lambda obj: "Alpha", "app"), obj=Alpha)
-    Foo.bar.register(
-        methodify(lambda app, obj: "Beta %s" % app.x, "app"), obj=Beta
-    )
+    Foo.bar.register(methodify(lambda app, obj: "Beta %s" % app.x, "app"), obj=Beta)
 
     assert foo.bar(Alpha()) == "Alpha"
     assert foo.bar(Beta()) == "Beta X"
@@ -208,15 +206,15 @@ def test_dispatch_method_register_auto():
 
 
 def test_dispatch_method_class_method_accessed_first():
-    class Foo(object):
+    class Foo:
         @dispatch_method(match_instance("obj"))
         def bar(self, obj):
             return "default"
 
-    class Alpha(object):
+    class Alpha:
         pass
 
-    class Beta(object):
+    class Beta:
         pass
 
     Foo.bar.register(lambda self, obj: "Alpha", obj=Alpha)
@@ -230,7 +228,7 @@ def test_dispatch_method_class_method_accessed_first():
 
 
 def test_dispatch_method_accesses_instance():
-    class Foo(object):
+    class Foo:
         def __init__(self, x):
             self.x = x
 
@@ -238,10 +236,10 @@ def test_dispatch_method_accesses_instance():
         def bar(self, obj):
             return "default %s" % self.x
 
-    class Alpha(object):
+    class Alpha:
         pass
 
-    class Beta(object):
+    class Beta:
         pass
 
     Foo.bar.register(lambda self, obj: "Alpha %s" % self.x, obj=Alpha)
@@ -255,7 +253,7 @@ def test_dispatch_method_accesses_instance():
 
 
 def test_dispatch_method_inheritance_register_on_subclass():
-    class Foo(object):
+    class Foo:
         @dispatch_method(match_instance("obj"))
         def bar(self, obj):
             return "default"
@@ -263,10 +261,10 @@ def test_dispatch_method_inheritance_register_on_subclass():
     class Sub(Foo):
         pass
 
-    class Alpha(object):
+    class Alpha:
         pass
 
-    class Beta(object):
+    class Beta:
         pass
 
     sub = Sub()
@@ -282,7 +280,7 @@ def test_dispatch_method_inheritance_register_on_subclass():
 
 
 def test_dispatch_method_inheritance_separation():
-    class Foo(object):
+    class Foo:
         @dispatch_method(match_instance("obj"))
         def bar(self, obj):
             return "default"
@@ -290,10 +288,10 @@ def test_dispatch_method_inheritance_separation():
     class Sub(Foo):
         pass
 
-    class Alpha(object):
+    class Alpha:
         pass
 
-    class Beta(object):
+    class Beta:
         pass
 
     # programmatic style:
@@ -318,7 +316,7 @@ def test_dispatch_method_inheritance_separation():
 
 
 def test_dispatch_method_inheritance_separation_multiple():
-    class Foo(object):
+    class Foo:
         @dispatch_method(match_instance("obj"))
         def bar(self, obj):
             return "bar default"
@@ -330,10 +328,10 @@ def test_dispatch_method_inheritance_separation_multiple():
     class Sub(Foo):
         pass
 
-    class Alpha(object):
+    class Alpha:
         pass
 
-    class Beta(object):
+    class Beta:
         pass
 
     Foo.bar.register(lambda self, obj: "Bar Foo Alpha", obj=Alpha)
@@ -370,15 +368,15 @@ def test_dispatch_method_api_available():
     def obj_fallback(self, obj):
         return "Obj fallback"
 
-    class Foo(object):
+    class Foo:
         @dispatch_method(match_instance("obj", fallback=obj_fallback))
         def bar(self, obj):
             return "default"
 
-    class Alpha(object):
+    class Alpha:
         pass
 
-    class Beta(object):
+    class Beta:
         pass
 
     foo = Foo()
@@ -403,15 +401,15 @@ def test_dispatch_method_api_available():
 
 
 def test_dispatch_method_with_register_function_value():
-    class Foo(object):
+    class Foo:
         @dispatch_method(match_instance("obj"))
         def bar(self, obj):
             return "default"
 
-    class Alpha(object):
+    class Alpha:
         pass
 
-    class Beta(object):
+    class Beta:
         pass
 
     foo = Foo()
@@ -431,15 +429,15 @@ def test_dispatch_method_with_register_function_value():
 
 
 def test_dispatch_method_with_register_auto_value():
-    class Foo(object):
+    class Foo:
         @dispatch_method(match_instance("obj"))
         def bar(self, obj):
             return "default"
 
-    class Alpha(object):
+    class Alpha:
         pass
 
-    class Beta(object):
+    class Beta:
         pass
 
     foo = Foo()
@@ -462,7 +460,7 @@ def test_dispatch_method_with_register_auto_value():
 
 
 def test_install_method():
-    class Target(object):
+    class Target:
         pass
 
     def f(self, a):
@@ -476,7 +474,7 @@ def test_install_method():
 
 
 def test_install_auto_method_function_no_app_arg():
-    class Target(object):
+    class Target:
         pass
 
     def f(a):
@@ -491,7 +489,7 @@ def test_install_auto_method_function_no_app_arg():
 
 
 def test_install_auto_method_function_app_arg():
-    class Target(object):
+    class Target:
         pass
 
     def g(app, a):
@@ -506,10 +504,10 @@ def test_install_auto_method_function_app_arg():
 
 
 def test_install_auto_method_method_no_app_arg():
-    class Target(object):
+    class Target:
         pass
 
-    class Foo(object):
+    class Foo:
         def f(self, a):
             return a
 
@@ -524,10 +522,10 @@ def test_install_auto_method_method_no_app_arg():
 
 
 def test_install_auto_method_method_app_arg():
-    class Target(object):
+    class Target:
         pass
 
-    class Bar(object):
+    class Bar:
         def g(self, app, a):
             assert isinstance(app, Target)
             return a
@@ -543,10 +541,10 @@ def test_install_auto_method_method_app_arg():
 
 
 def test_install_instance_method():
-    class Target(object):
+    class Target:
         pass
 
-    class Bar(object):
+    class Bar:
         def g(self, a):
             assert isinstance(self, Bar)
             return a
@@ -562,7 +560,7 @@ def test_install_instance_method():
 
 
 def test_dispatch_method_introspection():
-    class Foo(object):
+    class Foo:
         @dispatch_method("obj")
         def bar(self, obj):
             "Return the bar of an object."
@@ -574,7 +572,7 @@ def test_dispatch_method_introspection():
 
 
 def test_dispatch_method_clean():
-    class Foo(object):
+    class Foo:
         @dispatch_method(match_instance("obj"))
         def bar(self, obj):
             return "default"
@@ -582,10 +580,10 @@ def test_dispatch_method_clean():
     class Qux(Foo):
         pass
 
-    class Alpha(object):
+    class Alpha:
         pass
 
-    class Beta(object):
+    class Beta:
         pass
 
     foo = Foo()
@@ -612,7 +610,7 @@ def test_dispatch_method_clean():
 
 
 def test_clean_dispatch_methods():
-    class Foo(object):
+    class Foo:
         @dispatch_method(match_instance("obj"))
         def bar(self, obj):
             return "default"
@@ -620,10 +618,10 @@ def test_clean_dispatch_methods():
     class Qux(Foo):
         pass
 
-    class Alpha(object):
+    class Alpha:
         pass
 
-    class Beta(object):
+    class Beta:
         pass
 
     foo = Foo()
@@ -649,15 +647,15 @@ def test_clean_dispatch_methods():
 
 
 def test_replacing_with_normal_method():
-    class Foo(object):
+    class Foo:
         @dispatch_method("obj")
         def bar(self, obj):
             return "default"
 
-    class Alpha(object):
+    class Alpha:
         pass
 
-    class Beta(object):
+    class Beta:
         pass
 
     # At this moment Foo.bar is still a descriptor, even though it is
@@ -685,7 +683,7 @@ def test_replacing_with_normal_method():
 
 
 def test_replacing_with_normal_method_and_its_effect_on_inheritance():
-    class Foo(object):
+    class Foo:
         @dispatch_method("obj")
         def bar(self, obj):
             return "default"
@@ -693,10 +691,10 @@ def test_replacing_with_normal_method_and_its_effect_on_inheritance():
     class SubFoo(Foo):
         pass
 
-    class Alpha(object):
+    class Alpha:
         pass
 
-    class Beta(object):
+    class Beta:
         pass
 
     Foo.bar.register(obj=Alpha)(lambda self, obj: "Alpha")
@@ -735,7 +733,7 @@ def test_replacing_with_normal_method_and_its_effect_on_inheritance():
     # instead of dispatch_method:
     del Foo, SubFoo
 
-    class Foo(object):
+    class Foo:
         @dispatch("obj")
         def bar(self, obj):
             return "default"
@@ -761,7 +759,7 @@ def test_replacing_with_normal_method_and_its_effect_on_inheritance():
     # parent class, in this order:
     del Foo, SubFoo
 
-    class Foo(object):
+    class Foo:
         @dispatch_method("obj")
         def bar(self, obj):
             return "default"

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Reg documentation build configuration file, created by
 # sphinx-quickstart on Wed Sep 18 18:38:12 2013.

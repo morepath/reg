@@ -37,7 +37,7 @@ def args4(a, b, c, d):
     raise NotImplementedError()
 
 
-class Foo(object):
+class Foo:
     pass
 
 

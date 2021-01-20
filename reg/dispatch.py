@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from functools import partial, wraps
 from collections import namedtuple
 from .predicate import match_instance
@@ -7,7 +6,7 @@ from .arginfo import arginfo
 from .error import RegistrationError
 
 
-class dispatch(object):
+class dispatch:
     """Decorator to make a function dispatch based on its arguments.
 
     This takes the predicates to dispatch on as zero or more
@@ -31,9 +30,7 @@ class dispatch(object):
     """
 
     def __init__(self, *predicates, **kw):
-        self.predicates = [
-            self._make_predicate(predicate) for predicate in predicates
-        ]
+        self.predicates = [self._make_predicate(predicate) for predicate in predicates]
         self.get_key_lookup = kw.pop("get_key_lookup", identity)
 
     def _make_predicate(self, predicate):
@@ -75,7 +72,7 @@ class LookupEntry(namedtuple("LookupEntry", "lookup key")):
         return list(self.matches)
 
 
-class Dispatch(object):
+class Dispatch:
     """Dispatch function.
 
     You can register implementations based on particular predicates. The
@@ -105,9 +102,7 @@ class Dispatch(object):
     def _register_predicates(self, predicates):
         self.registry = PredicateRegistry(*predicates)
         self.predicates = predicates
-        self.call.key_lookup = self.key_lookup = self.get_key_lookup(
-            self.registry
-        )
+        self.call.key_lookup = self.key_lookup = self.get_key_lookup(self.registry)
         self.call.__globals__.update(
             _registry_key=self.registry.key,
             _component_lookup=self.key_lookup.component,
@@ -237,8 +232,7 @@ def validate_signature(f, dispatch):
     f_arginfo = arginfo(f)
     if f_arginfo is None:
         raise RegistrationError(
-            "Cannot register non-callable for dispatch "
-            "%r: %r" % (dispatch, f)
+            "Cannot register non-callable for dispatch " "%r: %r" % (dispatch, f)
         )
     if not same_signature(arginfo(dispatch), f_arginfo):
         raise RegistrationError(
@@ -263,17 +257,11 @@ def same_signature(a, b):
     """
     a_args = set(a.args)
     b_args = set(b.args)
-    return (
-        len(a_args) == len(b_args)
-        and a.varargs == b.varargs
-        and a.varkw == b.varkw
-    )
+    return len(a_args) == len(b_args) and a.varargs == b.varargs and a.varkw == b.varkw
 
 
 def execute(code_source, **namespace):
     """Execute code in a namespace, returning the namespace."""
-    code_object = compile(
-        code_source, "<generated code: {}>".format(code_source), "exec"
-    )
+    code_object = compile(code_source, f"<generated code: {code_source}>", "exec")
     exec(code_object, namespace)
     return namespace

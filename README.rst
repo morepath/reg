@@ -1,3 +1,17 @@
+.. image:: https://github.com/morepath/reg/workflows/CI/badge.svg?branch=master
+   :target: https://github.com/morepath/reg/actions?workflow=CI
+   :alt: CI Status
+
+.. image:: https://coveralls.io/repos/github/morepath/reg/badge.svg?branch=master
+    :target: https://coveralls.io/github/morepath/reg?branch=master
+
+.. image:: https://img.shields.io/pypi/v/reg.svg
+  :target: https://pypi.org/project/reg/
+
+.. image:: https://img.shields.io/pypi/pyversions/reg.svg
+  :target: https://pypi.org/project/reg/
+
+
 Reg: Clever Dispatch
 ====================
 
@@ -8,12 +22,3 @@ for your application, library or framework.
 Documentation_.
 
 .. _Documentation: http://reg.readthedocs.org
-
-Build Status
-------------
-
-.. image:: https://travis-ci.com/morepath/reg.svg?branch=master
-    :target: https://travis-ci.com/morepath/reg
-
-.. image:: https://coveralls.io/repos/github/morepath/reg/badge.svg?branch=master
-    :target: https://coveralls.io/github/morepath/reg?branch=master
