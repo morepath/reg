@@ -6,6 +6,8 @@ CHANGES
 
 - Drop support for Python below 3.6
 
+- Use GitHub Actions for CI
+
 
 0.12 (2020-01-29)
 =================

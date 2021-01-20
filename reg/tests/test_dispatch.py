@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 import pytest
 
 from ..predicate import match_instance, match_key, match_class
@@ -6,7 +5,7 @@ from ..dispatch import dispatch
 from ..error import RegistrationError
 
 
-class IAlpha(object):
+class IAlpha:
     pass
 
 
@@ -14,7 +13,7 @@ class Alpha(IAlpha):
     pass
 
 
-class IBeta(object):
+class IBeta:
     pass
 
 
@@ -33,11 +32,11 @@ def test_dispatch_argname():
     def for_qux(obj):
         return obj.method()
 
-    class Bar(object):
+    class Bar:
         def method(self):
             return "bar's method"
 
-    class Qux(object):
+    class Qux:
         def method(self):
             return "qux's method"
 
@@ -59,11 +58,11 @@ def test_dispatch_match_instance():
     def for_qux(obj):
         return obj.method()
 
-    class Bar(object):
+    class Bar:
         def method(self):
             return "bar's method"
 
-    class Qux(object):
+    class Qux:
         def method(self):
             return "qux's method"
 
@@ -91,7 +90,7 @@ def test_dispatch_no_arguments():
 
 
 def test_all():
-    class Base(object):
+    class Base:
         pass
 
     class Sub(Base):
@@ -121,7 +120,7 @@ def test_all():
 
 
 def test_all_by_keys():
-    class Base(object):
+    class Base:
         pass
 
     class Sub(Base):
@@ -214,7 +213,7 @@ def test_component_two_sources():
 
 
 def test_component_inheritance():
-    class Gamma(object):
+    class Gamma:
         pass
 
     class Delta(Gamma):
@@ -355,7 +354,7 @@ def test_component_not_found_two_sources():
 def test_call_not_found_two_sources():
     @dispatch("a", "b")
     def target(a, b):
-        return "a: %s b: %s" % (a, b)
+        return f"a: {a} b: {b}"
 
     assert target("dummy1", "dummy2") == "a: dummy1 b: dummy2"
 
@@ -538,7 +537,7 @@ def test_different_defaults_in_specific_dispatch_arg_causes_dispatch():
 
 
 def test_add_predicates_no_defaults():
-    class Foo(object):
+    class Foo:
         pass
 
     class FooSub(Foo):
@@ -570,9 +569,7 @@ def test_add_predicates_no_defaults():
         [
             match_instance("model", get_model, model_fallback),
             match_key("name", get_name, name_fallback),
-            match_key(
-                "request_method", get_request_method, request_method_fallback
-            ),
+            match_key("request_method", get_request_method, request_method_fallback),
         ]
     )
 
@@ -589,7 +586,7 @@ def test_add_predicates_no_defaults():
     view.register(foo_post, model=Foo, name="", request_method="POST")
     view.register(foo_edit, model=Foo, name="edit", request_method="POST")
 
-    class Request(object):
+    class Request:
         def __init__(self, name, request_method):
             self.name = name
             self.request_method = request_method
@@ -598,7 +595,7 @@ def test_add_predicates_no_defaults():
     assert view(FooSub(), Request("", "GET")) == "foo default"
     assert view(FooSub(), Request("edit", "POST")) == "foo edit"
 
-    class Bar(object):
+    class Bar:
         pass
 
     assert view(Bar(), Request("", "GET")) == "Model fallback"
@@ -608,7 +605,7 @@ def test_add_predicates_no_defaults():
 
 
 def test_dispatch_external_predicates():
-    class Foo(object):
+    class Foo:
         pass
 
     class FooSub(Foo):
@@ -640,9 +637,7 @@ def test_dispatch_external_predicates():
         [
             match_instance("model", get_model, model_fallback),
             match_key("name", get_name, name_fallback),
-            match_key(
-                "request_method", get_request_method, request_method_fallback
-            ),
+            match_key("request_method", get_request_method, request_method_fallback),
         ]
     )
 
@@ -659,7 +654,7 @@ def test_dispatch_external_predicates():
     view.register(foo_post, model=Foo, name="", request_method="POST")
     view.register(foo_edit, model=Foo, name="edit", request_method="POST")
 
-    class Request(object):
+    class Request:
         def __init__(self, name, request_method):
             self.name = name
             self.request_method = request_method
@@ -668,7 +663,7 @@ def test_dispatch_external_predicates():
     assert view(FooSub(), Request("", "GET")) == "foo default"
     assert view(FooSub(), Request("edit", "POST")) == "foo edit"
 
-    class Bar(object):
+    class Bar:
         pass
 
     assert view(Bar(), Request("", "GET")) == "Model fallback"
@@ -679,7 +674,7 @@ def test_dispatch_external_predicates():
 
 
 def test_dispatch_predicates_register_defaults():
-    class Foo(object):
+    class Foo:
         pass
 
     class FooSub(Foo):
@@ -733,7 +728,7 @@ def test_dispatch_predicates_register_defaults():
     view.register(foo_post, model=Foo, request_method="POST")
     view.register(foo_edit, model=Foo, name="edit", request_method="POST")
 
-    class Request(object):
+    class Request:
         def __init__(self, name, request_method):
             self.name = name
             self.request_method = request_method
@@ -742,7 +737,7 @@ def test_dispatch_predicates_register_defaults():
     assert view(FooSub(), Request("", "GET")) == "foo default"
     assert view(FooSub(), Request("edit", "POST")) == "foo edit"
 
-    class Bar(object):
+    class Bar:
         pass
 
     assert view(Bar(), Request("", "GET")) == "Model fallback"
@@ -779,7 +774,7 @@ def test_key_dict_to_predicate_key_unknown_keys():
 
 
 def test_register_dispatch_key_dict():
-    class Foo(object):
+    class Foo:
         pass
 
     class FooSub(Foo):
@@ -824,7 +819,7 @@ def test_register_dispatch_key_dict():
 
 
 def test_fallback_should_already_use_subset():
-    class Request(object):
+    class Request:
         def __init__(self, name, request_method, body_obj):
             self.name = name
             self.request_method = request_method
@@ -863,9 +858,7 @@ def test_fallback_should_already_use_subset():
             request_method_fallback,
             default="GET",
         ),
-        match_class(
-            "body_model", get_body_model, body_model_fallback, default=object
-        ),
+        match_class("body_model", get_body_model, body_model_fallback, default=object),
     )
     def view(self, request):
         return "view fallback"
@@ -875,13 +868,13 @@ def test_fallback_should_already_use_subset():
 
     view.register(exception_view, model=Exception)
 
-    class Collection(object):
+    class Collection:
         pass
 
-    class Item(object):
+    class Item:
         pass
 
-    class Item2(object):
+    class Item2:
         pass
 
     def collection_add(self, request):
@@ -915,7 +908,7 @@ def test_dispatch_missing_argument():
     def for_bar(obj):
         return "for bar"
 
-    class Bar(object):
+    class Bar:
         pass
 
     foo.register(for_bar, obj=Bar)
@@ -935,10 +928,10 @@ def test_register_dispatch_predicates_twice():
     def for_qux(a, b):
         return "for qux"
 
-    class Bar(object):
+    class Bar:
         pass
 
-    class Qux(object):
+    class Qux:
         pass
 
     foo.add_predicates([match_instance("a")])
@@ -969,11 +962,11 @@ def test_dispatch_clean():
     def for_qux(obj):
         return obj.method()
 
-    class Bar(object):
+    class Bar:
         def method(self):
             return "bar's method"
 
-    class Qux(object):
+    class Qux:
         def method(self):
             return "qux's method"
 
@@ -1000,11 +993,11 @@ def test_dispatch_clean_add_predicates():
     def for_qux(obj):
         return obj.method()
 
-    class Bar(object):
+    class Bar:
         def method(self):
             return "bar's method"
 
-    class Qux(object):
+    class Qux:
         def method(self):
             return "qux's method"
 
@@ -1040,11 +1033,11 @@ def test_dispatch_argname_with_decorator():
     def foo(obj):
         pass
 
-    class Bar(object):
+    class Bar:
         def method(self):
             return "bar's method"
 
-    class Qux(object):
+    class Qux:
         def method(self):
             return "qux's method"
 
@@ -1068,7 +1061,7 @@ def test_component_lookup_before_call_and_no_registrations():
     def foo(obj):
         pass
 
-    class Bar(object):
+    class Bar:
         pass
 
     assert foo.by_args(Bar()).component is None

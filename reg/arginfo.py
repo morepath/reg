@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 import inspect
 
 
@@ -92,7 +91,7 @@ def fake_empty_init():
     pass  # pragma: nocoverage
 
 
-class Dummy(object):
+class Dummy:
     pass
 
 

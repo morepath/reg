@@ -33,7 +33,7 @@ def args4(a, b, c, d):
     raise NotImplementedError()
 
 
-class Foo(object):
+class Foo:
     pass
 
 
@@ -108,11 +108,7 @@ print("dispatch 4 args")
 print(timeit.timeit("docall4()", setup="from __main__ import docall4"))
 
 print("Plain func 0 args")
-print(
-    timeit.timeit("plain_docall0()", setup="from __main__ import plain_docall0")
-)
+print(timeit.timeit("plain_docall0()", setup="from __main__ import plain_docall0"))
 
 print("Plain func 4 args")
-print(
-    timeit.timeit("plain_docall4()", setup="from __main__ import plain_docall4")
-)
+print(timeit.timeit("plain_docall4()", setup="from __main__ import plain_docall4"))
