@@ -4,7 +4,19 @@ CHANGES
 0.13 (unreleased)
 =================
 
-- Drop support for Python below 3.6
+- ``reg.arginfo`` is now implemented manually using
+  ``inspect.signature``, instead of relying on the deprecated
+  compatibility method in ``inspect``, in order to better
+  support Python 3.14+.
+
+  It is recommended to migrate from ``reg.arginfo`` to pure
+  ``inspect.signature``, since the utility this module provides
+  is now very limited, compared to ``inspect.signature``, since
+  that already properly handles ``self`` parameters.
+
+- Added support for Python 3.10, 3.11, 3.12, 3.13 and 3.14
+
+- Drop support for Python below 3.10
 
 - Use GitHub Actions for CI
 

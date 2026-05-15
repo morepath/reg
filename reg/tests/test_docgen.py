@@ -1,4 +1,5 @@
 import pydoc
+import sys
 from sphinx.application import Sphinx
 from .fixtures.module import Foo, foo
 
@@ -31,12 +32,13 @@ class Foo({builtins}.object)
  |  Data descriptors defined here:
  |
  |  __dict__
- |      dictionary for instance variables (if defined)
+ |      dictionary for instance variables{postamble}
  |
  |  __weakref__
- |      list of weak references to the object (if defined)
+ |      list of weak references to the object{postamble}
 """.format(
-            builtins=object.__module__
+            builtins=object.__module__,
+            postamble=" (if defined)" if sys.version_info < (3, 11) else "",
         )
     )
 
@@ -44,29 +46,23 @@ class Foo({builtins}.object)
 def test_dispatch_method_help(capsys):
     pydoc.help(Foo.bar)
     out, err = capsys.readouterr()
-    assert (
-        rstrip_lines(out)
-        == """\
+    assert rstrip_lines(out) == """\
 Help on function bar in module reg.tests.fixtures.module:
 
 bar(self, obj)
     Return the bar of an object.
 """
-    )
 
 
 def test_dispatch_help(capsys):
     pydoc.help(foo)
     out, err = capsys.readouterr()
-    assert (
-        rstrip_lines(out)
-        == """\
+    assert rstrip_lines(out) == """\
 Help on function foo in module reg.tests.fixtures.module:
 
 foo(obj)
     return the foo of an object.
 """
-    )
 
 
 def test_autodoc(tmpdir):
@@ -80,9 +76,7 @@ def test_autodoc(tmpdir):
     # remove it.
     app = Sphinx(root, root, root + "/build", root, "text", status=None)
     app.build()
-    assert (
-        tmpdir.join("build/contents.txt").read()
-        == """\
+    assert tmpdir.join("build/contents.txt").read() == """\
 Sample module for testing autodoc.
 
 class reg.tests.fixtures.module.Foo
@@ -101,4 +95,3 @@ reg.tests.fixtures.module.foo(obj)
 
    return the foo of an object.
 """
-    )

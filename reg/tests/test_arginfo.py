@@ -340,6 +340,103 @@ def test_arginfo_defaults(callable):
     assert info.defaults == (1,)
 
 
+def func_kwonlydefaults(*, a=1):
+    pass
+
+
+class ObjKwOnlyDefaults:
+    def __call__(self, *, a=1):
+        pass
+
+
+obj_kwonlydefaults = ObjKwOnlyDefaults()
+
+
+class MethodKwOnlyDefaults:
+    def method(self, *, a=1):
+        pass
+
+
+method_kwonlydefaults = MethodKwOnlyDefaults()
+
+
+class ClassKwOnlyDefaults:
+    def __init__(self, *, a=1):
+        pass
+
+
+class InheritedKwOnlyDefaults(ClassKwOnlyDefaults):
+    pass
+
+
+@pytest.mark.parametrize(
+    "callable",
+    [
+        func_kwonlydefaults,
+        obj_kwonlydefaults,
+        method_kwonlydefaults.method,
+        ClassKwOnlyDefaults,
+        InheritedKwOnlyDefaults,
+    ],
+)
+def test_arginfo_kwonlydefaults(callable):
+    info = arginfo(callable)
+    assert not info.args
+    assert info.varargs is None
+    assert info.varkw is None
+    assert info.defaults is None
+    assert info.kwonlyargs == ["a"]
+    assert info.kwonlydefaults == {"a": 1}
+
+
+def func_annotations(a: int) -> None:
+    pass
+
+
+class ObjAnnotations:
+    def __call__(self, a: int) -> None:
+        pass
+
+
+obj_annotations = ObjAnnotations()
+
+
+class MethodAnnotations:
+    def method(self, a: int) -> None:
+        pass
+
+
+method_annotations = MethodAnnotations()
+
+
+class ClassAnnotations:
+    def __init__(self, a: int) -> None:
+        pass
+
+
+class InheritedAnnotations(ClassAnnotations):
+    pass
+
+
+@pytest.mark.parametrize(
+    "callable",
+    [
+        func_annotations,
+        obj_annotations,
+        method_annotations.method,
+        ClassAnnotations,
+        InheritedAnnotations,
+    ],
+)
+def test_arginfo_annotations(callable):
+    info = arginfo(callable)
+    assert info.args == ["a"]
+    assert info.varargs is None
+    assert info.varkw is None
+    assert info.defaults is None
+    assert info.annotations == {"a": int, "return": None}
+
+
 # Information on builtin functions is not reported. These can
 # still be called with mapply, but only using positional arguments.
 def test_arginfo_builtin():
