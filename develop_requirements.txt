@@ -1,7 +1,8 @@
 # development
 -e '.[test,coverage,pep8,docs]'
 pre-commit
-tox >= 2.4.1
+# FIXME: Make tox.ini compatible with newer versions of tox
+tox >= 2.4.1, < 4
 radon
 
 # releaser

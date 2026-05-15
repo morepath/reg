@@ -1,4 +1,18 @@
 import inspect
+import sys
+
+if sys.version_info < (3, 14):
+
+    def get_signature(callable):  # pragma: no cover
+        """A compatibility wrapper for `inspect.signature`."""
+        return inspect.signature(callable)
+
+else:
+    from annotationlib import Format
+
+    def get_signature(callable):  # pragma: no cover
+        """A compatibility wrapper for `inspect.signature`."""
+        return inspect.signature(callable, annotation_format=Format.FORWARDREF)
 
 
 def arginfo(callable):
@@ -10,7 +24,10 @@ def arginfo(callable):
     :func:`inspect.getfullargspec` returns information about the arguments
     of a function. arginfo also works for classes and instances with a
     __call__ defined. Unlike getfullargspec, arginfo treats bound methods
-    like functions, so that the self argument is not reported.
+    like functions, so that the self argument is not reported. Another
+    difference is the handling of decorated functions. This will return
+    the original signature, rather than the signature of the wrapper, if
+    wrapped via :func:`functools.wraps`.
 
     arginfo returns ``None`` if given something that is not callable.
 
@@ -29,22 +46,68 @@ def arginfo(callable):
             return arginfo._cache[callable.__call__]
         except (AttributeError, KeyError):
             pass
-    func, cache_key, remove_self = get_callable_info(callable)
-    if func is None:
-        return None
-    result = inspect.getfullargspec(func)
-    if remove_self:
-        args = result.args[1:]
-        result = inspect.FullArgSpec(
-            args,
-            result.varargs,
-            result.varkw,
-            result.defaults,
-            result.kwonlyargs,
-            result.kwonlydefaults,
-            result.annotations,
-        )
-    arginfo._cache[cache_key] = result
+
+    if inspect.isfunction(callable):
+        cache_key = callable
+    elif inspect.ismethod(callable):
+        cache_key = callable
+    elif inspect.isclass(callable):
+        cache_key = callable
+        if callable.__init__ is WRAPPER_DESCRIPTOR:
+            # Only in this specific case do we replace the callable
+            # into `inspect.signature` with something else, to ensure
+            # we don't get a `ValueError` and instead end up with
+            # an empty signature.
+            callable = fake_empty_init
+    else:
+        # Since arbitrary callable objects may not be hashable
+        # we instead retrieve their call method, which should be
+        try:
+            cache_key = callable.__call__
+        except AttributeError:
+            return None
+
+    signature = get_signature(callable)
+    args = []
+    varargs = None
+    varkw = None
+    defaults = []
+    kwonlyargs = []
+    kwonlydefaults = {}
+    annotations = {}
+
+    if signature.return_annotation is not signature.empty:
+        annotations["return"] = signature.return_annotation
+
+    for parameter in signature.parameters.values():
+        if (
+            parameter.kind is parameter.POSITIONAL_OR_KEYWORD
+            or parameter.kind is parameter.POSITIONAL_ONLY
+        ):
+            args.append(parameter.name)
+            if parameter.default is not parameter.empty:
+                defaults.append(parameter.default)
+        elif parameter.kind is parameter.KEYWORD_ONLY:
+            kwonlyargs.append(parameter.name)
+            if parameter.default is not parameter.empty:
+                kwonlydefaults[parameter.name] = parameter.default
+        elif parameter.kind is parameter.VAR_POSITIONAL:
+            varargs = parameter.name
+        elif parameter.kind is parameter.VAR_KEYWORD:
+            varkw = parameter.name
+
+        if parameter.annotation is not parameter.empty:
+            annotations[parameter.name] = parameter.annotation
+
+    result = arginfo._cache[cache_key] = inspect.FullArgSpec(
+        args,
+        varargs,
+        varkw,
+        tuple(defaults) if defaults else None,
+        kwonlyargs,
+        kwonlydefaults if kwonlydefaults else None,
+        annotations,
+    )
     return result
 
 
@@ -58,35 +121,6 @@ arginfo._cache = {}
 arginfo.is_cached = is_cached
 
 
-def get_callable_info(callable):
-    """Get information about a callable.
-
-    Returns a tuple of:
-
-    * actual function/method that can be inspected with inspect.getfullargspec.
-
-    * cache key to use to cache results.
-
-    * whether to remove self or not.
-
-    Note that in Python 3, __init__ is not a method, but we still
-    want to remove self from it.
-
-    If not inspectable (None, None, False) is returned.
-    """
-    if inspect.isfunction(callable):
-        return callable, callable, False
-    if inspect.ismethod(callable):
-        return callable, callable, True
-    if inspect.isclass(callable):
-        return get_class_init(callable), callable, True
-    try:
-        callable = getattr(callable, "__call__")
-        return callable, callable, True
-    except AttributeError:
-        return None, None, False
-
-
 def fake_empty_init():
     pass  # pragma: nocoverage
 
@@ -96,13 +130,3 @@ class Dummy:
 
 
 WRAPPER_DESCRIPTOR = Dummy.__init__
-
-
-def get_class_init(class_):
-    func = class_.__init__
-
-    # If this is a new-style class and there is no __init__
-    # defined this is a WRAPPER_DESCRIPTOR.
-    if func is WRAPPER_DESCRIPTOR:
-        return fake_empty_init
-    return func
