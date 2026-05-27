@@ -8,7 +8,7 @@ if sys.version_info < (3, 14):
         return inspect.signature(callable)
 
 else:
-    from annotationlib import Format
+    from annotationlib import Format  # pragma: no cover
 
     def get_signature(callable):  # pragma: no cover
         """A compatibility wrapper for `inspect.signature`."""

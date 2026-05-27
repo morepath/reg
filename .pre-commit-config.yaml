@@ -7,8 +7,9 @@ repos:
     rev: "7.3.0"
     hooks:
       - id: flake8
+        additional_dependencies: [flake8-pyproject]
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.21.2
     hooks:
     - id: pyupgrade
-      args: [--py36-plus]
+      args: [--py310-plus]
