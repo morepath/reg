@@ -1,0 +1,121 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "reg"
+version = "0.13.dev0"
+dynamic = ["readme"]
+description = "Clever dispatch"
+license = "BSD-3-Clause"
+license-files = ["LICENSE.txt"]
+authors = [{name = "Martijn Faassen", email = "faassen@startifact.com"}]
+maintainers = [{name = "Henri Hulski", email = "henri@sancode.it"}]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Development Status :: 5 - Production/Stable",
+]
+requires-python = ">= 3.10"
+dependencies = ["repoze.lru"]
+
+[project.urls]
+Documentation = "https://reg.readthedocs.io"
+Repository = "https://github.com/morepath/reg"
+Issues = "https://github.com/morepath/reg/issues"
+Changelog = "https://github.com/morepath/reg/blob/master/CHANGES.txt"
+
+[project.optional-dependencies]
+test = ["pytest >= 8", "pytest-env", "sphinx"]
+docs = ["sphinx"]
+coverage = ["pytest-cov"]
+lint = ["black", "flake8", "flake8-pyproject"]
+
+[tool.setuptools.packages]
+find = {}
+
+[tool.setuptools.dynamic]
+readme = {file = ["README.rst", "CHANGES.txt"]}
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["reg"]
+addopts = ["-vv"]
+env = ["RUN_ENV=test"]
+
+[tool.coverage.run]
+omit = ["reg/tests/*"]
+source = ["reg"]
+
+[tool.coverage.report]
+show_missing = true
+
+[tool.flake8]
+show-source = true
+ignore = ["E203", "E731", "W503"]
+max-line-length = 88
+
+[tool.tox]
+requires = ["tox>=4"]
+env_list = [
+    "py310",
+    "py311",
+    "py312",
+    "py313",
+    "py314",
+    "pypy3",
+    "coverage",
+    "pre-commit",
+    "docs",
+    "perf",
+]
+skip_missing_interpreters = true
+
+[tool.tox.gh.python]
+"3.10" = ["py310", "perf"]
+"3.11" = ["py311"]
+"3.12" = ["py312"]
+"3.13" = ["py313"]
+"3.14" = ["py314", "pre-commit", "coverage"]
+"pypy-3.11" = ["pypy3"]
+
+[tool.tox.env_run_base]
+package = "editable"
+extras = ["test"]
+commands = [["pytest", "{posargs:reg}"]]
+
+[tool.tox.env.coverage]
+base_python = ["python3"]
+extras = ["test", "coverage"]
+commands = [
+    ["pytest", "--cov", "--cov-fail-under=100", "{posargs:reg}"],
+]
+
+[tool.tox.env.pre-commit]
+base_python = ["python3"]
+package = "skip"
+deps = ["pre-commit"]
+commands = [
+    ["pre-commit", "run", "--all-files"],
+]
+
+[tool.tox.env.docs]
+base_python = ["python3"]
+extras = ["docs"]
+commands = [
+    ["sphinx-build", "-b", "doctest", "doc", "{env_tmp_dir}"],
+]
+
+[tool.tox.env.perf]
+base_python = ["python3"]
+extras = []
+commands = [
+    ["python", "{toxinidir}/tox_perf.py"],
+]
