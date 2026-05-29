@@ -33,13 +33,21 @@ Issues = "https://github.com/morepath/reg/issues"
 Changelog = "https://github.com/morepath/reg/blob/master/CHANGES.txt"
 
 [project.optional-dependencies]
-test = ["pytest >= 8", "pytest-env", "sphinx"]
+test = ["pytest >= 8", "pytest-env", "sphinx", "typing_extensions"]
 docs = ["sphinx"]
 coverage = ["pytest-cov"]
 lint = ["black", "flake8", "flake8-pyproject"]
+# NOTE: sphinx 9.1 introduced PEP-695 syntax into the code-base, so we
+#       can't type check in pre-3.12 mode this way, which we need to,
+#       as long as we still support these versions.
+mypy = ["mypy", "pytest", "sphinx < 9.1.0"]
+pyright = ["pyright", "pytest", "sphinx < 9.1.0"]
 
 [tool.setuptools.packages]
 find = {}
+
+[tool.setuptools.package-data]
+reg = ["py.typed"]
 
 [tool.setuptools.dynamic]
 readme = {file = ["README.rst", "CHANGES.txt"]}
@@ -51,7 +59,7 @@ addopts = ["-vv"]
 env = ["RUN_ENV=test"]
 
 [tool.coverage.run]
-omit = ["reg/tests/*"]
+omit = ["reg/tests/*", "reg/types.py"]
 source = ["reg"]
 
 [tool.coverage.report]
@@ -59,8 +67,17 @@ show_missing = true
 
 [tool.flake8]
 show-source = true
-ignore = ["E203", "E731", "W503"]
+ignore = ["E203", "E301", "E501", "E704", "E731", "W503"]
 max-line-length = 88
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = "reg.tests.fixtures.*"
+disallow_untyped_defs = false
 
 [tool.tox]
 requires = ["tox>=4"]
@@ -75,11 +92,13 @@ env_list = [
     "pre-commit",
     "docs",
     "perf",
+    "mypy",
+    "pyright"
 ]
 skip_missing_interpreters = true
 
 [tool.tox.gh.python]
-"3.10" = ["py310", "perf"]
+"3.10" = ["py310", "mypy", "pyright", "perf"]
 "3.11" = ["py311"]
 "3.12" = ["py312"]
 "3.13" = ["py313"]
@@ -118,4 +137,26 @@ base_python = ["python3"]
 extras = []
 commands = [
     ["python", "{toxinidir}/tox_perf.py"],
+]
+
+[tool.tox.env.mypy]
+base_python = ["python3"]
+extras = ["mypy"]
+commands = [
+    ["mypy", "-p", "reg", "--python-version", "3.10"],
+    ["mypy", "-p", "reg", "--python-version", "3.11"],
+    ["mypy", "-p", "reg", "--python-version", "3.12"],
+    ["mypy", "-p", "reg", "--python-version", "3.13"],
+    ["mypy", "-p", "reg", "--python-version", "3.14"],
+]
+
+[tool.tox.env.pyright]
+base_python = ["python3"]
+extras = ["pyright"]
+commands = [
+    ["pyright", "reg", "--pythonversion", "3.10"],
+    ["pyright", "reg", "--pythonversion", "3.11"],
+    ["pyright", "reg", "--pythonversion", "3.12"],
+    ["pyright", "reg", "--pythonversion", "3.13"],
+    ["pyright", "reg", "--pythonversion", "3.14"],
 ]

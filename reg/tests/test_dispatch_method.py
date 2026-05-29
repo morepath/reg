@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 from types import FunctionType
+from typing import TYPE_CHECKING, Any
+from typing_extensions import assert_type
 import pytest
+from ..dispatch import dispatch
 from ..context import (
-    dispatch,
     dispatch_method,
     methodify,
     clean_dispatch_methods,
@@ -9,14 +13,40 @@ from ..context import (
 from ..predicate import match_instance
 from ..error import RegistrationError
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from ..types import BoundDispatchMethodCall, DispatchMethodCall  # noqa: F401
 
-def test_dispatch_method_explicit_fallback():
-    def obj_fallback(self, obj):
+
+def test_dispatch_method_typing() -> None:
+    class Foo:
+        @dispatch_method()
+        def bar(self) -> str | None:
+            pass
+
+        @dispatch_method()
+        def baz(self, x: str, /) -> None:
+            pass
+
+        @dispatch_method()
+        def qux(self, x: str, y: int, /) -> Any:
+            pass
+
+    assert_type(Foo.bar, "DispatchMethodCall[[], Foo, str | None]")
+    assert_type(Foo.baz, "DispatchMethodCall[[str], Foo, None]")
+    assert_type(Foo.qux, "DispatchMethodCall[[str, int], Foo, Any]")
+    assert_type(Foo().bar, "BoundDispatchMethodCall[[], Foo, str | None]")
+    assert_type(Foo().baz, "BoundDispatchMethodCall[[str], Foo, None]")
+    assert_type(Foo().qux, "BoundDispatchMethodCall[[str, int], Foo, Any]")
+
+
+def test_dispatch_method_explicit_fallback() -> None:
+    def obj_fallback(self: Foo, obj: object) -> str:
         return "Obj fallback"
 
     class Foo:
         @dispatch_method(match_instance("obj", fallback=obj_fallback))
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             return "default"
 
     class Alpha:
@@ -37,10 +67,10 @@ def test_dispatch_method_explicit_fallback():
     assert foo.bar(None) == "Obj fallback"
 
 
-def test_dispatch_method_without_fallback():
+def test_dispatch_method_without_fallback() -> None:
     class Foo:
         @dispatch_method(match_instance("obj"))
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             return "default"
 
     class Alpha:
@@ -61,10 +91,10 @@ def test_dispatch_method_without_fallback():
     assert foo.bar(None) == "default"
 
 
-def test_dispatch_method_string_predicates():
+def test_dispatch_method_string_predicates() -> None:
     class Foo:
         @dispatch_method("obj")
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             return "default"
 
     class Alpha:
@@ -85,10 +115,10 @@ def test_dispatch_method_string_predicates():
     assert foo.bar(None) == "default"
 
 
-def test_dispatch_method_add_predicates():
+def test_dispatch_method_add_predicates() -> None:
     class Foo:
         @dispatch_method()
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             return "default"
 
     Foo.bar.add_predicates([match_instance("obj")])
@@ -111,10 +141,10 @@ def test_dispatch_method_add_predicates():
     assert foo.bar(None) == "default"
 
 
-def test_dispatch_method_register_function():
+def test_dispatch_method_register_function() -> None:
     class Foo:
         @dispatch_method(match_instance("obj"))
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             return "default"
 
     class Alpha:
@@ -135,56 +165,56 @@ def test_dispatch_method_register_function():
     assert foo.bar(None) == "default"
 
 
-def test_dispatch_method_register_function_wrong_signature_too_long():
+def test_dispatch_method_register_function_wrong_signature_too_long() -> None:
     class Foo:
         @dispatch_method("obj")
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             return "default"
 
     class Alpha:
         pass
 
     with pytest.raises(RegistrationError):
-        Foo.bar.register(methodify(lambda obj, extra: "Alpha"), obj=Alpha)
+        Foo.bar.register(methodify(lambda obj, extra: "Alpha"), obj=Alpha)  # type: ignore
 
 
-def test_dispatch_method_register_function_wrong_signature_too_short():
+def test_dispatch_method_register_function_wrong_signature_too_short() -> None:
     class Foo:
         @dispatch_method("obj")
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             return "default"
 
     class Alpha:
         pass
 
     with pytest.raises(RegistrationError):
-        Foo.bar.register(methodify(lambda: "Alpha"), obj=Alpha)
+        Foo.bar.register(methodify(lambda: "Alpha"), obj=Alpha)  # type: ignore
 
 
-def test_dispatch_method_register_non_callable():
+def test_dispatch_method_register_non_callable() -> None:
     class Foo:
         @dispatch_method("obj")
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             return "default"
 
     class Alpha:
         pass
 
     with pytest.raises(RegistrationError):
-        Foo.bar.register("cannot call this", obj=Alpha)
+        Foo.bar.register("cannot call this", obj=Alpha)  # type: ignore
 
 
-def test_dispatch_method_methodify_non_callable():
+def test_dispatch_method_methodify_non_callable() -> None:
     with pytest.raises(TypeError):
-        methodify("cannot call this")
+        methodify("cannot call this")  # type: ignore
 
 
-def test_dispatch_method_register_auto():
+def test_dispatch_method_register_auto() -> None:
     class Foo:
         x = "X"
 
         @dispatch_method(match_instance("obj"))
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             return "default"
 
     class Alpha:
@@ -205,10 +235,10 @@ def test_dispatch_method_register_auto():
     assert foo.bar(None) == "default"
 
 
-def test_dispatch_method_class_method_accessed_first():
+def test_dispatch_method_class_method_accessed_first() -> None:
     class Foo:
         @dispatch_method(match_instance("obj"))
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             return "default"
 
     class Alpha:
@@ -227,13 +257,13 @@ def test_dispatch_method_class_method_accessed_first():
     assert foo.bar(None) == "default"
 
 
-def test_dispatch_method_accesses_instance():
+def test_dispatch_method_accesses_instance() -> None:
     class Foo:
-        def __init__(self, x):
+        def __init__(self, x: str) -> None:
             self.x = x
 
         @dispatch_method(match_instance("obj"))
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             return "default %s" % self.x
 
     class Alpha:
@@ -252,10 +282,10 @@ def test_dispatch_method_accesses_instance():
     assert foo.bar(None) == "default hello"
 
 
-def test_dispatch_method_inheritance_register_on_subclass():
+def test_dispatch_method_inheritance_register_on_subclass() -> None:
     class Foo:
         @dispatch_method(match_instance("obj"))
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             return "default"
 
     class Sub(Foo):
@@ -279,10 +309,10 @@ def test_dispatch_method_inheritance_register_on_subclass():
     assert sub.bar(None) == "default"
 
 
-def test_dispatch_method_inheritance_separation():
+def test_dispatch_method_inheritance_separation() -> None:
     class Foo:
         @dispatch_method(match_instance("obj"))
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             return "default"
 
     class Sub(Foo):
@@ -315,14 +345,14 @@ def test_dispatch_method_inheritance_separation():
     assert sub.bar(None) == "default"
 
 
-def test_dispatch_method_inheritance_separation_multiple():
+def test_dispatch_method_inheritance_separation_multiple() -> None:
     class Foo:
         @dispatch_method(match_instance("obj"))
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             return "bar default"
 
         @dispatch_method(match_instance("obj"))
-        def qux(self, obj):
+        def qux(self, obj: Any) -> str:
             return "qux default"
 
     class Sub(Foo):
@@ -364,13 +394,13 @@ def test_dispatch_method_inheritance_separation_multiple():
     assert sub.qux(None) == "qux default"
 
 
-def test_dispatch_method_api_available():
-    def obj_fallback(self, obj):
+def test_dispatch_method_api_available() -> None:
+    def obj_fallback(self: Any, obj: Any) -> str:
         return "Obj fallback"
 
     class Foo:
         @dispatch_method(match_instance("obj", fallback=obj_fallback))
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             return "default"
 
     class Alpha:
@@ -381,10 +411,10 @@ def test_dispatch_method_api_available():
 
     foo = Foo()
 
-    def alpha_func(self, obj):
+    def alpha_func(self: Foo, obj: Alpha) -> str:
         return "Alpha"
 
-    def beta_func(self, obj):
+    def beta_func(self: Foo, obj: Beta) -> str:
         return "Beta"
 
     Foo.bar.register(alpha_func, obj=Alpha)
@@ -400,10 +430,10 @@ def test_dispatch_method_api_available():
     assert foo.bar.by_args(None).all_matches == []
 
 
-def test_dispatch_method_with_register_function_value():
+def test_dispatch_method_with_register_function_value() -> None:
     class Foo:
         @dispatch_method(match_instance("obj"))
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             return "default"
 
     class Alpha:
@@ -416,10 +446,10 @@ def test_dispatch_method_with_register_function_value():
 
     assert foo.bar(Alpha()) == "default"
 
-    def alpha_func(obj):
+    def alpha_func(obj: Alpha) -> str:
         return "Alpha"
 
-    def beta_func(obj):
+    def beta_func(obj: Beta) -> str:
         return "Beta"
 
     Foo.bar.register(methodify(alpha_func), obj=Alpha)
@@ -428,10 +458,10 @@ def test_dispatch_method_with_register_function_value():
     assert unmethodify(foo.bar.by_args(Alpha()).component) is alpha_func
 
 
-def test_dispatch_method_with_register_auto_value():
+def test_dispatch_method_with_register_auto_value() -> None:
     class Foo:
         @dispatch_method(match_instance("obj"))
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             return "default"
 
     class Alpha:
@@ -444,10 +474,10 @@ def test_dispatch_method_with_register_auto_value():
 
     assert foo.bar(Alpha()) == "default"
 
-    def alpha_func(obj):
+    def alpha_func(obj: Alpha) -> str:
         return "Alpha"
 
-    def beta_func(app, obj):
+    def beta_func(app: Foo, obj: Beta) -> str:
         return "Beta"
 
     Foo.bar.register(methodify(alpha_func, "app"), obj=Alpha)
@@ -459,11 +489,11 @@ def test_dispatch_method_with_register_auto_value():
     assert foo.bar.by_args(Beta()).component is beta_func
 
 
-def test_install_method():
+def test_install_method() -> None:
     class Target:
-        pass
+        m: Callable[..., str]
 
-    def f(self, a):
+    def f(self: Target, a: str) -> str:
         return a
 
     Target.m = f
@@ -473,11 +503,11 @@ def test_install_method():
     assert t.m("A") == "A"
 
 
-def test_install_auto_method_function_no_app_arg():
+def test_install_auto_method_function_no_app_arg() -> None:
     class Target:
-        pass
+        m: Callable[..., str]
 
-    def f(a):
+    def f(a: str) -> str:
         return a
 
     Target.m = methodify(f, "app")
@@ -488,11 +518,11 @@ def test_install_auto_method_function_no_app_arg():
     assert unmethodify(t.m) is f
 
 
-def test_install_auto_method_function_app_arg():
+def test_install_auto_method_function_app_arg() -> None:
     class Target:
-        pass
+        m: Callable[..., str]
 
-    def g(app, a):
+    def g(app: Target, a: str) -> str:
         assert isinstance(app, Target)
         return a
 
@@ -503,12 +533,12 @@ def test_install_auto_method_function_app_arg():
     assert unmethodify(t.m) is g
 
 
-def test_install_auto_method_method_no_app_arg():
+def test_install_auto_method_method_no_app_arg() -> None:
     class Target:
-        pass
+        m: Callable[..., str]
 
     class Foo:
-        def f(self, a):
+        def f(self, a: str) -> str:
             return a
 
     f = Foo().f
@@ -521,12 +551,12 @@ def test_install_auto_method_method_no_app_arg():
     assert unmethodify(t.m) is f
 
 
-def test_install_auto_method_method_app_arg():
+def test_install_auto_method_method_app_arg() -> None:
     class Target:
-        pass
+        m: Callable[..., str]
 
     class Bar:
-        def g(self, app, a):
+        def g(self, app: Target, a: str) -> str:
             assert isinstance(app, Target)
             return a
 
@@ -540,12 +570,12 @@ def test_install_auto_method_method_app_arg():
     assert unmethodify(t.m) is g
 
 
-def test_install_instance_method():
+def test_install_instance_method() -> None:
     class Target:
-        pass
+        m: Callable[..., str]
 
     class Bar:
-        def g(self, a):
+        def g(self, a: str) -> str:
             assert isinstance(self, Bar)
             return a
 
@@ -559,10 +589,10 @@ def test_install_instance_method():
     assert unmethodify(t.m) is g
 
 
-def test_dispatch_method_introspection():
+def test_dispatch_method_introspection() -> None:
     class Foo:
         @dispatch_method("obj")
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             "Return the bar of an object."
             return "default"
 
@@ -571,10 +601,10 @@ def test_dispatch_method_introspection():
     assert Foo.bar.__module__ == __name__
 
 
-def test_dispatch_method_clean():
+def test_dispatch_method_clean() -> None:
     class Foo:
         @dispatch_method(match_instance("obj"))
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             return "default"
 
     class Qux(Foo):
@@ -609,10 +639,10 @@ def test_dispatch_method_clean():
     assert qux.bar(Alpha()) == "Qux Alpha"
 
 
-def test_clean_dispatch_methods():
+def test_clean_dispatch_methods() -> None:
     class Foo:
         @dispatch_method(match_instance("obj"))
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             return "default"
 
     class Qux(Foo):
@@ -646,10 +676,10 @@ def test_clean_dispatch_methods():
     assert qux.bar(Alpha()) == "Qux Alpha"
 
 
-def test_replacing_with_normal_method():
+def test_replacing_with_normal_method() -> None:
     class Foo:
         @dispatch_method("obj")
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             return "default"
 
     class Alpha:
@@ -664,10 +694,12 @@ def test_replacing_with_normal_method():
 
     # Simply using Foo.bar wouldn't have worked here, as it would
     # invoke the descriptor:
-    assert isinstance(Foo.bar, FunctionType)
+    if not TYPE_CHECKING:
+        # NOTE: mypy does not like the following two statements
+        assert isinstance(Foo.bar, FunctionType)
 
-    # We now replace the descriptor with the actual unbound method:
-    Foo.bar = Foo.bar
+        # We now replace the descriptor with the actual unbound method:
+        Foo.bar = Foo.bar
 
     # Now the descriptor is gone
     assert isinstance(vars(Foo)["bar"], FunctionType)
@@ -682,10 +714,10 @@ def test_replacing_with_normal_method():
     assert foo.bar(None) == "default"
 
 
-def test_replacing_with_normal_method_and_its_effect_on_inheritance():
+def test_replacing_with_normal_method_and_its_effect_on_inheritance_1() -> None:
     class Foo:
         @dispatch_method("obj")
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             return "default"
 
     class SubFoo(Foo):
@@ -712,7 +744,7 @@ def test_replacing_with_normal_method_and_its_effect_on_inheritance():
     assert subfoo.bar(None) == "default"
 
     # We now replace the descriptor with the actual unbound method:
-    Foo.bar = Foo.bar
+    Foo.bar = Foo.bar  # type: ignore
 
     # Now the descriptor is gone
     assert isinstance(vars(Foo)["bar"], FunctionType)
@@ -729,49 +761,70 @@ def test_replacing_with_normal_method_and_its_effect_on_inheritance():
     assert subfoo.bar(Beta()) == "Beta"
     assert subfoo.bar(None) == "default"
 
+
+def test_replacing_with_normal_method_and_its_effect_on_inheritance_2() -> None:
     # This is exactly the same behavior we'd get by using dispatch
     # instead of dispatch_method:
-    del Foo, SubFoo
 
     class Foo:
         @dispatch("obj")
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             return "default"
 
     class SubFoo(Foo):
+        pass
+
+    class Alpha:
+        pass
+
+    class Beta:
         pass
 
     # Foo and SubFoo share the same registry:
     Foo.bar.register(obj=Alpha)(lambda self, obj: "Alpha")
     SubFoo.bar.register(obj=Beta)(lambda self, obj: "Beta")
 
-    foo = Foo()
-    assert foo.bar(Alpha()) == "Alpha"
-    assert foo.bar(Beta()) == "Beta"
-    assert foo.bar(None) == "default"
+    # NOTE: Using dispatch instead of dispatch_method makes type checkers
+    #       not understand, that the first argument can be omitted, it's
+    #       technically a solveable problem to a degree, but it takes a
+    #       a lot of extra descriptor protocols and complex overloads to
+    #       make work. It's probably not worth making worth at the moment
+    #       since you can just use dispatch_method
+    if not TYPE_CHECKING:
+        foo = Foo()
+        assert foo.bar(Alpha()) == "Alpha"
+        assert foo.bar(Beta()) == "Beta"
+        assert foo.bar(None) == "default"
 
-    subfoo = SubFoo()
-    assert subfoo.bar(Alpha()) == "Alpha"
-    assert subfoo.bar(Beta()) == "Beta"
-    assert subfoo.bar(None) == "default"
+        subfoo = SubFoo()
+        assert subfoo.bar(Alpha()) == "Alpha"
+        assert subfoo.bar(Beta()) == "Beta"
+        assert subfoo.bar(None) == "default"
 
+
+def test_replacing_with_normal_method_and_its_effect_on_inheritance_3() -> None:
     # Now we start again, and do the replacement for both subclass and
     # parent class, in this order:
-    del Foo, SubFoo
 
     class Foo:
         @dispatch_method("obj")
-        def bar(self, obj):
+        def bar(self, obj: Any) -> str:
             return "default"
 
     class SubFoo(Foo):
         pass
 
+    class Alpha:
+        pass
+
+    class Beta:
+        pass
+
     Foo.bar.register(obj=Alpha)(lambda self, obj: "Alpha")
     Foo.bar.register(obj=Beta)(lambda self, obj: "Beta")
 
-    SubFoo.bar = SubFoo.bar
-    Foo.bar = Foo.bar
+    SubFoo.bar = SubFoo.bar  # type: ignore
+    Foo.bar = Foo.bar  # type: ignore
 
     # This has kept two separate registries:
     foo = Foo()
@@ -785,7 +838,7 @@ def test_replacing_with_normal_method_and_its_effect_on_inheritance():
     assert subfoo.bar(None) == "default"
 
 
-def unmethodify(func):
+def unmethodify(func: Any) -> Any:
     """Reverses methodify operation.
 
     Given an object that is returned from a call to

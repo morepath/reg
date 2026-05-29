@@ -1,6 +1,5 @@
 include *.txt *.rst *.cfg *.py *.ini *.toml *.yaml
 exclude .installed.cfg
-recursive-include reg *.py
+recursive-include reg *.py py.typed
 recursive-include tests *.py
 recursive-include doc *.rst Makefile *.py *.bat
-include .coveragerc

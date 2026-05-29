@@ -1,13 +1,27 @@
+from __future__ import annotations
+
 import pytest
+from typing import TYPE_CHECKING, Any
+from typing_extensions import assert_type
 from ..arginfo import arginfo
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from inspect import FullArgSpec  # noqa: F401
+    from ..types import ArgInfo  # noqa: F401
 
-def func_no_args():
+
+def test_arginfo_typing() -> None:
+    assert_type(arginfo, "ArgInfo")
+    assert_type(arginfo(lambda: None), "FullArgSpec | None")
+
+
+def func_no_args() -> None:
     pass
 
 
 class ObjNoArgs:
-    def __call__(self):
+    def __call__(self) -> None:
         pass
 
 
@@ -15,7 +29,7 @@ obj_no_args = ObjNoArgs()
 
 
 class MethodNoArgs:
-    def method(self):
+    def method(self) -> None:
         pass
 
 
@@ -24,13 +38,13 @@ method_no_args = MethodNoArgs()
 
 class StaticMethodNoArgs:
     @staticmethod
-    def method():
+    def method() -> None:
         pass
 
 
 class ClassMethodNoArgs:
     @classmethod
-    def method(cls):
+    def method(cls) -> None:
         pass
 
 
@@ -39,7 +53,7 @@ class ClassNoInit:
 
 
 class ClassNoArgs:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
 
@@ -48,7 +62,7 @@ class ClassicNoInit:
 
 
 class ClassicNoArgs:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
 
@@ -86,20 +100,21 @@ class ClassicInheritedNoArgs(ClassicNoArgs):
         ClassicInheritedNoArgs,
     ],
 )
-def test_arginfo_no_args(callable):
+def test_arginfo_no_args(callable: Callable[[], Any]) -> None:
     info = arginfo(callable)
+    assert info is not None
     assert info.args == []
     assert info.varargs is None
     assert info.varkw is None
     assert info.defaults is None
 
 
-def func_args(a):
+def func_args(a: int) -> None:
     pass
 
 
 class ObjArgs:
-    def __call__(self, a):
+    def __call__(self, a: int) -> None:
         pass
 
 
@@ -107,7 +122,7 @@ obj_args = ObjArgs()
 
 
 class MethodArgs:
-    def method(self, a):
+    def method(self, a: int) -> None:
         pass
 
 
@@ -116,23 +131,23 @@ method_args = MethodArgs()
 
 class StaticMethodArgs:
     @staticmethod
-    def method(a):
+    def method(a: int) -> None:
         pass
 
 
 class ClassMethodArgs:
     @classmethod
-    def method(cls, a):
+    def method(cls, a: int) -> None:
         pass
 
 
 class ClassArgs:
-    def __init__(self, a):
+    def __init__(self, a: int) -> None:
         pass
 
 
 class ClassicArgs:
-    def __init__(self, a):
+    def __init__(self, a: int) -> None:
         pass
 
 
@@ -158,20 +173,21 @@ class ClassicInheritedArgs(ClassicArgs):
         ClassicInheritedArgs,
     ],
 )
-def test_arginfo_args(callable):
+def test_arginfo_args(callable: Callable[[int], Any]) -> None:
     info = arginfo(callable)
+    assert info is not None
     assert info.args == ["a"]
     assert info.varargs is None
     assert info.varkw is None
     assert info.defaults is None
 
 
-def func_varargs(*args):
+def func_varargs(*args: int) -> None:
     pass
 
 
 class ObjVarargs:
-    def __call__(self, *args):
+    def __call__(self, *args: int) -> None:
         pass
 
 
@@ -179,7 +195,7 @@ obj_varargs = ObjVarargs()
 
 
 class MethodVarargs:
-    def method(self, *args):
+    def method(self, *args: int) -> None:
         pass
 
 
@@ -187,12 +203,12 @@ method_varargs = MethodVarargs()
 
 
 class ClassVarargs:
-    def __init__(self, *args):
+    def __init__(self, *args: int) -> None:
         pass
 
 
 class ClassicVarargs:
-    def __init__(self, *args):
+    def __init__(self, *args: int) -> None:
         pass
 
 
@@ -216,20 +232,21 @@ class ClassicInheritedVarargs(ClassicVarargs):
         ClassicInheritedVarargs,
     ],
 )
-def test_arginfo_varargs(callable):
+def test_arginfo_varargs(callable: Callable[..., Any]) -> None:
     info = arginfo(callable)
+    assert info is not None
     assert info.args == []
     assert info.varargs == "args"
     assert info.varkw is None
     assert info.defaults is None
 
 
-def func_keywords(**kw):
+def func_keywords(**kw: int) -> None:
     pass
 
 
 class ObjKeywords:
-    def __call__(self, **kw):
+    def __call__(self, **kw: int) -> None:
         pass
 
 
@@ -237,7 +254,7 @@ obj_keywords = ObjKeywords()
 
 
 class MethodKeywords:
-    def method(self, **kw):
+    def method(self, **kw: int) -> None:
         pass
 
 
@@ -245,12 +262,12 @@ method_keywords = MethodKeywords()
 
 
 class ClassKeywords:
-    def __init__(self, **kw):
+    def __init__(self, **kw: int) -> None:
         pass
 
 
 class ClassicKeywords:
-    def __init__(self, **kw):
+    def __init__(self, **kw: int) -> None:
         pass
 
 
@@ -274,20 +291,21 @@ class ClassicInheritedKeywords(ClassicKeywords):
         ClassicInheritedKeywords,
     ],
 )
-def test_arginfo_keywords(callable):
+def test_arginfo_keywords(callable: Callable[..., Any]) -> None:
     info = arginfo(callable)
+    assert info is not None
     assert info.args == []
     assert info.varargs is None
     assert info.varkw == "kw"
     assert info.defaults is None
 
 
-def func_defaults(a=1):
+def func_defaults(a: int = 1) -> None:
     pass
 
 
 class ObjDefaults:
-    def __call__(self, a=1):
+    def __call__(self, a: int = 1) -> None:
         pass
 
 
@@ -295,7 +313,7 @@ obj_defaults = ObjDefaults()
 
 
 class MethodDefaults:
-    def method(self, a=1):
+    def method(self, a: int = 1) -> None:
         pass
 
 
@@ -303,12 +321,12 @@ method_defaults = MethodDefaults()
 
 
 class ClassDefaults:
-    def __init__(self, a=1):
+    def __init__(self, a: int = 1) -> None:
         pass
 
 
 class ClassicDefaults:
-    def __init__(self, a=1):
+    def __init__(self, a: int = 1) -> None:
         pass
 
 
@@ -332,20 +350,21 @@ class ClassicInheritedDefaults(ClassicDefaults):
         ClassicInheritedDefaults,
     ],
 )
-def test_arginfo_defaults(callable):
+def test_arginfo_defaults(callable: Callable[[int], Any]) -> None:
     info = arginfo(callable)
+    assert info is not None
     assert info.args == ["a"]
     assert info.varargs is None
     assert info.varkw is None
     assert info.defaults == (1,)
 
 
-def func_kwonlydefaults(*, a=1):
+def func_kwonlydefaults(*, a: int = 1) -> None:
     pass
 
 
 class ObjKwOnlyDefaults:
-    def __call__(self, *, a=1):
+    def __call__(self, *, a: int = 1) -> None:
         pass
 
 
@@ -353,7 +372,7 @@ obj_kwonlydefaults = ObjKwOnlyDefaults()
 
 
 class MethodKwOnlyDefaults:
-    def method(self, *, a=1):
+    def method(self, *, a: int = 1) -> None:
         pass
 
 
@@ -361,7 +380,7 @@ method_kwonlydefaults = MethodKwOnlyDefaults()
 
 
 class ClassKwOnlyDefaults:
-    def __init__(self, *, a=1):
+    def __init__(self, *, a: int = 1) -> None:
         pass
 
 
@@ -379,8 +398,9 @@ class InheritedKwOnlyDefaults(ClassKwOnlyDefaults):
         InheritedKwOnlyDefaults,
     ],
 )
-def test_arginfo_kwonlydefaults(callable):
+def test_arginfo_kwonlydefaults(callable: Callable[..., Any]) -> None:
     info = arginfo(callable)
+    assert info is not None
     assert not info.args
     assert info.varargs is None
     assert info.varkw is None
@@ -428,27 +448,29 @@ class InheritedAnnotations(ClassAnnotations):
         InheritedAnnotations,
     ],
 )
-def test_arginfo_annotations(callable):
+def test_arginfo_annotations(callable: Callable[[int], Any]) -> None:
     info = arginfo(callable)
+    assert info is not None
     assert info.args == ["a"]
     assert info.varargs is None
     assert info.varkw is None
     assert info.defaults is None
-    assert info.annotations == {"a": int, "return": None}
+    assert info.annotations == {"a": "int", "return": "None"}
 
 
 # Information on builtin functions is not reported. These can
 # still be called with mapply, but only using positional arguments.
-def test_arginfo_builtin():
+def test_arginfo_builtin() -> None:
     info = arginfo(int)
+    assert info is not None
     assert info.args == []
     assert info.varargs is None
     assert info.varkw is None
     assert info.defaults is None
 
 
-def test_arginfo_cache():
-    def foo(a):
+def test_arginfo_cache() -> None:
+    def foo(a: object) -> None:
         pass
 
     assert not arginfo.is_cached(foo)
@@ -456,9 +478,9 @@ def test_arginfo_cache():
     assert arginfo.is_cached(foo)
 
 
-def test_arginfo_cache_callable():
+def test_arginfo_cache_callable() -> None:
     class Foo:
-        def __call__(self):
+        def __call__(self) -> None:
             pass
 
     foo = Foo()

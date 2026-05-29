@@ -1,11 +1,24 @@
+from __future__ import annotations
+
 import inspect
 from operator import itemgetter
 from itertools import product
+from typing import TYPE_CHECKING, Any, Generic
 
 from .error import RegistrationError
 
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator, Sequence
+    from typing_extensions import TypeVar
 
-class Predicate:
+    _ValueT = TypeVar("_ValueT", default=Callable[..., Any])
+else:
+    from typing import TypeVar
+
+    _ValueT = TypeVar("_ValueT")
+
+
+class Predicate(Generic[_ValueT]):
     """A dispatch predicate.
 
     :param name: name used to identify the predicate when specifying
@@ -25,21 +38,36 @@ class Predicate:
 
     """
 
-    def __init__(self, name, index, get_key=None, fallback=None, default=None):
+    def __init__(
+        self,
+        name: str,
+        index: Callable[[_ValueT | None], KeyIndex[_ValueT]],
+        # FIXME: This maybe shouldn't be optional, considering
+        #        PredicateRegistry.key will crash if it got a
+        #        Predicate without a get_key.
+        get_key: Callable[[dict[str, Any]], Any] | None = None,
+        fallback: _ValueT | None = None,
+        default: Any | None = None,
+    ) -> None:
         self.name = name
         self.index = index
         self.fallback = fallback
         self.get_key = get_key
         self.default = default
 
-    def create_index(self):
+    def create_index(self) -> KeyIndex[_ValueT]:
         return self.index(self.fallback)
 
-    def key_by_predicate_name(self, d):
+    def key_by_predicate_name(self, d: dict[str, Any]) -> Any | None:
         return d.get(self.name, self.default)
 
 
-def match_key(name, func=None, fallback=None, default=None):
+def match_key(
+    name: str,
+    func: Callable[..., Any] | None = None,
+    fallback: Any | None = None,
+    default: Any | None = None,
+) -> Predicate[Any]:
     """Predicate that returns a value used for dispatching.
 
     :name: predicate name.
@@ -54,6 +82,7 @@ def match_key(name, func=None, fallback=None, default=None):
     :returns: a :class:`Predicate`.
 
     """
+    get_key: Callable[[dict[str, Any]], Any]
     if func is None:
         get_key = itemgetter(name)
     else:
@@ -61,7 +90,12 @@ def match_key(name, func=None, fallback=None, default=None):
     return Predicate(name, KeyIndex, get_key, fallback, default)
 
 
-def match_instance(name, func=None, fallback=None, default=None):
+def match_instance(
+    name: str,
+    func: Callable[..., Any] | None = None,
+    fallback: Any | None = None,
+    default: Any | None = None,
+) -> Predicate[Any]:
     """Predicate that returns an instance whose class is used for dispatching.
 
     :name: predicate name.
@@ -82,7 +116,12 @@ def match_instance(name, func=None, fallback=None, default=None):
     return Predicate(name, ClassIndex, get_key, fallback, default)
 
 
-def match_class(name, func=None, fallback=None, default=None):
+def match_class(
+    name: str,
+    func: Callable[..., Any] | None = None,
+    fallback: Any | None = None,
+    default: Any | None = None,
+) -> Predicate[Any]:
     """Predicate that returns a class used for dispatching.
 
     :name: predicate name.
@@ -96,6 +135,7 @@ def match_class(name, func=None, fallback=None, default=None):
     :returns: a :class:`Predicate`.
 
     """
+    get_key: Callable[[dict[str, Any]], Any]
     if func is None:
         get_key = itemgetter(name)
     else:
@@ -103,17 +143,17 @@ def match_class(name, func=None, fallback=None, default=None):
     return Predicate(name, ClassIndex, get_key, fallback, default)
 
 
-_emptyset = frozenset()
+_emptyset: frozenset[Any] = frozenset()
 
 
-class KeyIndex(dict):
-    def __init__(self, fallback=None):
+class KeyIndex(dict[Any, set[_ValueT]]):
+    def __init__(self, fallback: _ValueT | None = None) -> None:
         self.fallback = fallback
 
-    def __missing__(self, key):
+    def __missing__(self, key: Any) -> frozenset[Any]:
         return _emptyset
 
-    def permutations(self, key):
+    def permutations(self, key: Any) -> Iterator[Any]:
         """Permutations for a simple immutable key.
 
         There is only a single permutation: the key itself.
@@ -121,42 +161,37 @@ class KeyIndex(dict):
         yield key
 
 
-class ClassIndex(KeyIndex):
-    def permutations(self, key):
+class ClassIndex(KeyIndex[_ValueT]):
+    def permutations(self, key: type[Any]) -> Iterator[type[Any]]:
         """Permutations for class key.
 
-        Returns class and its base classes in mro order. If a classic
-        class in Python 2, smuggle in ``object`` as the base class
-        anyway to make lookups consistent.
+        Returns class and its base classes in mro order.
         """
-        for class_ in inspect.getmro(key):
-            yield class_
-        if class_ is not object:
-            yield object  # pragma: no cover
+        yield from inspect.getmro(key)
 
 
-class PredicateRegistry:
-    def __init__(self, *predicates):
-        self.known_keys = set()
-        self.known_values = set()
+class PredicateRegistry(Generic[_ValueT]):
+    def __init__(self, *predicates: Predicate[_ValueT]) -> None:
+        self.known_keys: set[Any] = set()
+        self.known_values: set[_ValueT] = set()
         self.predicates = predicates
         self.indexes = [predicate.create_index() for predicate in predicates]
         key_getters = [p.get_key for p in predicates]
         if len(predicates) == 0:
-            self.key = lambda **kw: ()
+            self.key = lambda **kw: ()  # type: ignore
         elif len(predicates) == 1:
             (p,) = key_getters
-            self.key = lambda **kw: (p(kw),)
+            self.key = lambda **kw: (p(kw),)  # type: ignore
         elif len(predicates) == 2:
             p, q = key_getters
-            self.key = lambda **kw: (p(kw), q(kw))
+            self.key = lambda **kw: (p(kw), q(kw))  # type: ignore
         elif len(predicates) == 3:
             p, q, r = key_getters
-            self.key = lambda **kw: (p(kw), q(kw), r(kw))
+            self.key = lambda **kw: (p(kw), q(kw), r(kw))  # type: ignore
         else:
-            self.key = lambda **kw: tuple([p(kw) for p in key_getters])
+            self.key = lambda **kw: tuple([p(kw) for p in key_getters])  # type: ignore
 
-    def register(self, key, value):
+    def register(self, key: Any, value: _ValueT) -> None:
         if key in self.known_keys:
             raise RegistrationError(f"Already have registration for key: {key}")
         for index, key_item in zip(self.indexes, key):
@@ -164,7 +199,7 @@ class PredicateRegistry:
         self.known_keys.add(key)
         self.known_values.add(value)
 
-    def get(self, keys):
+    def get(self, keys: Sequence[Any]) -> set[_ValueT]:
         # do an intersection of all sets that result from index lookup
         # this code is a bit convoluted for performance reasons.
         sets = (index[key] for index, key in zip(self.indexes, keys))
@@ -172,12 +207,12 @@ class PredicateRegistry:
         # this returns the known values if there are no indexes at all
         return next(sets, self.known_values).intersection(*sets)
 
-    def permutations(self, keys):
+    def permutations(self, keys: Sequence[Any]) -> Iterator[tuple[Any, ...]]:
         return product(
             *(index.permutations(key) for index, key in zip(self.indexes, keys))
         )
 
-    def key(self, **kw):
+    def key(self, **kw: Any) -> tuple[Any, ...]:  # type: ignore[empty-body]
         """Construct a dispatch key from the arguments of a generic function.
 
         :param kw: a dictionary with the arguments passed to a generic
@@ -187,7 +222,7 @@ class PredicateRegistry:
         """
         # Overwritten by init
 
-    def key_dict_to_predicate_key(self, d):
+    def key_dict_to_predicate_key(self, d: dict[str, Any]) -> tuple[Any, ...]:
         """Construct a dispatch key from predicate values.
 
         Uses ``name`` and ``default`` attributes of predicates to
@@ -200,10 +235,10 @@ class PredicateRegistry:
         """
         return tuple([p.key_by_predicate_name(d) for p in self.predicates])
 
-    def component(self, keys):
+    def component(self, keys: Sequence[Any]) -> _ValueT | None:
         return next(self.all(keys), None)
 
-    def fallback(self, keys):
+    def fallback(self, keys: Sequence[Any]) -> _ValueT | None:
         result = None
         for index, key in zip(self.indexes, keys):
             for k in index.permutations(key):
@@ -221,7 +256,8 @@ class PredicateRegistry:
             # match
             if not result:
                 return index.fallback
+        return None
 
-    def all(self, key):
+    def all(self, key: Sequence[Any]) -> Iterator[_ValueT]:
         for p in self.permutations(key):
             yield from self.get(p)
