@@ -1,8 +1,15 @@
+from __future__ import annotations
+
 import pytest
 
+from typing import TYPE_CHECKING, Any
+from typing_extensions import assert_type
 from ..predicate import match_instance, match_key, match_class
 from ..dispatch import dispatch
 from ..error import RegistrationError
+
+if TYPE_CHECKING:
+    from ..types import DispatchCall  # noqa: F401
 
 
 class IAlpha:
@@ -21,64 +28,82 @@ class Beta(IBeta):
     pass
 
 
-def test_dispatch_argname():
-    @dispatch("obj")
-    def foo(obj):
-        pass
-
-    def for_bar(obj):
-        return obj.method()
-
-    def for_qux(obj):
-        return obj.method()
-
-    class Bar:
-        def method(self):
-            return "bar's method"
-
-    class Qux:
-        def method(self):
-            return "qux's method"
-
-    foo.register(for_bar, obj=Bar)
-    foo.register(for_qux, obj=Qux)
-
-    assert foo(Bar()) == "bar's method"
-    assert foo(Qux()) == "qux's method"
-
-
-def test_dispatch_match_instance():
-    @dispatch(match_instance("obj"))
-    def foo(obj):
-        pass
-
-    def for_bar(obj):
-        return obj.method()
-
-    def for_qux(obj):
-        return obj.method()
-
-    class Bar:
-        def method(self):
-            return "bar's method"
-
-    class Qux:
-        def method(self):
-            return "qux's method"
-
-    foo.register(for_bar, obj=Bar)
-    foo.register(for_qux, obj=Qux)
-
-    assert foo(Bar()) == "bar's method"
-    assert foo(Qux()) == "qux's method"
-
-
-def test_dispatch_no_arguments():
+def test_dispatch_typing() -> None:
     @dispatch()
-    def foo():
+    def foo() -> str | None:
         pass
 
-    def special_foo():
+    @dispatch()
+    def bar(x: str, /) -> None:
+        pass
+
+    @dispatch()
+    def baz(a: str, b: int, /) -> Any:
+        pass
+
+    assert_type(foo, "DispatchCall[[], str | None]")
+    assert_type(bar, "DispatchCall[[str], None]")
+    assert_type(baz, "DispatchCall[[str, int], Any]")
+
+
+def test_dispatch_argname() -> None:
+    @dispatch("obj")
+    def foo(obj: Any) -> str | None:
+        pass
+
+    def for_bar(obj: Bar) -> str:
+        return obj.method()
+
+    def for_qux(obj: Qux) -> str:
+        return obj.method()
+
+    class Bar:
+        def method(self) -> str:
+            return "bar's method"
+
+    class Qux:
+        def method(self) -> str:
+            return "qux's method"
+
+    foo.register(for_bar, obj=Bar)
+    foo.register(for_qux, obj=Qux)
+
+    assert foo(Bar()) == "bar's method"
+    assert foo(Qux()) == "qux's method"
+
+
+def test_dispatch_match_instance() -> None:
+    @dispatch(match_instance("obj"))
+    def foo(obj: Any) -> str | None:
+        pass
+
+    def for_bar(obj: Bar) -> str:
+        return obj.method()
+
+    def for_qux(obj: Qux) -> str:
+        return obj.method()
+
+    class Bar:
+        def method(self) -> str:
+            return "bar's method"
+
+    class Qux:
+        def method(self) -> str:
+            return "qux's method"
+
+    foo.register(for_bar, obj=Bar)
+    foo.register(for_qux, obj=Qux)
+
+    assert foo(Bar()) == "bar's method"
+    assert foo(Qux()) == "qux's method"
+
+
+def test_dispatch_no_arguments() -> None:
+    @dispatch()
+    def foo() -> str | None:
+        pass
+
+    def special_foo() -> str:
         return "special"
 
     foo.register(special_foo)
@@ -89,7 +114,7 @@ def test_dispatch_no_arguments():
     assert foo.by_args().fallback is None
 
 
-def test_all():
+def test_all() -> None:
     class Base:
         pass
 
@@ -97,13 +122,13 @@ def test_all():
         pass
 
     @dispatch("obj")
-    def target(obj):
+    def target(obj: Any) -> None:
         pass
 
-    def registered_for_sub(obj):
+    def registered_for_sub(obj: Sub) -> None:
         pass
 
-    def registered_for_base(obj):
+    def registered_for_base(obj: Base) -> None:
         pass
 
     target.register(registered_for_sub, obj=Sub)
@@ -119,7 +144,7 @@ def test_all():
     assert target.by_args(base).all_matches == [registered_for_base]
 
 
-def test_all_by_keys():
+def test_all_by_keys() -> None:
     class Base:
         pass
 
@@ -127,13 +152,13 @@ def test_all_by_keys():
         pass
 
     @dispatch("obj")
-    def target(obj):
+    def target(obj: Any) -> None:
         pass
 
-    def registered_for_sub(obj):
+    def registered_for_sub(obj: Sub) -> None:
         pass
 
-    def registered_for_base(obj):
+    def registered_for_base(obj: Base) -> None:
         pass
 
     target.register(registered_for_sub, obj=Sub)
@@ -146,36 +171,36 @@ def test_all_by_keys():
     assert target.by_predicates(obj=Base).all_matches == [registered_for_base]
 
 
-def test_component_no_source():
+def test_component_no_source() -> None:
     @dispatch()
-    def target():
+    def target() -> None:
         pass
 
-    def foo():
+    def foo() -> None:
         pass
 
     target.register(foo)
     assert target.by_args().component is foo
 
 
-def test_component_no_source_key_dict():
+def test_component_no_source_key_dict() -> None:
     @dispatch()
-    def target():
+    def target() -> None:
         pass
 
-    def foo():
+    def foo() -> None:
         pass
 
     target.register(foo)
     assert target.by_predicates().component is foo
 
 
-def test_component_one_source():
+def test_component_one_source() -> None:
     @dispatch("obj")
-    def target(obj):
+    def target(obj: Any) -> None:
         pass
 
-    def foo(obj):
+    def foo(obj: Alpha) -> None:
         pass
 
     target.register(foo, obj=Alpha)
@@ -184,12 +209,12 @@ def test_component_one_source():
     assert target.by_args(alpha).component is foo
 
 
-def test_component_one_source_key_dict():
+def test_component_one_source_key_dict() -> None:
     @dispatch("obj")
-    def target(obj):
+    def target(obj: Any) -> None:
         pass
 
-    def foo(obj):
+    def foo(obj: Alpha) -> None:
         pass
 
     target.register(foo, obj=Alpha)
@@ -197,12 +222,12 @@ def test_component_one_source_key_dict():
     assert target.by_predicates(obj=Alpha).component is foo
 
 
-def test_component_two_sources():
+def test_component_two_sources() -> None:
     @dispatch("a", "b")
-    def target(a, b):
+    def target(a: Any, b: Any) -> None:
         pass
 
-    def foo(a, b):
+    def foo(a: IAlpha, b: IBeta) -> None:
         pass
 
     target.register(foo, a=IAlpha, b=IBeta)
@@ -212,7 +237,7 @@ def test_component_two_sources():
     assert target.by_args(alpha, beta).component is foo
 
 
-def test_component_inheritance():
+def test_component_inheritance() -> None:
     class Gamma:
         pass
 
@@ -220,10 +245,10 @@ def test_component_inheritance():
         pass
 
     @dispatch("obj")
-    def target(obj):
+    def target(obj: Any) -> None:
         pass
 
-    def foo(obj):
+    def foo(obj: Gamma) -> None:
         pass
 
     target.register(foo, obj=Gamma)
@@ -233,7 +258,7 @@ def test_component_inheritance():
     assert target.by_args(delta).component is foo
 
 
-def test_component_inheritance_old_style_class():
+def test_component_inheritance_old_style_class() -> None:
     class Gamma:
         pass
 
@@ -241,10 +266,10 @@ def test_component_inheritance_old_style_class():
         pass
 
     @dispatch("obj")
-    def target(obj):
+    def target(obj: Any) -> None:
         pass
 
-    def foo(obj):
+    def foo(obj: Gamma) -> None:
         pass
 
     target.register(foo, obj=Gamma)
@@ -258,14 +283,14 @@ def test_component_inheritance_old_style_class():
     assert target.by_args(delta).component is foo
 
 
-def test_call_no_source():
+def test_call_no_source() -> None:
     foo = object()
 
     @dispatch()
-    def target():
+    def target() -> object:
         pass
 
-    def factory():
+    def factory() -> object:
         return foo
 
     target.register(factory)
@@ -273,15 +298,15 @@ def test_call_no_source():
     assert target() is foo
 
 
-def test_call_one_source():
+def test_call_one_source() -> None:
     @dispatch("obj")
-    def target(obj):
+    def target(obj: Any) -> str | None:
         pass
 
-    def foo(obj):
+    def foo(obj: IAlpha) -> str:
         return "foo"
 
-    def bar(obj):
+    def bar(obj: IBeta) -> str:
         return "bar"
 
     target.register(foo, obj=IAlpha)
@@ -291,15 +316,15 @@ def test_call_one_source():
     assert target(Beta()) == "bar"
 
 
-def test_call_two_sources():
+def test_call_two_sources() -> None:
     @dispatch("a", "b")
-    def target(a, b):
+    def target(a: Any, b: Any) -> str | None:
         pass
 
-    def foo(a, b):
+    def foo(a: IAlpha, b: IBeta) -> str:
         return "foo"
 
-    def bar(a, b):
+    def bar(a: IBeta, b: IAlpha) -> str:
         return "bar"
 
     target.register(foo, a=IAlpha, b=IBeta)
@@ -311,119 +336,119 @@ def test_call_two_sources():
     assert target(beta, alpha) == "bar"
 
 
-def test_component_not_found_no_sources():
+def test_component_not_found_no_sources() -> None:
     @dispatch()
-    def target():
+    def target() -> None:
         pass
 
     assert target.by_args().component is None
 
 
-def test_call_not_found_no_sources():
+def test_call_not_found_no_sources() -> None:
     @dispatch()
-    def target():
+    def target() -> str:
         return "default"
 
     assert target() == "default"
 
 
-def test_component_not_found_one_source():
+def test_component_not_found_one_source() -> None:
     @dispatch("obj")
-    def target(obj):
+    def target(obj: str) -> None:
         pass
 
     assert target.by_args("dummy").component is None
 
 
-def test_call_not_found_one_source():
+def test_call_not_found_one_source() -> None:
     @dispatch("obj")
-    def target(obj):
+    def target(obj: str) -> str:
         return "default: %s" % obj
 
     assert target("dummy") == "default: dummy"
 
 
-def test_component_not_found_two_sources():
+def test_component_not_found_two_sources() -> None:
     @dispatch("a", "b")
-    def target(a, b):
+    def target(a: str, b: str) -> None:
         pass
 
     assert target.by_args("dummy", "dummy").component is None
 
 
-def test_call_not_found_two_sources():
+def test_call_not_found_two_sources() -> None:
     @dispatch("a", "b")
-    def target(a, b):
+    def target(a: str, b: str) -> str:
         return f"a: {a} b: {b}"
 
     assert target("dummy1", "dummy2") == "a: dummy1 b: dummy2"
 
 
-def test_wrong_callable_registered():
+def test_wrong_callable_registered() -> None:
     @dispatch("obj")
-    def target(obj):
+    def target(obj: Any) -> Any:
         pass
 
-    def callable(a, b):
+    def callable(a: Any, b: Any) -> Any:
         pass
 
     with pytest.raises(RegistrationError):
-        target.register(callable, a=Alpha)
+        target.register(callable, a=Alpha)  # type: ignore
 
 
-def test_non_callable_registered():
+def test_non_callable_registered() -> None:
     @dispatch("obj")
-    def target(obj):
+    def target(obj: Any) -> None:
         pass
 
     non_callable = 42
 
     with pytest.raises(RegistrationError):
-        target.register(non_callable, a=Alpha)
+        target.register(non_callable, a=Alpha)  # type: ignore
 
 
-def test_call_with_no_args_while_arg_expected():
+def test_call_with_no_args_while_arg_expected() -> None:
     @dispatch("obj")
-    def target(obj):
+    def target(obj: Any) -> str | None:
         pass
 
-    def specific(obj):
+    def specific(obj: Alpha) -> str:
         return "specific"
 
     target.register(specific, obj=Alpha)
 
     # we are not allowed to call target without arguments
     with pytest.raises(TypeError):
-        target()
+        target()  # type: ignore
 
     with pytest.raises(TypeError):
-        target.by_args().component
+        target.by_args().component  # type: ignore
 
 
-def test_call_with_wrong_args():
+def test_call_with_wrong_args() -> None:
     @dispatch("obj")
-    def target(obj):
+    def target(obj: Any) -> str | None:
         pass
 
-    def specific(obj):
+    def specific(obj: Alpha) -> str:
         return "specific"
 
     target.register(specific, obj=Alpha)
 
     # we are not allowed to call target without arguments
     with pytest.raises(TypeError):
-        target(wrong=1)
+        target(wrong=1)  # type: ignore
 
     with pytest.raises(TypeError):
-        target.by_args(wrong=1)
+        target.by_args(wrong=1)  # type: ignore
 
 
-def test_extra_arg_for_call():
+def test_extra_arg_for_call() -> None:
     @dispatch("obj")
-    def target(obj, extra):
+    def target(obj: Any, extra: str) -> str:
         return "General: %s" % extra
 
-    def specific(obj, extra):
+    def specific(obj: Alpha, extra: str) -> str:
         return "Specific: %s" % extra
 
     target.register(specific, obj=Alpha)
@@ -437,15 +462,15 @@ def test_extra_arg_for_call():
     assert target(beta, "allowed") == "General: allowed"
 
 
-def test_fallback_to_fallback():
-    def fallback(obj):
+def test_fallback_to_fallback() -> None:
+    def fallback(obj: Any) -> str:
         return "fallback!"
 
     @dispatch(match_instance("obj", fallback=fallback))
-    def target(obj):
+    def target(obj: Any) -> str:
         return "not the fallback we want"
 
-    def specific_target(obj):
+    def specific_target(obj: Alpha) -> str:
         return "specific"
 
     target.register(specific_target, obj=Alpha)
@@ -459,12 +484,12 @@ def test_fallback_to_fallback():
     assert target.by_args(Alpha()).fallback is None
 
 
-def test_fallback_to_dispatch():
+def test_fallback_to_dispatch() -> None:
     @dispatch("obj")
-    def target(obj):
+    def target(obj: Any) -> str:
         return "fallback"
 
-    def specific_target(obj):
+    def specific_target(obj: Alpha) -> str:
         return "specific"
 
     target.register(specific_target, obj=Alpha)
@@ -475,15 +500,15 @@ def test_fallback_to_dispatch():
     assert target.by_args(beta).fallback is None
 
 
-def test_calling_twice():
+def test_calling_twice() -> None:
     @dispatch("obj")
-    def target(obj):
+    def target(obj: Any) -> str:
         return "fallback"
 
-    def a(obj):
+    def a(obj: Alpha) -> str:
         return "a"
 
-    def b(obj):
+    def b(obj: Beta) -> str:
         return "b"
 
     target.register(a, obj=Alpha)
@@ -493,12 +518,12 @@ def test_calling_twice():
     assert target(Beta()) == "b"
 
 
-def test_different_defaults_in_specific_non_dispatch_arg():
+def test_different_defaults_in_specific_non_dispatch_arg() -> None:
     @dispatch("obj")
-    def target(obj, blah="default"):
+    def target(obj: Any, blah: str = "default") -> str:
         return "fallback: %s" % blah
 
-    def a(obj, blah="default 2"):
+    def a(obj: Any, blah: str = "default 2") -> str:
         return "a: %s" % blah
 
     target.register(a, obj=Alpha)
@@ -506,12 +531,12 @@ def test_different_defaults_in_specific_non_dispatch_arg():
     assert target(Alpha()) == "a: default"
 
 
-def test_different_defaults_in_specific_dispatch_arg():
+def test_different_defaults_in_specific_dispatch_arg() -> None:
     @dispatch(match_key("key"))
-    def target(key="default"):
+    def target(key: str = "default") -> str:
         return "fallback: %s" % key
 
-    def a(key="default 2"):
+    def a(key: str = "default 2") -> str:
         return "a: %s" % key
 
     target.register(a, key="foo")
@@ -521,12 +546,12 @@ def test_different_defaults_in_specific_dispatch_arg():
     assert target() == "fallback: default"
 
 
-def test_different_defaults_in_specific_dispatch_arg_causes_dispatch():
+def test_different_defaults_in_specific_dispatch_arg_causes_dispatch() -> None:
     @dispatch(match_key("key"))
-    def target(key="foo"):
+    def target(key: str = "foo") -> str:
         return "fallback: %s" % key
 
-    def a(key="default 2"):
+    def a(key: str = "default 2") -> str:
         return "a: %s" % key
 
     target.register(a, key="foo")
@@ -536,33 +561,38 @@ def test_different_defaults_in_specific_dispatch_arg_causes_dispatch():
     assert target() == "a: foo"
 
 
-def test_add_predicates_no_defaults():
+def test_add_predicates_no_defaults() -> None:
     class Foo:
         pass
 
     class FooSub(Foo):
         pass
 
+    class Request:
+        def __init__(self, name: str, request_method: str) -> None:
+            self.name = name
+            self.request_method = request_method
+
     @dispatch()
-    def view(self, request):
+    def view(self: Any, request: Request) -> str:
         raise NotImplementedError()
 
-    def get_model(self, request):
+    def get_model(self: Any, request: Request) -> Any:
         return self
 
-    def get_name(self, request):
+    def get_name(self: Any, request: Request) -> str:
         return request.name
 
-    def get_request_method(self, request):
+    def get_request_method(self: Any, request: Request) -> str:
         return request.request_method
 
-    def model_fallback(self, request):
+    def model_fallback(self: Any, request: Request) -> Any:
         return "Model fallback"
 
-    def name_fallback(self, request):
+    def name_fallback(self: Any, request: Request) -> str:
         return "Name fallback"
 
-    def request_method_fallback(self, request):
+    def request_method_fallback(self: Any, request: Request) -> str:
         return "Request method fallback"
 
     view.add_predicates(
@@ -573,23 +603,18 @@ def test_add_predicates_no_defaults():
         ]
     )
 
-    def foo_default(self, request):
+    def foo_default(self: Foo, request: Request) -> str:
         return "foo default"
 
-    def foo_post(self, request):
+    def foo_post(self: Foo, request: Request) -> str:
         return "foo default post"
 
-    def foo_edit(self, request):
+    def foo_edit(self: Foo, request: Request) -> str:
         return "foo edit"
 
     view.register(foo_default, model=Foo, name="", request_method="GET")
     view.register(foo_post, model=Foo, name="", request_method="POST")
     view.register(foo_edit, model=Foo, name="edit", request_method="POST")
-
-    class Request:
-        def __init__(self, name, request_method):
-            self.name = name
-            self.request_method = request_method
 
     assert view(Foo(), Request("", "GET")) == "foo default"
     assert view(FooSub(), Request("", "GET")) == "foo default"
@@ -604,33 +629,38 @@ def test_add_predicates_no_defaults():
     assert view(FooSub(), Request("dummy", "GET")) == "Name fallback"
 
 
-def test_dispatch_external_predicates():
+def test_dispatch_external_predicates() -> None:
     class Foo:
         pass
 
     class FooSub(Foo):
         pass
 
+    class Request:
+        def __init__(self, name: str, request_method: str) -> None:
+            self.name = name
+            self.request_method = request_method
+
     @dispatch()
-    def view(self, request):
+    def view(self: Any, request: Request) -> str:
         raise NotImplementedError()
 
-    def get_model(self, request):
+    def get_model(self: Any, request: Request) -> Any:
         return self
 
-    def get_name(self, request):
+    def get_name(self: Any, request: Request) -> str:
         return request.name
 
-    def get_request_method(self, request):
+    def get_request_method(self: Any, request: Request) -> str:
         return request.request_method
 
-    def model_fallback(self, request):
+    def model_fallback(self: Any, request: Request) -> str:
         return "Model fallback"
 
-    def name_fallback(self, request):
+    def name_fallback(self: Any, request: Request) -> str:
         return "Name fallback"
 
-    def request_method_fallback(self, request):
+    def request_method_fallback(self: Any, request: Request) -> str:
         return "Request method fallback"
 
     view.add_predicates(
@@ -641,23 +671,18 @@ def test_dispatch_external_predicates():
         ]
     )
 
-    def foo_default(self, request):
+    def foo_default(self: Foo, request: Request) -> str:
         return "foo default"
 
-    def foo_post(self, request):
+    def foo_post(self: Foo, request: Request) -> str:
         return "foo default post"
 
-    def foo_edit(self, request):
+    def foo_edit(self: Foo, request: Request) -> str:
         return "foo edit"
 
     view.register(foo_default, model=Foo, name="", request_method="GET")
     view.register(foo_post, model=Foo, name="", request_method="POST")
     view.register(foo_edit, model=Foo, name="edit", request_method="POST")
-
-    class Request:
-        def __init__(self, name, request_method):
-            self.name = name
-            self.request_method = request_method
 
     assert view(Foo(), Request("", "GET")) == "foo default"
     assert view(FooSub(), Request("", "GET")) == "foo default"
@@ -673,33 +698,38 @@ def test_dispatch_external_predicates():
     assert view.by_args(Bar(), Request("", "GET")).fallback is model_fallback
 
 
-def test_dispatch_predicates_register_defaults():
+def test_dispatch_predicates_register_defaults() -> None:
     class Foo:
         pass
 
     class FooSub(Foo):
         pass
 
+    class Request:
+        def __init__(self, name: str, request_method: str) -> None:
+            self.name = name
+            self.request_method = request_method
+
     @dispatch()
-    def view(self, request):
+    def view(self: Any, request: Request) -> str:
         raise NotImplementedError()
 
-    def get_model(self, request):
+    def get_model(self: Any, request: Request) -> Any:
         return self
 
-    def get_name(self, request):
+    def get_name(self: Any, request: Request) -> str:
         return request.name
 
-    def get_request_method(self, request):
+    def get_request_method(self: Any, request: Request) -> str:
         return request.request_method
 
-    def model_fallback(self, request):
+    def model_fallback(self: Any, request: Request) -> Any:
         return "Model fallback"
 
-    def name_fallback(self, request):
+    def name_fallback(self: Any, request: Request) -> str:
         return "Name fallback"
 
-    def request_method_fallback(self, request):
+    def request_method_fallback(self: Any, request: Request) -> str:
         return "Request method fallback"
 
     view.add_predicates(
@@ -715,23 +745,18 @@ def test_dispatch_predicates_register_defaults():
         ]
     )
 
-    def foo_default(self, request):
+    def foo_default(self: Foo, request: Request) -> str:
         return "foo default"
 
-    def foo_post(self, request):
+    def foo_post(self: Foo, request: Request) -> str:
         return "foo default post"
 
-    def foo_edit(self, request):
+    def foo_edit(self: Foo, request: Request) -> str:
         return "foo edit"
 
     view.register(foo_default, model=Foo)
     view.register(foo_post, model=Foo, request_method="POST")
     view.register(foo_edit, model=Foo, name="edit", request_method="POST")
-
-    class Request:
-        def __init__(self, name, request_method):
-            self.name = name
-            self.request_method = request_method
 
     assert view(Foo(), Request("", "GET")) == "foo default"
     assert view(FooSub(), Request("", "GET")) == "foo default"
@@ -746,24 +771,24 @@ def test_dispatch_predicates_register_defaults():
     assert view(FooSub(), Request("dummy", "GET")) == "Name fallback"
 
 
-def test_key_dict_to_predicate_key():
+def test_key_dict_to_predicate_key() -> None:
     @dispatch(
         match_key("foo", default="default foo"),
         match_key("bar", default="default bar"),
     )
-    def view(self, request):
+    def view(self: Any, request: Any) -> Any:
         raise NotImplementedError()
 
     assert view.by_predicates(foo="FOO", bar="BAR").key == ("FOO", "BAR")
     assert view.by_predicates().key == ("default foo", "default bar")
 
 
-def test_key_dict_to_predicate_key_unknown_keys():
+def test_key_dict_to_predicate_key_unknown_keys() -> None:
     @dispatch(
         match_key("foo", default="default foo"),
         match_key("bar", default="default bar"),
     )
-    def view(self, request):
+    def view(self: Any, request: Any) -> Any:
         raise NotImplementedError()
 
     # unknown keys are just ignored
@@ -773,7 +798,7 @@ def test_key_dict_to_predicate_key_unknown_keys():
     )
 
 
-def test_register_dispatch_key_dict():
+def test_register_dispatch_key_dict() -> None:
     class Foo:
         pass
 
@@ -781,25 +806,25 @@ def test_register_dispatch_key_dict():
         pass
 
     @dispatch()
-    def view(self, request):
+    def view(self: Any, request: Any) -> Any:
         raise NotImplementedError()
 
-    def get_model(self, request):
+    def get_model(self: Any, request: Any) -> Any:
         return self
 
-    def get_name(self, request):
+    def get_name(self: Any, request: Any) -> Any:
         return request.name
 
-    def get_request_method(self, request):
+    def get_request_method(self: Any, request: Any) -> Any:
         return request.request_method
 
-    def model_fallback(self, request):
+    def model_fallback(self: Any, request: Any) -> Any:
         return "Model fallback"
 
-    def name_fallback(self, request):
+    def name_fallback(self: Any, request: Any) -> Any:
         return "Name fallback"
 
-    def request_method_fallback(self, request):
+    def request_method_fallback(self: Any, request: Any) -> Any:
         return "Request method fallback"
 
     view.add_predicates(
@@ -818,35 +843,35 @@ def test_register_dispatch_key_dict():
     assert view.by_predicates().key == (None, "", "GET")
 
 
-def test_fallback_should_already_use_subset():
+def test_fallback_should_already_use_subset() -> None:
     class Request:
-        def __init__(self, name, request_method, body_obj):
+        def __init__(self, name: str, request_method: str, body_obj: Any) -> None:
             self.name = name
             self.request_method = request_method
             self.body_obj = body_obj
 
-    def get_model(self, request):
+    def get_model(self: Any, request: Request) -> Any:
         return self
 
-    def get_name(self, request):
+    def get_name(self: Any, request: Request) -> str:
         return request.name
 
-    def get_request_method(self, request):
+    def get_request_method(self: Any, request: Request) -> str:
         return request.request_method
 
-    def get_body_model(self, request):
+    def get_body_model(self: Any, request: Request) -> Any:
         return request.body_obj.__class__
 
-    def model_fallback(self, request):
+    def model_fallback(self: Any, request: Request) -> Any:
         return "Model fallback"
 
-    def name_fallback(self, request):
+    def name_fallback(self: Any, request: Request) -> str:
         return "Name fallback"
 
-    def request_method_fallback(self, request):
+    def request_method_fallback(self: Any, request: Request) -> str:
         return "Request method fallback"
 
-    def body_model_fallback(self, request):
+    def body_model_fallback(self: Any, request: Request) -> Any:
         return "Body model fallback"
 
     @dispatch(
@@ -860,10 +885,10 @@ def test_fallback_should_already_use_subset():
         ),
         match_class("body_model", get_body_model, body_model_fallback, default=object),
     )
-    def view(self, request):
+    def view(self: Any, request: Request) -> str:
         return "view fallback"
 
-    def exception_view(self, request):
+    def exception_view(self: Exception, request: Request) -> str:
         return "exception view"
 
     view.register(exception_view, model=Exception)
@@ -877,7 +902,7 @@ def test_fallback_should_already_use_subset():
     class Item2:
         pass
 
-    def collection_add(self, request):
+    def collection_add(self: Collection, request: Request) -> str:
         return "collection add"
 
     view.register(
@@ -900,12 +925,12 @@ def test_fallback_should_already_use_subset():
     )
 
 
-def test_dispatch_missing_argument():
+def test_dispatch_missing_argument() -> None:
     @dispatch("obj")
-    def foo(obj):
+    def foo(obj: object) -> Any:
         pass
 
-    def for_bar(obj):
+    def for_bar(obj: object) -> Any:
         return "for bar"
 
     class Bar:
@@ -914,18 +939,18 @@ def test_dispatch_missing_argument():
     foo.register(for_bar, obj=Bar)
 
     with pytest.raises(TypeError):
-        assert foo()
+        assert foo()  # type: ignore
 
 
-def test_register_dispatch_predicates_twice():
+def test_register_dispatch_predicates_twice() -> None:
     @dispatch()
-    def foo(a, b):
+    def foo(a: Any, b: Any) -> Any:
         pass
 
-    def for_bar(a, b):
+    def for_bar(a: Any, b: Any) -> Any:
         return "for bar"
 
-    def for_qux(a, b):
+    def for_qux(a: Any, b: Any) -> Any:
         return "for qux"
 
     class Bar:
@@ -943,31 +968,31 @@ def test_register_dispatch_predicates_twice():
     assert foo(Qux(), Qux()) == "for qux"
 
 
-def test_dict_to_predicate_key_for_no_dispatch():
+def test_dict_to_predicate_key_for_no_dispatch() -> None:
     @dispatch()
-    def foo():
+    def foo() -> None:
         pass
 
     assert foo.by_predicates().key == ()
 
 
-def test_dispatch_clean():
+def test_dispatch_clean() -> None:
     @dispatch("obj")
-    def foo(obj):
+    def foo(obj: Any) -> str:
         return "default"
 
-    def for_bar(obj):
+    def for_bar(obj: Bar) -> str:
         return obj.method()
 
-    def for_qux(obj):
+    def for_qux(obj: Qux) -> str:
         return obj.method()
 
     class Bar:
-        def method(self):
+        def method(self) -> str:
             return "bar's method"
 
     class Qux:
-        def method(self):
+        def method(self) -> str:
             return "qux's method"
 
     foo.register(for_bar, obj=Bar)
@@ -982,23 +1007,23 @@ def test_dispatch_clean():
     assert foo(Qux()) == "default"
 
 
-def test_dispatch_clean_add_predicates():
+def test_dispatch_clean_add_predicates() -> None:
     @dispatch()
-    def foo(obj):
+    def foo(obj: Any) -> str:
         return "default"
 
-    def for_bar(obj):
+    def for_bar(obj: Bar) -> str:
         return obj.method()
 
-    def for_qux(obj):
+    def for_qux(obj: Qux) -> str:
         return obj.method()
 
     class Bar:
-        def method(self):
+        def method(self) -> str:
             return "bar's method"
 
     class Qux:
-        def method(self):
+        def method(self) -> str:
             return "qux's method"
 
     foo.add_predicates([match_instance("obj")])
@@ -1017,9 +1042,9 @@ def test_dispatch_clean_add_predicates():
         foo.register(for_qux)
 
 
-def test_dispatch_introspection():
+def test_dispatch_introspection() -> None:
     @dispatch("obj")
-    def foo(obj):
+    def foo(obj: object) -> str:
         "return the foo of an object."
         return "default"
 
@@ -1028,25 +1053,25 @@ def test_dispatch_introspection():
     assert foo.__module__ == __name__
 
 
-def test_dispatch_argname_with_decorator():
+def test_dispatch_argname_with_decorator() -> None:
     @dispatch("obj")
-    def foo(obj):
+    def foo(obj: Any) -> Any:
         pass
 
     class Bar:
-        def method(self):
+        def method(self) -> str:
             return "bar's method"
 
     class Qux:
-        def method(self):
+        def method(self) -> str:
             return "qux's method"
 
     @foo.register(obj=Bar)
-    def for_bar(obj):
+    def for_bar(obj: Bar) -> str:
         return obj.method()
 
     @foo.register(obj=Qux)
-    def for_qux(obj):
+    def for_qux(obj: Qux) -> str:
         return obj.method()
 
     assert foo(Bar()) == "bar's method"
@@ -1056,9 +1081,9 @@ def test_dispatch_argname_with_decorator():
     assert foo(Qux()) == for_qux(Qux())
 
 
-def test_component_lookup_before_call_and_no_registrations():
+def test_component_lookup_before_call_and_no_registrations() -> None:
     @dispatch("obj")
-    def foo(obj):
+    def foo(obj: Any) -> Any:
         pass
 
     class Bar:
@@ -1067,46 +1092,46 @@ def test_component_lookup_before_call_and_no_registrations():
     assert foo.by_args(Bar()).component is None
 
 
-def test_predicate_key_too_few_arguments_gives_typeerror():
+def test_predicate_key_too_few_arguments_gives_typeerror() -> None:
     @dispatch("obj")
-    def foo(obj):
+    def foo(obj: Any) -> Any:
         pass
 
-    def for_bar(obj):
+    def for_bar(obj: Any) -> Any:
         return obj.method()
 
-    def for_qux(obj):
+    def for_qux(obj: Any) -> Any:
         return obj.method()
 
     with pytest.raises(TypeError):
-        assert foo.by_args()
+        assert foo.by_args()  # type: ignore
 
 
-def test_predicate_key_too_many_arguments_gives_typeerror():
+def test_predicate_key_too_many_arguments_gives_typeerror() -> None:
     @dispatch("obj")
-    def foo(obj):
+    def foo(obj: Any) -> Any:
         pass
 
-    def for_bar(obj):
+    def for_bar(obj: Any) -> Any:
         return obj.method()
 
-    def for_qux(obj):
+    def for_qux(obj: Any) -> Any:
         return obj.method()
 
     with pytest.raises(TypeError):
-        assert foo.by_args(1, 2)
+        assert foo.by_args(1, 2)  # type: ignore
 
 
-def test_predicate_key_wrong_keyword_argument_gives_typeerror():
+def test_predicate_key_wrong_keyword_argument_gives_typeerror() -> None:
     @dispatch("obj")
-    def foo(obj):
+    def foo(obj: Any) -> Any:
         pass
 
-    def for_bar(obj):
+    def for_bar(obj: Any) -> Any:
         return obj.method()
 
-    def for_qux(obj):
+    def for_qux(obj: Any) -> Any:
         return obj.method()
 
     with pytest.raises(TypeError):
-        assert foo.by_args(wrong=1)
+        assert foo.by_args(wrong=1)  # type: ignore

@@ -1,21 +1,42 @@
+from __future__ import annotations
+
 import inspect
 import sys
 
+from typing import TYPE_CHECKING, Any, cast
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from .types import ArgInfo
+
 if sys.version_info < (3, 14):
 
-    def get_signature(callable):  # pragma: no cover
+    def get_signature(
+        callable: Callable[..., Any],
+    ) -> inspect.Signature:  # pragma: no cover
         """A compatibility wrapper for `inspect.signature`."""
         return inspect.signature(callable)
 
 else:
     from annotationlib import Format  # pragma: no cover
 
-    def get_signature(callable):  # pragma: no cover
+    def get_signature(
+        callable: Callable[..., Any],
+    ) -> inspect.Signature:  # pragma: no cover
         """A compatibility wrapper for `inspect.signature`."""
         return inspect.signature(callable, annotation_format=Format.FORWARDREF)
 
 
-def arginfo(callable):
+# NOTE: This no-op decorator lets type checkers know about the extra
+#       attributes we add to the arginfo callable
+def _coerce_to_arginfo(
+    f: Callable[[Callable[..., Any]], inspect.FullArgSpec | None],
+) -> ArgInfo:
+    return cast("ArgInfo", f)
+
+
+@_coerce_to_arginfo
+def arginfo(callable: Callable[..., Any]) -> inspect.FullArgSpec | None:
     """Get information about the arguments of a callable.
 
     Returns a :class:`inspect.FullArgSpec` object as for
@@ -43,10 +64,11 @@ def arginfo(callable):
     except KeyError:
         # Try to get __call__ function from the cache.
         try:
-            return arginfo._cache[callable.__call__]
+            return arginfo._cache[callable.__call__]  # type: ignore
         except (AttributeError, KeyError):
             pass
 
+    cache_key: Callable[..., Any]
     if inspect.isfunction(callable):
         cache_key = callable
     elif inspect.ismethod(callable):
@@ -63,7 +85,7 @@ def arginfo(callable):
         # Since arbitrary callable objects may not be hashable
         # we instead retrieve their call method, which should be
         try:
-            cache_key = callable.__call__
+            cache_key = callable.__call__  # type: ignore
         except AttributeError:
             return None
 
@@ -111,17 +133,17 @@ def arginfo(callable):
     return result
 
 
-def is_cached(callable):
+def is_cached(callable: Callable[..., Any]) -> bool:
     if callable in arginfo._cache:
         return True
-    return callable.__call__ in arginfo._cache
+    return callable.__call__ in arginfo._cache  # type: ignore
 
 
 arginfo._cache = {}
 arginfo.is_cached = is_cached
 
 
-def fake_empty_init():
+def fake_empty_init() -> None:
     pass  # pragma: nocoverage
 
 

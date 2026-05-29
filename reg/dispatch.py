@@ -1,9 +1,35 @@
+from __future__ import annotations
+
 from functools import partial, wraps
-from collections import namedtuple
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Generic,
+    NamedTuple,
+    NoReturn as Never,
+    ParamSpec,
+    TypeVar,
+    cast,
+    overload,
+)
 from .predicate import match_instance
 from .predicate import PredicateRegistry
 from .arginfo import arginfo
 from .error import RegistrationError
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
+    from inspect import FullArgSpec
+    from .predicate import Predicate
+    from .types import DispatchCall, GetKeyLookup, KeyLookup
+
+_T = TypeVar("_T")
+_F = TypeVar("_F", bound="Callable[..., Any]")
+_P = ParamSpec("_P")
+
+
+def identity(registry: PredicateRegistry) -> PredicateRegistry:
+    return registry
 
 
 class dispatch:
@@ -29,50 +55,56 @@ class dispatch:
 
     """
 
-    def __init__(self, *predicates, **kw):
+    def __init__(
+        self,
+        *predicates: str | Predicate,
+        get_key_lookup: GetKeyLookup = identity,
+        # NOTE: We keep allowing arbitrary keyword arguments at runtime
+        #       for now, but type checkers should emit an error for these.
+        **kw: Never,
+    ) -> None:
         self.predicates = [self._make_predicate(predicate) for predicate in predicates]
-        self.get_key_lookup = kw.pop("get_key_lookup", identity)
+        self.get_key_lookup = get_key_lookup
 
-    def _make_predicate(self, predicate):
+    def _make_predicate(self, predicate: str | Predicate) -> Predicate:
         if isinstance(predicate, str):
             return match_instance(predicate)
         return predicate
 
-    def __call__(self, callable):
+    def __call__(self, callable: Callable[_P, _T]) -> DispatchCall[_P, _T]:
         return Dispatch(self.predicates, callable, self.get_key_lookup).call
 
 
-def identity(registry):
-    return registry
+class _LookupEntry(NamedTuple):
+    lookup: KeyLookup
+    key: tuple[Any, ...]
 
 
-class LookupEntry(namedtuple("LookupEntry", "lookup key")):
+class LookupEntry(_LookupEntry, Generic[_F]):
     """The dispatch data associated to a key."""
 
-    __slots__ = ()
-
     @property
-    def component(self):
+    def component(self) -> _F | None:
         """The function to dispatch to, excluding fallbacks."""
-        return self.lookup.component(self.key)
+        return cast("_F | None", self.lookup.component(self.key))
 
     @property
-    def fallback(self):
+    def fallback(self) -> _F | None:
         """The approriate fallback implementation."""
-        return self.lookup.fallback(self.key)
+        return cast("_F | None", self.lookup.fallback(self.key))
 
     @property
-    def matches(self):
+    def matches(self) -> Iterable[_F]:
         """An iterator over all the compatible implementations."""
-        return self.lookup.all(self.key)
+        return cast("Iterable[_F]", self.lookup.all(self.key))
 
     @property
-    def all_matches(self):
+    def all_matches(self) -> list[_F]:
         """The list of all compatible implementations."""
         return list(self.matches)
 
 
-class Dispatch:
+class Dispatch(Generic[_P, _T]):
     """Dispatch function.
 
     You can register implementations based on particular predicates. The
@@ -92,14 +124,19 @@ class Dispatch:
       :class:`reg.LruCachingKeyLookup`) to make it more efficient.
     """
 
-    def __init__(self, predicates, callable, get_key_lookup):
+    def __init__(
+        self,
+        predicates: list[Predicate],
+        callable: Callable[_P, _T],
+        get_key_lookup: GetKeyLookup,
+    ) -> None:
         self.wrapped_func = callable
         self.get_key_lookup = get_key_lookup
         self._original_predicates = predicates
         self._define_call()
         self._register_predicates(predicates)
 
-    def _register_predicates(self, predicates):
+    def _register_predicates(self, predicates: list[Predicate]) -> None:
         self.registry = PredicateRegistry(*predicates)
         self.predicates = predicates
         self.call.key_lookup = self.key_lookup = self.get_key_lookup(self.registry)
@@ -110,10 +147,14 @@ class Dispatch:
         )
         self._predicate_key.__globals__.update(
             _registry_key=self.registry.key,
-            _return_type=partial(LookupEntry, self.key_lookup),
+            _return_type=partial(LookupEntry["Callable[_P, _T]"], self.key_lookup),
         )
 
-    def _define_call(self):
+    # tell type checkers about these auto-generated functions
+    call: DispatchCall[_P, _T]
+    _predicate_key: Callable[..., LookupEntry[Callable[_P, _T]]]
+
+    def _define_call(self) -> None:
         # We build the generic function on the fly. Its definition
         # requires the signature of the wrapped function and the
         # arguments needed by the registered predicates
@@ -127,6 +168,7 @@ def call({signature}):
 """
 
         args = arginfo(self.wrapped_func)
+        assert args is not None
         signature = format_signature(args)
         predicate_args = ", ".join("{0}={0}".format(x) for x in args.args)
         code_source = code_template.format(
@@ -134,14 +176,17 @@ def call({signature}):
         )
 
         # We now compile call to byte-code:
-        self.call = call = wraps(self.wrapped_func)(
-            execute(
-                code_source,
-                _registry_key=None,
-                _component_lookup=None,
-                _fallback_lookup=None,
-                _fallback=self.wrapped_func,
-            )["call"]
+        self.call = call = cast(
+            "DispatchCall[_P, _T]",
+            wraps(self.wrapped_func)(
+                execute(
+                    code_source,
+                    _registry_key=None,
+                    _component_lookup=None,
+                    _fallback_lookup=None,
+                    _fallback=self.wrapped_func,
+                )["call"]
+            ),
         )
 
         # We copy over the defaults from the wrapped function.
@@ -163,7 +208,7 @@ def call({signature}):
             _return_type=None,
         )["predicate_key"]
 
-    def clean(self):
+    def clean(self) -> None:
         """Clean up implementations and added predicates.
 
         This restores the dispatch function to its original state,
@@ -172,7 +217,7 @@ def call({signature}):
         """
         self._register_predicates(self._original_predicates)
 
-    def add_predicates(self, predicates):
+    def add_predicates(self, predicates: list[Predicate]) -> None:
         """Add new predicates.
 
         Extend the predicates used by this predicates. This can be
@@ -184,7 +229,16 @@ def call({signature}):
         """
         self._register_predicates(self.predicates + predicates)
 
-    def register(self, func=None, **key_dict):
+    @overload
+    def register(self, func: Callable[_P, _T], **key_dict: Any) -> Callable[_P, _T]: ...
+    @overload
+    def register(
+        self, func: None = None, **key_dict: Any
+    ) -> Callable[[Callable[_P, _T]], Callable[_P, _T]]: ...
+
+    def register(
+        self, func: Callable[_P, _T] | None = None, **key_dict: Any
+    ) -> Callable[_P, _T] | Callable[[Callable[_P, _T]], Callable[_P, _T]]:
         """Register an implementation.
 
         If ``func`` is not specified, this method can be used as a
@@ -207,7 +261,7 @@ def call({signature}):
         self.registry.register(predicate_key, func)
         return func
 
-    def by_args(self, *args, **kw):
+    def by_args(self, *args: _P.args, **kw: _P.kwargs) -> LookupEntry[Callable[_P, _T]]:
         """Lookup an implementation by invocation arguments.
 
         :param args: positional arguments used in invocation.
@@ -216,7 +270,7 @@ def call({signature}):
         """
         return self._predicate_key(*args, **kw)
 
-    def by_predicates(self, **predicate_values):
+    def by_predicates(self, **predicate_values: Any) -> LookupEntry[Callable[_P, _T]]:
         """Lookup an implementation by predicate values.
 
         :param predicate_values: the values of the predicates to lookup.
@@ -228,20 +282,22 @@ def call({signature}):
         )
 
 
-def validate_signature(f, dispatch):
+def validate_signature(f: Callable[..., Any], dispatch: Callable[..., Any]) -> None:
     f_arginfo = arginfo(f)
     if f_arginfo is None:
         raise RegistrationError(
             "Cannot register non-callable for dispatch " "%r: %r" % (dispatch, f)
         )
-    if not same_signature(arginfo(dispatch), f_arginfo):
+    d_arginfo = arginfo(dispatch)
+    assert d_arginfo is not None
+    if not same_signature(d_arginfo, f_arginfo):
         raise RegistrationError(
             "Signature of callable dispatched to (%r) "
             "not that of dispatch (%r)" % (f, dispatch)
         )
 
 
-def format_signature(args):
+def format_signature(args: FullArgSpec) -> str:
     return ", ".join(
         args.args
         + (["*" + args.varargs] if args.varargs else [])
@@ -249,7 +305,7 @@ def format_signature(args):
     )
 
 
-def same_signature(a, b):
+def same_signature(a: FullArgSpec, b: FullArgSpec) -> bool:
     """Check whether a arginfo and b arginfo are the same signature.
 
     Actual names of arguments may differ. Default arguments may be
@@ -260,7 +316,7 @@ def same_signature(a, b):
     return len(a_args) == len(b_args) and a.varargs == b.varargs and a.varkw == b.varkw
 
 
-def execute(code_source, **namespace):
+def execute(code_source: str, **namespace: Any) -> dict[str, Any]:
     """Execute code in a namespace, returning the namespace."""
     code_object = compile(code_source, f"<generated code: {code_source}>", "exec")
     exec(code_object, namespace)

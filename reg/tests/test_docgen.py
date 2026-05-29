@@ -1,15 +1,19 @@
+from __future__ import annotations
+
 import pydoc
+import pytest
 import sys
+from pathlib import Path
 from sphinx.application import Sphinx
 from .fixtures.module import Foo, foo
 
 
-def rstrip_lines(s):
+def rstrip_lines(s: str) -> str:
     "Delete trailing spaces from each line in s."
     return "\n".join(line.rstrip() for line in s.splitlines())
 
 
-def test_dispatch_method_class_help(capsys):
+def test_dispatch_method_class_help(capsys: pytest.CaptureFixture[str]) -> None:
     pydoc.help(Foo)
     out, err = capsys.readouterr()
     assert (
@@ -43,7 +47,7 @@ class Foo({builtins}.object)
     )
 
 
-def test_dispatch_method_help(capsys):
+def test_dispatch_method_help(capsys: pytest.CaptureFixture[str]) -> None:
     pydoc.help(Foo.bar)
     out, err = capsys.readouterr()
     assert rstrip_lines(out) == """\
@@ -54,7 +58,7 @@ bar(self, obj)
 """
 
 
-def test_dispatch_help(capsys):
+def test_dispatch_help(capsys: pytest.CaptureFixture[str]) -> None:
     pydoc.help(foo)
     out, err = capsys.readouterr()
     assert rstrip_lines(out) == """\
@@ -65,10 +69,10 @@ foo(obj)
 """
 
 
-def test_autodoc(tmpdir):
-    root = str(tmpdir)
-    tmpdir.join("conf.py").write("extensions = ['sphinx.ext.autodoc']\n")
-    tmpdir.join("contents.rst").write(
+def test_autodoc(tmp_path: Path) -> None:
+    root = str(tmp_path)
+    (tmp_path / "conf.py").write_text("extensions = ['sphinx.ext.autodoc']\n")
+    (tmp_path / "contents.rst").write_text(
         ".. automodule:: reg.tests.fixtures.module\n" "  :members:\n"
     )
     # status=None makes Sphinx completely quiet, in case you run
@@ -76,7 +80,7 @@ def test_autodoc(tmpdir):
     # remove it.
     app = Sphinx(root, root, root + "/build", root, "text", status=None)
     app.build()
-    assert tmpdir.join("build/contents.txt").read() == """\
+    assert (tmp_path / "build/contents.txt").read_text() == """\
 Sample module for testing autodoc.
 
 class reg.tests.fixtures.module.Foo
