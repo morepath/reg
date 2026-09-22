@@ -214,6 +214,13 @@ def clean_dispatch_methods(cls: type[object]) -> None:
     :param cls: a class that has :class:`reg.DispatchMethod` methods on it.
     """
     for name in dir(cls):
+        # NOTE: On Python 3.14+ this can invoke `__annotate__` with format
+        #       `VALUE` which can raise a `NameError`, so it can both cause
+        #       exceptions and also involve unnecessary work, so we explicitly
+        #       avoid touching this attribute
+        if name == "__annotations__":
+            continue
+
         attr = getattr(cls, name)
         if inspect.isfunction(attr) and hasattr(attr, "clean"):
             attr.clean()  # pyright: ignore[reportFunctionMemberAccess]
