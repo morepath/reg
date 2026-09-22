@@ -218,7 +218,7 @@ def clean_dispatch_methods(cls: type[object]) -> None:
         #       `VALUE` which can raise a `NameError`, so it can both cause
         #       exceptions and also involve unnecessary work, so we explicitly
         #       avoid touching this attribute
-        if name == "__annotations__":
+        if name == "__annotations__":  # pragma: no cover
             continue
 
         attr = getattr(cls, name)
