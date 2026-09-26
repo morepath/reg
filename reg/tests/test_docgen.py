@@ -5,7 +5,7 @@ import pytest
 import sys
 from pathlib import Path
 from sphinx.application import Sphinx
-from .fixtures.module import Foo, foo
+from .fixtures.module import Foo, foo  # pyright: ignore[reportUnknownVariableType]
 
 
 def rstrip_lines(s: str) -> str:
@@ -48,8 +48,10 @@ class Foo({builtins}.object)
 
 
 def test_dispatch_method_help(capsys: pytest.CaptureFixture[str]) -> None:
-    pydoc.help(Foo.bar)
-    out, err = capsys.readouterr()
+    pydoc.help(
+        Foo.bar  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
+    )
+    out, _err = capsys.readouterr()
     assert rstrip_lines(out) == """\
 Help on function bar in module reg.tests.fixtures.module:
 
@@ -59,8 +61,8 @@ bar(self, obj)
 
 
 def test_dispatch_help(capsys: pytest.CaptureFixture[str]) -> None:
-    pydoc.help(foo)
-    out, err = capsys.readouterr()
+    pydoc.help(foo)  # pyright: ignore[reportUnknownArgumentType]
+    out, _err = capsys.readouterr()
     assert rstrip_lines(out) == """\
 Help on function foo in module reg.tests.fixtures.module:
 

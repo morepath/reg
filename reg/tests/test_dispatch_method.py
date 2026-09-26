@@ -201,12 +201,12 @@ def test_dispatch_method_register_non_callable() -> None:
         pass
 
     with pytest.raises(RegistrationError):
-        Foo.bar.register("cannot call this", obj=Alpha)  # type: ignore
+        Foo.bar.register("cannot call this", obj=Alpha)  # type: ignore[call-overload]
 
 
 def test_dispatch_method_methodify_non_callable() -> None:
     with pytest.raises(TypeError):
-        methodify("cannot call this")  # type: ignore
+        methodify("cannot call this")  # type: ignore[call-overload]
 
 
 def test_dispatch_method_register_auto() -> None:
@@ -227,8 +227,13 @@ def test_dispatch_method_register_auto() -> None:
 
     assert foo.bar(Alpha()) == "default"
 
-    Foo.bar.register(methodify(lambda obj: "Alpha", "app"), obj=Alpha)
-    Foo.bar.register(methodify(lambda app, obj: "Beta %s" % app.x, "app"), obj=Beta)
+    Foo.bar.register(
+        methodify(lambda obj: "Alpha", "app"), obj=Alpha  # pyright: ignore
+    )
+    Foo.bar.register(
+        methodify(lambda app, obj: "Beta %s" % app.x, "app"),  # pyright: ignore
+        obj=Beta,
+    )
 
     assert foo.bar(Alpha()) == "Alpha"
     assert foo.bar(Beta()) == "Beta X"

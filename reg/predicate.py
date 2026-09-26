@@ -109,6 +109,7 @@ def match_instance(
     :returns: a :class:`Predicate`.
 
     """
+    get_key: Callable[[dict[str, Any]], type[Any]]
     if func is None:
         get_key = lambda d: d[name].__class__
     else:

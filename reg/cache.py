@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from repoze.lru import lru_cache  # type: ignore
 from typing import TYPE_CHECKING, Any, Generic
+
+from repoze.lru import lru_cache  # type: ignore[import-untyped]
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
     from typing_extensions import TypeVar
+
     from .types import KeyLookup
 
     _ValueT = TypeVar("_ValueT", default=Callable[..., Any])
