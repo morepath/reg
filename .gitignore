@@ -9,14 +9,20 @@ __pycache__/
 pip-wheel-metadata
 
 # Virtualenv
+.venv/
 /env/
 /src/
 
 # Unit test / coverage reports
-.cache/
-/.coverage
-/htmlcov
-/.tox
+.cache
+.pytest_cache
+.coverage
+htmlcov
+.tox
 
 # Sphinx documentation
 /doc/build/
+/doc/_build/
+
+# Type checkers
+.mypy_cache/
