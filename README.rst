@@ -21,4 +21,4 @@ for your application, library or framework.
 
 Documentation_.
 
-.. _Documentation: http://reg.readthedocs.org
+.. _Documentation: https://reg.readthedocs.io

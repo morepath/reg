@@ -34,7 +34,7 @@ The core registry (mapping) code was conceived by Thomas Lotze and
 Martijn Faassen as a speculative sandbox project in January
 of 2010. It was called ``iface`` then:
 
-http://svn.zope.org/Sandbox/faassen/iface/
+https://github.com/faassen/iface
 
 This registry was instrumental in getting Reg started, but was
 subsequently removed in a later refactoring.
@@ -103,9 +103,9 @@ refactoring_ to use generic functions throughout and no interfaces for
 lookup. Martijn then used this version of Reg in Morepath for about a
 year.
 
-.. _announcement: http://blog.startifact.com/posts/reg-component-architecture-reimagined.html
+.. _announcement: https://blog.startifact.com/posts/reg-component-architecture-reimagined/
 
-.. _refactoring: http://blog.startifact.com/posts/reg-now-with-more-generic.html
+.. _refactoring: https://blog.startifact.com/posts/reg-now-with-more-generic/
 
 Predicate dispatch
 ~~~~~~~~~~~~~~~~~~
@@ -179,13 +179,13 @@ significant evolution since then. ``zope.interface`` has a long
 history, going all the way back to December 1998, when a scarecrow
 interface package was released for discussion:
 
-http://old.zope.org/Members/jim/PythonInterfaces/Summary/
+https://old.zope.org/Members/jim/PythonInterfaces/Summary/
 
-http://old.zope.org/Members/jim/PythonInterfaces/Interface/
+https://old.zope.org/Members/jim/PythonInterfaces/Interface/
 
 A later version of this codebase found itself in Zope, as ``Interface``:
 
-http://svn.zope.org/Zope/tags/2-8-6/lib/python/Interface/
+https://github.com/zopefoundation/Zope/tree/2-8-6/lib/python/Interface
 
 A new version called zope.interface was developed for the Zope 3
 project, somewhere around the year 2001 or 2002 (code historians,

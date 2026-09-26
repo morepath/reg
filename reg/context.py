@@ -34,7 +34,7 @@ class dispatch_method(dispatch, Generic[_P, _T, _R]):
 
     This takes the predicates to dispatch on as zero or more parameters.
 
-    :param predicates: sequence of :class:`Predicate` instances to do
+    :param predicates: sequence of :class:`reg.Predicate` instances to do
       the dispatch on. You create predicates using
       :func:`reg.match_instance`, :func:`reg.match_key`,
       :func:`reg.match_class`, or with a custom predicate class.
@@ -42,9 +42,9 @@ class dispatch_method(dispatch, Generic[_P, _T, _R]):
       You can also pass in plain string argument, which is turned into
       a :func:`reg.match_instance` predicate.
     :param get_key_lookup: a function that gets a
-      :class:`PredicateRegistry` instance and returns a key lookup. A
-      :class:`PredicateRegistry` instance is itself a key lookup, but
-      you can return a caching key lookup (such as
+      :class:`reg.predicate.PredicateRegistry` instance and returns a key
+      lookup. A :class:`reg.predicate.PredicateRegistry` instance is itself
+      a key lookup, but you can return a caching key lookup (such as
       :class:`reg.DictCachingKeyLookup` or
       :class:`reg.LruCachingKeyLookup`) to make it more efficient.
     :param first_invocation_hook: a callable that accepts an instance of the
@@ -174,7 +174,7 @@ def methodify(
     If it is, the signature of ``func`` needn't be amended, but
     wrapping might still be necessary.
 
-    In all cases, :func:`inspect_methodified` lets you retrieve the wrapped
+    In all cases, ``inspect_methodified`` lets you retrieve the wrapped
     function.
 
     :param func: the function to turn into method.

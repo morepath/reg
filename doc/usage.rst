@@ -34,7 +34,7 @@ Predicate dispatch
 
   .. _`dynamic dispatch`: https://en.wikipedia.org/wiki/Dynamic_dispatch
 
-  .. _`multiple dispatch`: http://en.wikipedia.org/wiki/Multiple_dispatch
+  .. _`multiple dispatch`: https://en.wikipedia.org/wiki/Multiple_dispatch
 
   .. _`predicate dispatch`: https://en.wikipedia.org/wiki/Predicate_dispatch
 
@@ -56,7 +56,7 @@ Multiple registries
 Reg is designed with a caching layer that allows it to support these
 features efficiently.
 
-.. _`Morepath`: http://morepath.readthedocs.io
+.. _`Morepath`: https://morepath.readthedocs.io
 
 Example
 -------

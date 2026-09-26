@@ -35,7 +35,7 @@ small icon and a large icon. We want this API:
   implement the API in a base class either. We just do it in this
   example to be explicit.
 
-  .. _`abc module`: http://docs.python.org/2/library/abc.html
+  .. _`abc module`: https://docs.python.org/3/library/abc.html
 
 We define ``Document`` and ``Image`` content classes:
 
@@ -207,7 +207,7 @@ follow the open/closed principle and add functionality to a class
 without modifying it. This works for instance methods, but what about
 ``classmethod``? This takes the *class* as the first argument, not an
 instance. You can configure ``@reg.dispatch`` decorator with a special
-:class:`Predicate` instance that lets you dispatch on a class argument
+:class:`reg.Predicate` instance that lets you dispatch on a class argument
 instead of an instance argument.
 
 Here's what it looks like:
@@ -218,7 +218,7 @@ Here's what it looks like:
   def something(cls):
       raise NotImplementedError()
 
-Note the call to :func:`match_class` here. This lets us specify that
+Note the call to :func:`reg.match_class` here. This lets us specify that
 we want to dispatch on the class, in this case we simply want the
 ``cls`` argument.
 
