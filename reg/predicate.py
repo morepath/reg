@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import inspect
-from operator import itemgetter
 from itertools import product
+from operator import itemgetter
 from typing import TYPE_CHECKING, Any, Generic
 
 from .error import RegistrationError

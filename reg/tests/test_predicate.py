@@ -1,12 +1,13 @@
+import pytest
+
+from ..error import RegistrationError
 from ..predicate import (
-    KeyIndex,
     ClassIndex,
+    KeyIndex,
     PredicateRegistry,
     match_instance,
     match_key,
 )
-from ..error import RegistrationError
-import pytest
 
 
 def test_key_index_permutations() -> None:

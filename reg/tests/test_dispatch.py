@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-import pytest
-
 from typing import TYPE_CHECKING, Any
 from typing_extensions import assert_type
-from ..predicate import match_instance, match_key, match_class
+
+import pytest
+
 from ..dispatch import dispatch
 from ..error import RegistrationError
+from ..predicate import match_class, match_instance, match_key
 
 if TYPE_CHECKING:
     from ..types import DispatchCall  # noqa: F401

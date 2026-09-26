@@ -3,18 +3,21 @@ from __future__ import annotations
 from types import FunctionType
 from typing import TYPE_CHECKING, Any
 from typing_extensions import assert_type
+
 import pytest
-from ..dispatch import dispatch
+
 from ..context import (
+    clean_dispatch_methods,
     dispatch_method,
     methodify,
-    clean_dispatch_methods,
 )
-from ..predicate import match_instance
+from ..dispatch import dispatch
 from ..error import RegistrationError
+from ..predicate import match_instance
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
     from ..types import BoundDispatchMethodCall, DispatchMethodCall  # noqa: F401
 
 

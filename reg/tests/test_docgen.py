@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 import pydoc
-import pytest
 import sys
-from pathlib import Path
+from typing import TYPE_CHECKING
+
+import pytest
 from sphinx.application import Sphinx
+
 from .fixtures.module import Foo, foo  # pyright: ignore[reportUnknownVariableType]
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def rstrip_lines(s: str) -> str:
@@ -15,7 +20,7 @@ def rstrip_lines(s: str) -> str:
 
 def test_dispatch_method_class_help(capsys: pytest.CaptureFixture[str]) -> None:
     pydoc.help(Foo)
-    out, err = capsys.readouterr()
+    out, _err = capsys.readouterr()
     assert (
         rstrip_lines(out)
         == """\

@@ -7,17 +7,16 @@ from typing import (
     Any,
     Concatenate,
     Generic,
-    NoReturn as Never,
-    ParamSpec,
-    TypeVar,
-    cast,
-    overload,
 )
-from .dispatch import dispatch, Dispatch, format_signature, execute, identity
+from typing import NoReturn as Never
+from typing import ParamSpec, TypeVar, cast, overload
+
 from .arginfo import arginfo
+from .dispatch import Dispatch, dispatch, execute, format_signature, identity
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
     from .dispatch import LookupEntry
     from .predicate import Predicate, PredicateRegistry
     from .types import BoundDispatchMethodCall, DispatchMethodCall, KeyLookup
@@ -134,7 +133,9 @@ class DispatchMethod(Dispatch[Concatenate[_T, _P], _R], Generic[_P, _T, _R]):
         _P, _T, _R
     ]
 
-    def by_args(self, *args: _P.args, **kw: _P.kwargs) -> LookupEntry[Callable[Concatenate[_T, _P], _R]]:  # type: ignore[override]
+    def by_args(  # type: ignore[override]
+        self, *args: _P.args, **kw: _P.kwargs
+    ) -> LookupEntry[Callable[Concatenate[_T, _P], _R]]:
         """Lookup an implementation by invocation arguments.
 
         :param args: positional arguments used in invocation.

@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar
+
 import pytest
-from typing import Any, ParamSpec, TypeVar, TYPE_CHECKING
-from ..predicate import PredicateRegistry, match_instance, match_key
+
 from ..cache import DictCachingKeyLookup, LruCachingKeyLookup
-from ..error import RegistrationError
 from ..dispatch import dispatch
+from ..error import RegistrationError
+from ..predicate import PredicateRegistry, match_instance, match_key
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
     from ..types import DispatchCall
 
     _T = TypeVar("_T")
@@ -241,8 +244,13 @@ def test_dict_caching_registry() -> None:
 
     # use a bit of inside knowledge to check the cache is filled
     assert view.key_lookup.component.__self__.get((Foo, "", "GET")) is not None  # type: ignore[attr-defined]
-    assert view.key_lookup.component.__self__.get((FooSub, "", "GET")) is not None  # type: ignore[attr-defined]
-    assert view.key_lookup.component.__self__.get((FooSub, "edit", "POST")) is not None  # type: ignore[attr-defined]
+    assert (
+        view.key_lookup.component.__self__.get((FooSub, "", "GET")) is not None  # type: ignore[attr-defined]
+    )
+    assert (
+        view.key_lookup.component.__self__.get((FooSub, "edit", "POST"))  # type: ignore[attr-defined]
+        is not None
+    )
 
     # now let's do this again. this time things come from the component cache
     assert view(Foo(), Request("", "GET")) == "foo default"

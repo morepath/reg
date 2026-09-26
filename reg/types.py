@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
     from inspect import FullArgSpec
     from typing_extensions import TypeVar
+
     from .dispatch import LookupEntry
     from .predicate import Predicate, PredicateRegistry
 
@@ -114,7 +115,9 @@ class DispatchCall(Protocol[_P, _T]):
 
 
 class DispatchMethodCall(DispatchCall[Concatenate[_T, _P], _R], Protocol[_P, _T, _R]):
-    def by_args(self, *args: _P.args, **kw: _P.kwargs) -> LookupEntry[Callable[Concatenate[_T, _P], _R]]:  # type: ignore[override]
+    def by_args(  # type: ignore[override]
+        self, *args: _P.args, **kw: _P.kwargs
+    ) -> LookupEntry[Callable[Concatenate[_T, _P], _R]]:
         """Lookup an implementation by invocation arguments.
 
         :param args: positional arguments used in invocation.
@@ -183,4 +186,4 @@ class KeyLookup(Protocol[_ValueT]):
         raise NotImplementedError
 
 
-GetKeyLookup: TypeAlias = Callable[[PredicateRegistry[_ValueT]], KeyLookup[_ValueT]]
+GetKeyLookup: TypeAlias = "Callable[[PredicateRegistry[_ValueT]], KeyLookup[_ValueT]]"
