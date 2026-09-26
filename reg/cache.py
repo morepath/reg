@@ -34,8 +34,8 @@ class Cache(dict[_KT, _VT]):
 class DictCachingKeyLookup(Generic[_ValueT]):
     """A key lookup that caches.
 
-    Implements the read-only API of :class:`reg.PredicateRegistry` using
-    a cache to speed up access.
+    Implements the read-only API of :class:`reg.predicate.PredicateRegistry`
+    using a cache to speed up access.
 
     This cache is backed by a simple dictionary so could potentially
     grow large if the dispatch in question can be called with a large
@@ -43,7 +43,7 @@ class DictCachingKeyLookup(Generic[_ValueT]):
     predicate keys. If so, you can use
     :class:`reg.LruCachingKeyLookup` instead.
 
-    :param: key_lookup - the :class:`PredicateRegistry` to cache.
+    :param: key_lookup - the :class:`reg.predicate.PredicateRegistry` to cache.
 
     """
 
@@ -75,21 +75,21 @@ class DictCachingKeyLookup(Generic[_ValueT]):
 class LruCachingKeyLookup(Generic[_ValueT]):
     """A key lookup that caches.
 
-    Implements the read-only API of :class:`reg.PredicateRegistry`, using
-    a cache to speed up access.
+    Implements the read-only API of :class:`reg.predicate.PredicateRegistry`,
+    using a cache to speed up access.
 
     The cache is LRU so won't grow beyond a certain limit, preserving
     memory. This is only useful if you except the access pattern to
     your function to involve a huge range of different predicate keys.
 
-    :param: key_lookup - the :class:`PredicateRegistry` to cache.
+    :param: key_lookup - the :class:`reg.predicate.PredicateRegistry` to cache.
     :param component_cache_size: how many cache entries to store for
-      the :meth:`component` method. This is also used by dispatch
+      the ``component`` method. This is also used by dispatch
       calls.
     :param all_cache_size: how many cache entries to store for the
-      the :meth:`all` method.
+      the ``all`` method.
     :param fallback_cache_size: how many cache entries to store for
-      the :meth:`fallback` method.
+      the ``fallback`` method.
     """
 
     def __init__(
