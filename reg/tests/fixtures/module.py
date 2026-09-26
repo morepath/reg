@@ -1,6 +1,6 @@
 "Sample module for testing autodoc."
 
-from reg import dispatch_method, dispatch
+from reg import dispatch, dispatch_method
 
 
 class Foo:

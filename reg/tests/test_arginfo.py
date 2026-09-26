@@ -1,13 +1,16 @@
 from __future__ import annotations
 
-import pytest
 from typing import TYPE_CHECKING, Any
 from typing_extensions import assert_type
+
+import pytest
+
 from ..arginfo import arginfo
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from inspect import FullArgSpec  # noqa: F401
+
     from ..types import ArgInfo  # noqa: F401
 
 

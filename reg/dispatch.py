@@ -6,20 +6,18 @@ from typing import (
     Any,
     Generic,
     NamedTuple,
-    NoReturn as Never,
-    ParamSpec,
-    TypeVar,
-    cast,
-    overload,
 )
-from .predicate import match_instance
-from .predicate import PredicateRegistry
+from typing import NoReturn as Never
+from typing import ParamSpec, TypeVar, cast, overload
+
 from .arginfo import arginfo
 from .error import RegistrationError
+from .predicate import PredicateRegistry, match_instance
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
     from inspect import FullArgSpec
+
     from .predicate import Predicate
     from .types import DispatchCall, GetKeyLookup, KeyLookup
 
