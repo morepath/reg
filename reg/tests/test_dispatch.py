@@ -802,7 +802,7 @@ def test_register_dispatch_key_dict() -> None:
     class Foo:
         pass
 
-    class FooSub(Foo):
+    class FooSub(Foo):  # pyright: ignore[reportUnusedClass]
         pass
 
     @dispatch()
@@ -1097,10 +1097,10 @@ def test_predicate_key_too_few_arguments_gives_typeerror() -> None:
     def foo(obj: Any) -> Any:
         pass
 
-    def for_bar(obj: Any) -> Any:
+    def for_bar(obj: Any) -> Any:  # pyright: ignore[reportUnusedFunction]
         return obj.method()
 
-    def for_qux(obj: Any) -> Any:
+    def for_qux(obj: Any) -> Any:  # pyright: ignore[reportUnusedFunction]
         return obj.method()
 
     with pytest.raises(TypeError):
@@ -1112,10 +1112,10 @@ def test_predicate_key_too_many_arguments_gives_typeerror() -> None:
     def foo(obj: Any) -> Any:
         pass
 
-    def for_bar(obj: Any) -> Any:
+    def for_bar(obj: Any) -> Any:  # pyright: ignore[reportUnusedFunction]
         return obj.method()
 
-    def for_qux(obj: Any) -> Any:
+    def for_qux(obj: Any) -> Any:  # pyright: ignore[reportUnusedFunction]
         return obj.method()
 
     with pytest.raises(TypeError):
@@ -1127,10 +1127,10 @@ def test_predicate_key_wrong_keyword_argument_gives_typeerror() -> None:
     def foo(obj: Any) -> Any:
         pass
 
-    def for_bar(obj: Any) -> Any:
+    def for_bar(obj: Any) -> Any:  # pyright: ignore[reportUnusedFunction]
         return obj.method()
 
-    def for_qux(obj: Any) -> Any:
+    def for_qux(obj: Any) -> Any:  # pyright: ignore[reportUnusedFunction]
         return obj.method()
 
     with pytest.raises(TypeError):

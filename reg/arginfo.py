@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import inspect
 import sys
-
 from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
     from .types import ArgInfo
 
 if sys.version_info < (3, 14):
@@ -60,11 +60,11 @@ def arginfo(callable: Callable[..., Any]) -> inspect.FullArgSpec | None:
     also show other getarginfo() information, and for readability.
     """
     try:
-        return arginfo._cache[callable]
+        return arginfo._cache[callable]  # pyright: ignore[reportPrivateUsage]
     except KeyError:
         # Try to get __call__ function from the cache.
         try:
-            return arginfo._cache[callable.__call__]  # type: ignore
+            return arginfo._cache[callable.__call__]  # type: ignore[operator]
         except (AttributeError, KeyError):
             pass
 
@@ -90,13 +90,13 @@ def arginfo(callable: Callable[..., Any]) -> inspect.FullArgSpec | None:
             return None
 
     signature = get_signature(callable)
-    args = []
-    varargs = None
-    varkw = None
-    defaults = []
-    kwonlyargs = []
-    kwonlydefaults = {}
-    annotations = {}
+    args: list[str] = []
+    varargs: str | None = None
+    varkw: str | None = None
+    defaults: list[Any] = []
+    kwonlyargs: list[str] = []
+    kwonlydefaults: dict[str, Any] = {}
+    annotations: dict[str, Any] = {}
 
     if signature.return_annotation is not signature.empty:
         annotations["return"] = signature.return_annotation
@@ -121,25 +121,27 @@ def arginfo(callable: Callable[..., Any]) -> inspect.FullArgSpec | None:
         if parameter.annotation is not parameter.empty:
             annotations[parameter.name] = parameter.annotation
 
-    result = arginfo._cache[cache_key] = inspect.FullArgSpec(
-        args,
-        varargs,
-        varkw,
-        tuple(defaults) if defaults else None,
-        kwonlyargs,
-        kwonlydefaults if kwonlydefaults else None,
-        annotations,
+    result = arginfo._cache[cache_key] = (  # pyright: ignore[reportPrivateUsage]
+        inspect.FullArgSpec(
+            args,
+            varargs,
+            varkw,
+            tuple(defaults) if defaults else None,
+            kwonlyargs,
+            kwonlydefaults if kwonlydefaults else None,
+            annotations,
+        )
     )
     return result
 
 
 def is_cached(callable: Callable[..., Any]) -> bool:
-    if callable in arginfo._cache:
+    if callable in arginfo._cache:  # pyright: ignore[reportPrivateUsage]
         return True
     return callable.__call__ in arginfo._cache  # type: ignore
 
 
-arginfo._cache = {}
+arginfo._cache = {}  # pyright: ignore[reportPrivateUsage]
 arginfo.is_cached = is_cached
 
 

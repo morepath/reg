@@ -149,7 +149,7 @@ def test_predicate_registry_target_find_specific() -> None:
 def test_registry_no_sources() -> None:
     reg = PredicateRegistry[str]()
 
-    class Animal:
+    class Animal:  # pyright: ignore[reportUnusedClass]
         pass
 
     reg.register((), "elephant")
