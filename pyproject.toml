@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "reg"
-version = "0.13.dev0"
+version = "1.0.0.dev0"
 dynamic = ["readme"]
 description = "Clever dispatch"
 license = "BSD-3-Clause"
@@ -14,12 +14,14 @@ maintainers = [{name = "Henri Hulski", email = "henri@sancode.it"}]
 classifiers = [
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
     "Development Status :: 5 - Production/Stable",
 ]
@@ -33,15 +35,21 @@ Issues = "https://github.com/morepath/reg/issues"
 Changelog = "https://github.com/morepath/reg/blob/master/CHANGES.txt"
 
 [project.optional-dependencies]
-test = ["pytest >= 8", "pytest-env", "sphinx", "typing_extensions"]
-docs = ["sphinx"]
+test = ["pytest >= 8", "pytest-env", "typing_extensions"]
 coverage = ["pytest-cov"]
-lint = ["black", "flake8", "flake8-pyproject"]
+lint = [
+    "black",
+    "flake8",
+    "flake8-pyproject",
+    "flake8-type-checking",
+    "isort",
+]
 # NOTE: sphinx 9.1 introduced PEP-695 syntax into the code-base, so we
 #       can't type check in pre-3.12 mode this way, which we need to,
 #       as long as we still support these versions.
-mypy = ["mypy", "pytest", "sphinx < 9.1.0"]
-pyright = ["pyright", "pytest", "sphinx < 9.1.0"]
+docs = ["sphinx < 9.1"]
+mypy = ["mypy", "pytest"]
+pyright = ["pyright", "pytest"]
 
 [tool.setuptools.packages]
 find = {}
@@ -68,16 +76,18 @@ show_missing = true
 [tool.flake8]
 show-source = true
 ignore = ["E203", "E301", "E501", "E704", "E731", "W503"]
+extend-select = ["TC", "TC1"]
 max-line-length = 88
 
 [tool.mypy]
 python_version = "3.10"
 strict = true
+files = ["."]
 warn_unreachable = true
+warn_unused_ignores = true
 
-[[tool.mypy.overrides]]
-module = "reg.tests.fixtures.*"
-disallow_untyped_defs = false
+[tool.pyright]
+typeCheckingMode = "strict"
 
 [tool.tox]
 requires = ["tox>=4"]
@@ -93,26 +103,26 @@ env_list = [
     "docs",
     "perf",
     "mypy",
-    "pyright"
+    "pyright",
 ]
 skip_missing_interpreters = true
 
 [tool.tox.gh.python]
-"3.10" = ["py310", "mypy", "pyright", "perf"]
+"3.10" = ["py310"]
 "3.11" = ["py311"]
 "3.12" = ["py312"]
 "3.13" = ["py313"]
-"3.14" = ["py314", "pre-commit", "coverage"]
+"3.14" = ["py314", "pre-commit", "coverage", "mypy", "pyright", "perf"]
 "pypy-3.11" = ["pypy3"]
 
 [tool.tox.env_run_base]
 package = "editable"
-extras = ["test"]
+extras = ["test", "docs"]
 commands = [["pytest", "{posargs:reg}"]]
 
 [tool.tox.env.coverage]
 base_python = ["python3"]
-extras = ["test", "coverage"]
+extras = ["test", "coverage", "docs"]
 commands = [
     ["pytest", "--cov", "--cov-fail-under=100", "{posargs:reg}"],
 ]
@@ -141,22 +151,47 @@ commands = [
 
 [tool.tox.env.mypy]
 base_python = ["python3"]
-extras = ["mypy"]
+extras = ["mypy", "docs"]
 commands = [
-    ["mypy", "-p", "reg", "--python-version", "3.10"],
-    ["mypy", "-p", "reg", "--python-version", "3.11"],
-    ["mypy", "-p", "reg", "--python-version", "3.12"],
-    ["mypy", "-p", "reg", "--python-version", "3.13"],
-    ["mypy", "-p", "reg", "--python-version", "3.14"],
+    ["mypy", "--python-version", "3.10"],
+    ["mypy", "--python-version", "3.11"],
+    ["mypy", "--python-version", "3.12"],
+    ["mypy", "--python-version", "3.13"],
+    ["mypy", "--python-version", "3.14"],
 ]
 
 [tool.tox.env.pyright]
 base_python = ["python3"]
-extras = ["pyright"]
+extras = ["pyright", "docs"]
 commands = [
-    ["pyright", "reg", "--pythonversion", "3.10"],
-    ["pyright", "reg", "--pythonversion", "3.11"],
-    ["pyright", "reg", "--pythonversion", "3.12"],
-    ["pyright", "reg", "--pythonversion", "3.13"],
-    ["pyright", "reg", "--pythonversion", "3.14"],
+    ["pyright", "--pythonversion", "3.10"],
+    ["pyright", "--pythonversion", "3.11"],
+    ["pyright", "--pythonversion", "3.12"],
+    ["pyright", "--pythonversion", "3.13"],
+    ["pyright", "--pythonversion", "3.14"],
 ]
+
+[tool.black]
+target-version = ['py310', 'py311', 'py312', 'py313', 'py314']
+include = '\.pyi?$'
+exclude = '''
+(
+  /(
+      \.git
+    | \.tox
+    | env
+    | venv
+    | .venv
+    | __pycache__
+    | build
+    | dist
+  )/
+)
+'''
+
+[tool.isort]
+profile = 'black'
+py_version = 310
+skip_gitignore = true
+extra_standard_library = ["typing_extensions"]
+known_first_party = ["dectate", "importscan", "reg"]
