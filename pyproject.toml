@@ -75,7 +75,7 @@ show_missing = true
 
 [tool.flake8]
 show-source = true
-ignore = ["E203", "E301", "E501", "E704", "E731", "W503"]
+ignore = ["E203", "E301", "E302", "E501", "E704", "E731", "W503"]
 extend-select = ["TC", "TC1"]
 max-line-length = 88
 
@@ -83,11 +83,15 @@ max-line-length = 88
 python_version = "3.10"
 strict = true
 files = ["."]
+mypy_path = "stubs"
+explicit_package_bases = true
 warn_unreachable = true
 warn_unused_ignores = true
+warn_unused_configs = true
 
 [tool.pyright]
 typeCheckingMode = "strict"
+stubPath = "stubs"
 
 [tool.tox]
 requires = ["tox>=4"]
