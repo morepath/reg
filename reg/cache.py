@@ -1,8 +1,7 @@
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import TYPE_CHECKING, Any, Generic
-
-from repoze.lru import lru_cache  # type: ignore[import-untyped]
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -49,27 +48,13 @@ class DictCachingKeyLookup(Generic[_ValueT]):
 
     def __init__(self, key_lookup: KeyLookup[_ValueT]) -> None:
         self.key_lookup = key_lookup
-        self.component = Cache(key_lookup.component).__getitem__  # type: ignore
-        self.fallback = Cache(key_lookup.fallback).__getitem__  # type: ignore
+        self.component = Cache(key_lookup.component).__getitem__
+        self.fallback = Cache(key_lookup.fallback).__getitem__
 
         def _all(key: Sequence[Any]) -> list[_ValueT]:
             return list(key_lookup.all(key))
 
-        self.all = Cache(_all).__getitem__  # type: ignore
-
-    if TYPE_CHECKING:
-        # NOTE: For pyright's sake we declare these callable instance attributes
-        #       as methods, even though they're not, since pyright does not seem
-        #       to be able to match protocols against them. mypy can deal with
-        #       it just fine
-        def component(self, key: Sequence[Any], /) -> _ValueT | None:
-            raise NotImplementedError
-
-        def fallback(self, key: Sequence[Any], /) -> _ValueT | None:
-            raise NotImplementedError
-
-        def all(self, key: Sequence[Any], /) -> list[_ValueT]:
-            raise NotImplementedError
+        self.all = Cache(_all).__getitem__
 
 
 class LruCachingKeyLookup(Generic[_ValueT]):
@@ -100,20 +85,11 @@ class LruCachingKeyLookup(Generic[_ValueT]):
         fallback_cache_size: int,
     ) -> None:
         self.key_lookup = key_lookup
-        self.component = lru_cache(component_cache_size)(key_lookup.component)  # type: ignore
-        self.fallback = lru_cache(fallback_cache_size)(key_lookup.fallback)  # type: ignore
-        self.all = lru_cache(all_cache_size)(lambda key: list(key_lookup.all(key)))  # type: ignore
+        self.component = lru_cache(component_cache_size)(key_lookup.component)
+        self.fallback = lru_cache(fallback_cache_size)(key_lookup.fallback)
 
-    if TYPE_CHECKING:
-        # NOTE: For pyright's sake we declare these callable instance attributes
-        #       as methods, even though they're not, since pyright does not seem
-        #       to be able to match protocols against them. mypy can deal with
-        #       it just fine
-        def component(self, key: Sequence[Any], /) -> _ValueT | None:
-            raise NotImplementedError
+        @lru_cache(all_cache_size)
+        def _all(key: Sequence[Any]) -> list[_ValueT]:
+            return list(key_lookup.all(key))
 
-        def fallback(self, key: Sequence[Any], /) -> _ValueT | None:
-            raise NotImplementedError
-
-        def all(self, key: Sequence[Any], /) -> list[_ValueT]:
-            raise NotImplementedError
+        self.all = _all
