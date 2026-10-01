@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar
 
 import pytest
@@ -14,8 +15,9 @@ if TYPE_CHECKING:
 
     from ..types import DispatchCall
 
-    _T = TypeVar("_T")
-    _P = ParamSpec("_P")
+
+_T = TypeVar("_T")
+_P = ParamSpec("_P")
 
 
 def register_value(
@@ -282,6 +284,29 @@ def test_dict_caching_registry() -> None:
     assert view(FooSub(), Request("dummy", "GET")) == "Name fallback"
 
 
+class SpyKeyLookup:
+    """Wraps a key lookup and counts the calls that reach it."""
+
+    def __init__(self, key_lookup: Any) -> None:
+        self.key_lookup = key_lookup
+        self.calls: Counter[tuple[str, Any]] = Counter()
+
+    def component(self, key: Any) -> Any:
+        self.calls[("component", key)] += 1
+        return self.key_lookup.component(key)
+
+    def fallback(self, key: Any) -> Any:
+        self.calls[("fallback", key)] += 1
+        return self.key_lookup.fallback(key)
+
+    def all(self, key: Any) -> Any:
+        self.calls[("all", key)] += 1
+        return self.key_lookup.all(key)
+
+
+spies: list[SpyKeyLookup] = []
+
+
 def test_lru_caching_registry() -> None:
     class Foo:
         pass
@@ -313,7 +338,9 @@ def test_lru_caching_registry() -> None:
         return "Request method fallback"
 
     def get_caching_key_lookup(r: PredicateRegistry) -> LruCachingKeyLookup:
-        return LruCachingKeyLookup(r, 100, 100, 100)
+        spy = SpyKeyLookup(r)
+        spies.append(spy)
+        return LruCachingKeyLookup(spy, 100, 100, 100)
 
     @dispatch(
         match_instance("model", get_model, model_fallback),
@@ -337,6 +364,9 @@ def test_lru_caching_registry() -> None:
     register_value(view, (Foo, "", "POST"), foo_post)
     register_value(view, (Foo, "edit", "POST"), foo_edit)
 
+    assert len(spies) == 1
+    spy = spies[0]
+
     assert view(Foo(), Request("", "GET")) == "foo default"
     assert view(FooSub(), Request("", "GET")) == "foo default"
     assert view(FooSub(), Request("edit", "POST")) == "foo edit"
@@ -346,25 +376,25 @@ def test_lru_caching_registry() -> None:
         "GET",
     )
 
-    # use a bit of inside knowledge to check the cache is filled
-    assert view.key_lookup.component.__closure__ is not None
-    component_cache = view.key_lookup.component.__closure__[0].cell_contents
-    assert component_cache.get(((Foo, "", "GET"),)) is not None
-    assert component_cache.get(((FooSub, "", "GET"),)) is not None
-    assert component_cache.get(((FooSub, "edit", "POST"),)) is not None
+    # each key has reached the real registry exactly once
+    assert spy.calls[("component", (Foo, "", "GET"))] == 1
+    assert spy.calls[("component", (FooSub, "", "GET"))] == 1
+    assert spy.calls[("component", (FooSub, "edit", "POST"))] == 1
 
     # now let's do this again. this time things come from the component cache
+    before = spy.calls.copy()
     assert view(Foo(), Request("", "GET")) == "foo default"
     assert view(FooSub(), Request("", "GET")) == "foo default"
     assert view(FooSub(), Request("edit", "POST")) == "foo edit"
+    assert spy.calls == before  # nothing new reached the registry
 
-    assert view.key_lookup.all.__closure__ is not None
-    all_cache = view.key_lookup.all.__closure__[0].cell_contents
     # prime and check the all cache
     assert view.by_args(Foo(), Request("", "GET")).all_matches == [foo_default]
-    assert all_cache.get(((Foo, "", "GET"),)) is not None
+    assert spy.calls[("all", (Foo, "", "GET"))] == 1
     # should be coming from cache now
+    before = spy.calls.copy()
     assert view.by_args(Foo(), Request("", "GET")).all_matches == [foo_default]
+    assert spy.calls == before
 
     class Bar:
         pass
@@ -375,12 +405,12 @@ def test_lru_caching_registry() -> None:
     assert view(FooSub(), Request("dummy", "GET")) == "Name fallback"
 
     # fallbacks get cached too
-    assert view.key_lookup.fallback.__closure__ is not None
-    fallback_cache = view.key_lookup.fallback.__closure__[0].cell_contents
-    assert fallback_cache.get(((Bar, "", "GET"),)) is model_fallback
+    assert spy.calls[("fallback", (Bar, "", "GET"))] == 1
 
     # these come from the fallback cache now
+    before = spy.calls.copy()
     assert view(Bar(), Request("", "GET")) == "Model fallback"
     assert view(Foo(), Request("dummy", "GET")) == "Name fallback"
     assert view(Foo(), Request("", "PUT")) == "Request method fallback"
     assert view(FooSub(), Request("dummy", "GET")) == "Name fallback"
+    assert spy.calls == before
