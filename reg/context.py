@@ -7,9 +7,12 @@ from typing import (
     Any,
     Concatenate,
     Generic,
+    Never,
+    ParamSpec,
+    TypeVar,
+    cast,
+    overload,
 )
-from typing import NoReturn as Never
-from typing import ParamSpec, TypeVar, cast, overload
 
 from .arginfo import arginfo
 from .dispatch import Dispatch, dispatch, execute, format_signature, identity

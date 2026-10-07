@@ -6,9 +6,12 @@ from typing import (
     Any,
     Generic,
     NamedTuple,
+    Never,
+    ParamSpec,
+    TypeVar,
+    cast,
+    overload,
 )
-from typing import NoReturn as Never
-from typing import ParamSpec, TypeVar, cast, overload
 
 from .arginfo import arginfo
 from .error import RegistrationError
