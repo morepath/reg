@@ -17,9 +17,7 @@ Then go to the reg directory::
 
   $ cd reg
 
-Make sure you have virtualenv_ installed.
-
-Create a new virtualenv for Python 3 inside the reg directory::
+Create a new virtualenv inside the reg directory::
 
   $ python -m venv --upgrade-deps .venv
 
@@ -30,7 +28,7 @@ Activate the virtualenv::
 Install the various dependencies and development tools from
 develop_requirements.txt::
 
-  $ pip install -Ur develop_requirements.txt
+  (.venv) $ pip install -Ur develop_requirements.txt
 
 For upgrading the requirements just run the command again.
 
@@ -39,7 +37,6 @@ For upgrading the requirements just run the command again.
    The following commands work only if you have the virtualenv activated.
 
 .. _github: https://docs.github.com/en/authentication/connecting-to-github-with-ssh
-.. _virtualenv: https://pypi.org/project/virtualenv
 
 Install pre-commit hook for Black integration
 ---------------------------------------------
@@ -47,7 +44,7 @@ Install pre-commit hook for Black integration
 We're using Black_ for formatting the code and it's recommended to
 install the `pre-commit hook`_ for Black integration before committing::
 
-  $ pre-commit install
+  (.venv) $ pre-commit install
 
 .. _`pre-commit hook`: https://black.readthedocs.io/en/stable/integrations/source_version_control.html
 
@@ -56,11 +53,11 @@ Running the tests
 
 You can run the tests using `pytest`_::
 
-  $ pytest
+  (.venv) $ pytest
 
 To generate test coverage information as HTML do::
 
-  $ pytest --cov --cov-report html
+  (.venv) $ pytest --cov --cov-report html
 
 You can then point your web browser to the ``htmlcov/index.html`` file
 in the project directory and click on modules to see detailed coverage
@@ -73,12 +70,23 @@ Black
 
 To format the code with the `Black Code Formatter`_ run in the root directory::
 
-  $ black reg
+  (.venv) $ black reg
 
 Black has also integration_ for the most popular editors.
 
 .. _`Black Code Formatter`: https://black.readthedocs.io
 .. _integration: https://black.readthedocs.io/en/stable/editor_integration.html
+
+isort
+-----
+
+To sort imports with isort_ from the project directory do::
+
+  (.venv) $ isort .
+
+isort uses the settings in ``pyproject.toml``.
+
+.. _isort: https://pycqa.github.io/isort/
 
 flake8
 ------
@@ -88,21 +96,30 @@ mistakes using pyflakes_, checks for PEP8_ style compliance and
 can do `cyclomatic complexity`_ checking. To do pyflakes and pep8
 checking do::
 
-  $ flake8 reg
+  (.venv) $ flake8 reg
 
 To also show cyclomatic complexity, use this command::
 
-  $ flake8 --max-complexity=10 reg
-
+  (.venv) $ flake8 --max-complexity=10 reg
 
 .. _flake8: https://pypi.org/project/flake8
-
 .. _pyflakes: https://pypi.org/project/pyflakes
-
 .. _pep8: https://peps.python.org/pep-0008
-
 .. _`cyclomatic complexity`: https://en.wikipedia.org/wiki/Cyclomatic_complexity
 
+Type checking
+-------------
+
+Reg uses mypy_ and pyright_ for type checking. Run either checker
+from the project directory::
+
+  (.venv) $ mypy
+  (.venv) $ pyright
+
+Both checkers use the settings in ``pyproject.toml``.
+
+.. _mypy: https://mypy.readthedocs.io/
+.. _pyright: https://microsoft.github.io/pyright/
 
 Running the documentation tests
 -------------------------------
@@ -110,32 +127,32 @@ Running the documentation tests
 The documentation contains code. To check these code snippets, you
 can run this code using this command::
 
-  (py3) $ sphinx-build -b doctest doc doc/build/doctest
+  (.venv) $ sphinx-build -b doctest doc doc/_build/doctest
 
 Or alternatively if you have ``Make`` installed::
 
-  (py3) $ cd doc
-  (py3) $ make doctest
+  (.venv) $ cd doc
+  (.venv) $ make doctest
 
 Or from the Reg project directory::
 
-  (py3) $ make -C doc doctest
+  (.venv) $ make -C doc doctest
 
 Building the HTML documentation
 -------------------------------
 
 To build the HTML documentation (output in ``doc/_build/html``), run::
 
-  $ sphinx-build doc doc/_build/html
+  (.venv) $ sphinx-build doc doc/_build/html
 
 Or alternatively if you have ``Make`` installed::
 
-  $ cd doc
-  $ make html
+  (.venv) $ cd doc
+  (.venv) $ make html
 
 Or from the Reg project directory::
 
-  $ make -C doc html
+  (.venv) $ make -C doc html
 
 Tox
 ---
@@ -154,20 +171,20 @@ One tool you can use to install multiple versions of Python is pyenv_.
 
 To find out which test environments are defined for Reg in tox.ini run::
 
-  $ tox -l
+  (.venv) $ tox -l
 
 You can run all tox tests with::
 
-  $ tox
+  (.venv) $ tox
 
 You can also specify a test environment to run e.g.::
 
-  $ tox -e py311
-  $ tox -e lint
-  $ tox -e docs
+  (.venv) $ tox -e py311
+  (.venv) $ tox -e lint
+  (.venv) $ tox -e docs
 
 To run a simple performance test you can use::
 
-  $ tox -e perf
+  (.venv) $ tox -e perf
 
 .. _pyenv: https://github.com/pyenv/pyenv
