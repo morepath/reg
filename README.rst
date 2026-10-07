@@ -2,9 +2,6 @@
    :target: https://github.com/morepath/reg/actions?workflow=CI
    :alt: CI Status
 
-.. image:: https://coveralls.io/repos/github/morepath/reg/badge.svg?branch=master
-    :target: https://coveralls.io/github/morepath/reg?branch=master
-
 .. image:: https://img.shields.io/pypi/v/reg.svg
   :target: https://pypi.org/project/reg/
 
