@@ -171,7 +171,7 @@ def call({signature}):
         args = arginfo(self.wrapped_func)
         assert args is not None
         signature = format_signature(args)
-        predicate_args = ", ".join("{0}={0}".format(x) for x in args.args)
+        predicate_args = ", ".join(f"{x}={x}" for x in args.args)
         code_source = code_template.format(
             signature=signature, predicate_args=predicate_args
         )
@@ -201,10 +201,8 @@ def call({signature}):
 
         # We now build the implementation for the predicate_key method
         self._predicate_key = execute(
-            "def predicate_key({signature}):\n"
-            "    return _return_type(_registry_key({predicate_args}))".format(
-                signature=format_signature(args), predicate_args=predicate_args
-            ),
+            f"def predicate_key({format_signature(args)}):\n"
+            f"    return _return_type(_registry_key({predicate_args}))",
             _registry_key=None,
             _return_type=None,
         )["predicate_key"]
@@ -287,14 +285,14 @@ def validate_signature(f: Callable[..., Any], dispatch: Callable[..., Any]) -> N
     f_arginfo = arginfo(f)
     if f_arginfo is None:
         raise RegistrationError(
-            "Cannot register non-callable for dispatch " "%r: %r" % (dispatch, f)
+            f"Cannot register non-callable for dispatch {dispatch!r}: {f!r}"
         )
     d_arginfo = arginfo(dispatch)
     assert d_arginfo is not None
     if not same_signature(d_arginfo, f_arginfo):
         raise RegistrationError(
-            "Signature of callable dispatched to (%r) "
-            "not that of dispatch (%r)" % (f, dispatch)
+            f"Signature of callable dispatched to ({f!r}) "
+            f"not that of dispatch ({dispatch!r})"
         )
 
 

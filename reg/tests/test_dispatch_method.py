@@ -230,10 +230,11 @@ def test_dispatch_method_register_auto() -> None:
     assert foo.bar(Alpha()) == "default"
 
     Foo.bar.register(
-        methodify(lambda obj: "Alpha", "app"), obj=Alpha  # pyright: ignore
+        methodify(lambda obj: "Alpha", "app"),  # pyright: ignore
+        obj=Alpha,
     )
     Foo.bar.register(
-        methodify(lambda app, obj: "Beta %s" % app.x, "app"),  # pyright: ignore
+        methodify(lambda app, obj: f"Beta {app.x}", "app"),  # pyright: ignore
         obj=Beta,
     )
 
@@ -271,7 +272,7 @@ def test_dispatch_method_accesses_instance() -> None:
 
         @dispatch_method(match_instance("obj"))
         def bar(self, obj: Any) -> str:
-            return "default %s" % self.x
+            return f"default {self.x}"
 
     class Alpha:
         pass
@@ -279,8 +280,8 @@ def test_dispatch_method_accesses_instance() -> None:
     class Beta:
         pass
 
-    Foo.bar.register(lambda self, obj: "Alpha %s" % self.x, obj=Alpha)
-    Foo.bar.register(lambda self, obj: "Beta %s" % self.x, obj=Beta)
+    Foo.bar.register(lambda self, obj: f"Alpha {self.x}", obj=Alpha)
+    Foo.bar.register(lambda self, obj: f"Beta {self.x}", obj=Beta)
 
     foo = Foo("hello")
 

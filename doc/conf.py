@@ -60,7 +60,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "Reg"
-copyright = "2010 - %s, Morepath Developers" % datetime.today().year
+copyright = f"2010 - {datetime.today().year}, Morepath Developers"
 author = "Martijn Faassen"
 
 # The version info for the project you're documenting, acts as replacement for

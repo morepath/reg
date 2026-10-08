@@ -30,7 +30,7 @@ def test_dispatch_basic() -> None:
         raise NotImplementedError()
 
     def something_for_object(cls: type[object]) -> str:
-        return "Something for %s" % cls
+        return f"Something for {cls}"
 
     something.register(something_for_object, cls=object)
 
@@ -46,10 +46,10 @@ def test_classdispatch_multidispatch() -> None:
         raise NotImplementedError()
 
     def something_for_object_and_object(cls: type[object], other: object) -> str:
-        return "Something, other is object: %s" % other
+        return f"Something, other is object: {other}"
 
     def something_for_object_and_foo(cls: type[object], other: Foo) -> str:
-        return "Something, other is Foo: %s" % other
+        return f"Something, other is Foo: {other}"
 
     something.register(something_for_object_and_object, cls=object, other=object)
 
@@ -67,7 +67,7 @@ def test_classdispatch_extra_arguments() -> None:
         raise NotImplementedError()
 
     def something_for_object(cls: type[object], extra: str) -> str:
-        return "Extra: %s" % extra
+        return f"Extra: {extra}"
 
     something.register(something_for_object, cls=object)
 
@@ -93,10 +93,10 @@ def test_classdispatch_override() -> None:
         raise NotImplementedError()
 
     def something_for_object(cls: type[object]) -> str:
-        return "Something for %s" % cls
+        return f"Something for {cls}"
 
     def something_for_special(cls: type[SpecialClass]) -> str:
-        return "Special for %s" % cls
+        return f"Special for {cls}"
 
     something.register(something_for_object, cls=object)
     something.register(something_for_special, cls=SpecialClass)

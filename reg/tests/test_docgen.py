@@ -4,13 +4,14 @@ import pydoc
 import sys
 from typing import TYPE_CHECKING
 
-import pytest
 from sphinx.application import Sphinx
 
 from .fixtures.module import Foo, foo  # pyright: ignore[reportUnknownVariableType]
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    import pytest
 
 
 def rstrip_lines(s: str) -> str:
@@ -57,37 +58,45 @@ def test_dispatch_method_help(capsys: pytest.CaptureFixture[str]) -> None:
         Foo.bar  # pyright: ignore[reportUnknownMemberType, reportUnknownArgumentType]
     )
     out, _err = capsys.readouterr()
-    assert rstrip_lines(out) == """\
+    assert (
+        rstrip_lines(out)
+        == """\
 Help on function bar in module reg.tests.fixtures.module:
 
 bar(self, obj)
     Return the bar of an object.
 """
+    )
 
 
 def test_dispatch_help(capsys: pytest.CaptureFixture[str]) -> None:
     pydoc.help(foo)  # pyright: ignore[reportUnknownArgumentType]
     out, _err = capsys.readouterr()
-    assert rstrip_lines(out) == """\
+    assert (
+        rstrip_lines(out)
+        == """\
 Help on function foo in module reg.tests.fixtures.module:
 
 foo(obj)
     return the foo of an object.
 """
+    )
 
 
 def test_autodoc(tmp_path: Path) -> None:
     root = str(tmp_path)
     (tmp_path / "conf.py").write_text("extensions = ['sphinx.ext.autodoc']\n")
     (tmp_path / "contents.rst").write_text(
-        ".. automodule:: reg.tests.fixtures.module\n" "  :members:\n"
+        ".. automodule:: reg.tests.fixtures.module\n  :members:\n"
     )
     # status=None makes Sphinx completely quiet, in case you run
     # py.test with the -s switch.  For debugging you might want to
     # remove it.
     app = Sphinx(root, root, root + "/build", root, "text", status=None)
     app.build()
-    assert (tmp_path / "build/contents.txt").read_text() == """\
+    assert (
+        (tmp_path / "build/contents.txt").read_text()
+        == """\
 Sample module for testing autodoc.
 
 class reg.tests.fixtures.module.Foo
@@ -106,3 +115,4 @@ reg.tests.fixtures.module.foo(obj)
 
    return the foo of an object.
 """
+    )

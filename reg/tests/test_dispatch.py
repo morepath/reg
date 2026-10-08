@@ -363,7 +363,7 @@ def test_component_not_found_one_source() -> None:
 def test_call_not_found_one_source() -> None:
     @dispatch("obj")
     def target(obj: str) -> str:
-        return "default: %s" % obj
+        return f"default: {obj}"
 
     assert target("dummy") == "default: dummy"
 
@@ -446,10 +446,10 @@ def test_call_with_wrong_args() -> None:
 def test_extra_arg_for_call() -> None:
     @dispatch("obj")
     def target(obj: Any, extra: str) -> str:
-        return "General: %s" % extra
+        return f"General: {extra}"
 
     def specific(obj: Alpha, extra: str) -> str:
-        return "Specific: %s" % extra
+        return f"Specific: {extra}"
 
     target.register(specific, obj=Alpha)
 
@@ -521,10 +521,10 @@ def test_calling_twice() -> None:
 def test_different_defaults_in_specific_non_dispatch_arg() -> None:
     @dispatch("obj")
     def target(obj: Any, blah: str = "default") -> str:
-        return "fallback: %s" % blah
+        return f"fallback: {blah}"
 
     def a(obj: Any, blah: str = "default 2") -> str:
-        return "a: %s" % blah
+        return f"a: {blah}"
 
     target.register(a, obj=Alpha)
 
@@ -534,10 +534,10 @@ def test_different_defaults_in_specific_non_dispatch_arg() -> None:
 def test_different_defaults_in_specific_dispatch_arg() -> None:
     @dispatch(match_key("key"))
     def target(key: str = "default") -> str:
-        return "fallback: %s" % key
+        return f"fallback: {key}"
 
     def a(key: str = "default 2") -> str:
-        return "a: %s" % key
+        return f"a: {key}"
 
     target.register(a, key="foo")
 
@@ -549,10 +549,10 @@ def test_different_defaults_in_specific_dispatch_arg() -> None:
 def test_different_defaults_in_specific_dispatch_arg_causes_dispatch() -> None:
     @dispatch(match_key("key"))
     def target(key: str = "foo") -> str:
-        return "fallback: %s" % key
+        return f"fallback: {key}"
 
     def a(key: str = "default 2") -> str:
-        return "a: %s" % key
+        return f"a: {key}"
 
     target.register(a, key="foo")
 
