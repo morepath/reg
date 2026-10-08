@@ -36,13 +36,7 @@ Changelog = "https://github.com/morepath/reg/blob/master/CHANGES.txt"
 [project.optional-dependencies]
 test = ["pytest >= 8", "pytest-env"]
 coverage = ["pytest-cov"]
-lint = [
-    "black",
-    "flake8",
-    "flake8-pyproject",
-    "flake8-type-checking",
-    "isort",
-]
+lint = ["ruff"]
 # NOTE: sphinx 9.1 introduced PEP-695 syntax into the code-base, so we
 #       can't type check in pre-3.12 mode this way, which we need to,
 #       as long as we still support these versions.
@@ -72,11 +66,14 @@ source = ["reg"]
 [tool.coverage.report]
 show_missing = true
 
-[tool.flake8]
-show-source = true
-ignore = ["E203", "E301", "E501", "E704", "E731", "W503"]
-extend-select = ["TC", "TC1"]
-max-line-length = 88
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "TC", "UP", "RUF"]
+ignore = ["E501", "E731"]
+future-annotations = true
+
+[tool.ruff.lint.isort]
+extra-standard-library = ["typing_extensions"]
+known-first-party = ["dectate", "importscan", "reg"]
 
 [tool.mypy]
 python_version = "3.11"
@@ -99,7 +96,7 @@ env_list = [
     "py315",
     "pypy3",
     "coverage",
-    "pre-commit",
+    "lint",
     "docs",
     "perf",
     "mypy",
@@ -111,7 +108,7 @@ skip_missing_interpreters = true
 "3.11" = ["py311"]
 "3.12" = ["py312"]
 "3.13" = ["py313"]
-"3.14" = ["py314", "pre-commit", "coverage", "mypy", "pyright", "perf"]
+"3.14" = ["py314", "coverage", "lint", "mypy", "pyright", "perf"]
 "3.15" = ["py315"]
 "pypy-3.12" = ["pypy3"]
 
@@ -127,12 +124,12 @@ commands = [
     ["pytest", "--cov", "--cov-fail-under=100", "{posargs:reg}"],
 ]
 
-[tool.tox.env.pre-commit]
-base_python = ["python3"]
-package = "skip"
-deps = ["pre-commit"]
+[tool.tox.env.lint]
+base_python = ["python3.14"]
+extras = ["lint"]
 commands = [
-    ["pre-commit", "run", "--all-files"],
+    ["ruff", "check", "."],
+    ["ruff", "format", "--check", "."],
 ]
 
 [tool.tox.env.docs]
@@ -170,28 +167,3 @@ commands = [
     ["pyright", "--pythonversion", "3.14"],
     ["pyright", "--pythonversion", "3.15"],
 ]
-
-[tool.black]
-target-version = ['py311', 'py312', 'py313', 'py314', 'py315']
-include = '\.pyi?$'
-exclude = '''
-(
-  /(
-      \.git
-    | \.tox
-    | env
-    | venv
-    | .venv
-    | __pycache__
-    | build
-    | dist
-  )/
-)
-'''
-
-[tool.isort]
-profile = 'black'
-py_version = 311
-skip_gitignore = true
-extra_standard_library = ["typing_extensions"]
-known_first_party = ["dectate", "importscan", "reg"]
