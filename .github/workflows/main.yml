@@ -18,16 +18,19 @@ jobs:
     runs-on: "ubuntu-latest"
 
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.11", "3.12", "3.13", "3.14", "3.15", "pypy-3.12"]
     
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: "actions/checkout@v6"
-      - uses: "actions/setup-python@v6"
+      - uses: "actions/checkout@v7"
+      - uses: "actions/setup-python@v7"
         with:
           python-version: "${{ matrix.python-version }}"
+          allow-prereleases: true
+          check-latest: true
       - name: "Install dependencies"
         run: python -m pip install --upgrade pip tox tox-gh
       - name: "Run tox targets for ${{ matrix.python-version }}"
