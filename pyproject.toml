@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "reg"
-version = "1.0.0.dev0"
+version = "1.0.0"
 dynamic = ["readme"]
 description = "Clever dispatch"
 license = "BSD-3-Clause"
