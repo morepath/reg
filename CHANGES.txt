@@ -4,7 +4,8 @@ CHANGES
 1.0.1 (unreleased)
 ==================
 
-- Nothing changed yet.
+- Fix ``arginfo`` and ``arginfo.is_cached`` for unhashable callable instances
+  by using the existing bound-method cache fallback.
 
 
 1.0.0 (2026-10-10)

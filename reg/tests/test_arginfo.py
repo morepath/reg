@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, assert_type
 
 import pytest
@@ -489,3 +490,32 @@ def test_arginfo_cache_callable() -> None:
     assert not arginfo.is_cached(foo)
     arginfo(foo)
     assert arginfo.is_cached(foo)
+
+
+@dataclass
+class UnhashableCallable:
+    def __call__(self, value: int = 3, *, enabled: bool = False) -> int:
+        return value
+
+
+def test_arginfo_unhashable_callable() -> None:
+    info = arginfo(UnhashableCallable())
+    assert info is not None
+    assert info.args == ["value"]
+    assert info.defaults == (3,)
+    assert info.kwonlyargs == ["enabled"]
+    assert info.kwonlydefaults == {"enabled": False}
+    assert info.annotations == {"value": "int", "enabled": "bool", "return": "int"}
+
+
+def test_arginfo_cache_unhashable_callable() -> None:
+    obj = UnhashableCallable()
+    assert not arginfo.is_cached(obj)
+    info = arginfo(obj)
+    assert arginfo.is_cached(obj)
+    assert arginfo(obj) is info
+
+
+@pytest.mark.parametrize("obj", [[], {}])
+def test_arginfo_unhashable_non_callable(obj: Any) -> None:
+    assert arginfo(obj) is None
