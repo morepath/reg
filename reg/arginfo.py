@@ -52,8 +52,9 @@ def arginfo(callable: Callable[..., Any]) -> inspect.FullArgSpec | None:
 
     arginfo returns ``None`` if given something that is not callable.
 
-    arginfo caches previous calls (except for instances with a
-    __call__), making calling it repeatedly cheap.
+    arginfo caches previous calls, making calling it repeatedly cheap.
+    Callable instances are cached by their bound __call__ method, so the
+    instances themselves need not be hashable.
 
     This was originally inspired by the pytest.core varnames() function,
     but has been completely rewritten to handle class constructors,
@@ -61,7 +62,7 @@ def arginfo(callable: Callable[..., Any]) -> inspect.FullArgSpec | None:
     """
     try:
         return arginfo._cache[callable]  # pyright: ignore[reportPrivateUsage]
-    except KeyError:
+    except (KeyError, TypeError):
         # Try to get __call__ function from the cache.
         try:
             return arginfo._cache[callable.__call__]  # type: ignore[operator]
@@ -136,8 +137,11 @@ def arginfo(callable: Callable[..., Any]) -> inspect.FullArgSpec | None:
 
 
 def is_cached(callable: Callable[..., Any]) -> bool:
-    if callable in arginfo._cache:  # pyright: ignore[reportPrivateUsage]
-        return True
+    try:
+        if callable in arginfo._cache:  # pyright: ignore[reportPrivateUsage]
+            return True
+    except TypeError:
+        pass
     return callable.__call__ in arginfo._cache  # type: ignore
 
 
