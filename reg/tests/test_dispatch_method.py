@@ -859,3 +859,25 @@ def unmethodify(func: Any) -> Any:
     """
     func = getattr(func, "__func__", func)
     return func.__globals__.get("_func", func)
+
+
+def test_dispatch_method_by_args_with_positional_defaults() -> None:
+    class Foo:
+        @dispatch_method("obj")
+        def bar(self, obj=None) -> str:
+            return "default"
+
+    class Alpha:
+        pass
+
+    def alpha_func(self: Foo, obj: Alpha) -> str:
+        return "Alpha"
+
+    Foo.bar.register(alpha_func, obj=Alpha)
+
+    foo = Foo()
+
+    assert foo.bar() == "default"
+    assert foo.bar(Alpha()) == "Alpha"
+    assert foo.bar.by_args().component is None
+    assert foo.bar.by_args(Alpha()).component is alpha_func
