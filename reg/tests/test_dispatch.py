@@ -1135,3 +1135,42 @@ def test_predicate_key_wrong_keyword_argument_gives_typeerror() -> None:
 
     with pytest.raises(TypeError):
         assert foo.by_args(wrong=1)  # type: ignore
+
+
+def test_by_args_with_positional_defaults() -> None:
+    class Alpha:
+        pass
+
+    default_alpha = Alpha()
+
+    @dispatch("x")
+    def foo(x: Alpha = default_alpha) -> str:
+        return "default"
+
+    def special_foo(x: Alpha = default_alpha) -> str:
+        return "special"
+
+    foo.register(special_foo, x=Alpha)
+
+    assert foo() == "special"
+    assert foo.by_args().component is special_foo
+    assert foo.by_args(default_alpha).component is special_foo
+
+
+def test_by_args_with_optional_non_dispatch_argument() -> None:
+    class Alpha:
+        pass
+
+    @dispatch("a")
+    def foo(a: Alpha, b: int = 2) -> str:
+        return "default"
+
+    def special_foo(a: Alpha, b: int = 2) -> str:
+        return "special"
+
+    foo.register(special_foo, a=Alpha)
+
+    alpha = Alpha()
+
+    assert foo(alpha) == "special"
+    assert foo.by_args(alpha).component is special_foo
