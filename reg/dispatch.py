@@ -207,6 +207,10 @@ def call({signature}):
             _return_type=None,
         )["predicate_key"]
 
+        # Copy over the defaults so by_args accepts omitted positional
+        # arguments with defaults, just like calling the dispatch itself.
+        self._predicate_key.__defaults__ = args.defaults
+
     def clean(self) -> None:
         """Clean up implementations and added predicates.
 
